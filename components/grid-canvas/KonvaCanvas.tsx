@@ -114,8 +114,15 @@ export function KonvaCanvas({ width = 1200, height = 800 }: KonvaCanvasProps) {
     newRow: number,
     newCol: number
   ) => {
-    // Create a copy of current areas
-    const newAreas = areas.map((row) => [...row])
+    // Create a copy of current areas and ensure it's gridRows × gridCols size
+    const newAreas: string[][] = []
+    for (let r = 0; r < gridRows; r++) {
+      const row: string[] = []
+      for (let c = 0; c < gridCols; c++) {
+        row.push(areas[r]?.[c] ?? "")
+      }
+      newAreas.push(row)
+    }
 
     // Validate new position is within bounds
     if (
