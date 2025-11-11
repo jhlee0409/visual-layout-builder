@@ -117,7 +117,7 @@ const invalidRefSchema = {
     {
       id: "c1",
       name: "Test",
-      semanticTag: "div",
+      semanticTag: "div" as const,
     },
   ],
   breakpoints: [{ name: "mobile", minWidth: 0 }],
