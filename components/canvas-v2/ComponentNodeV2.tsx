@@ -1,68 +1,72 @@
 "use client"
 
-import { useState, useCallback } from "react"
+import { useState, useRef, useEffect } from "react"
 import { Group, Rect, Text, Circle } from "react-konva"
-import type { Component } from "@/types/schema"
+import type { Component } from "@/types/schema-v2"
 
 const CELL_SIZE = 100
 const HANDLE_SIZE = 12
 
-interface ComponentNodeProps {
+interface ComponentNodeV2Props {
   component: Component
-  /** Grid cell position (0-based) */
-  gridRow: number
-  gridCol: number
-  /** Grid cell span */
-  rowSpan: number
-  colSpan: number
   /** Selection state */
   isSelected: boolean
   /** Click handler */
   onClick: () => void
   /** Drag end handler - returns new grid position */
-  onDragEnd?: (newGridRow: number, newGridCol: number) => void
+  onDragEnd?: (newX: number, newY: number) => void
   /** Resize end handler - returns new span */
-  onResizeEnd?: (newRowSpan: number, newColSpan: number) => void
+  onResizeEnd?: (newWidth: number, newHeight: number) => void
   /** Grid bounds for validation */
   gridRows: number
   gridCols: number
-  /** Stage reference for coordinate transformation */
-  stageRef?: React.RefObject<any>
 }
 
 /**
- * ComponentNode - Renders a single component on the Konva canvas
+ * ComponentNodeV2 - Renders a single component on the Konva canvas (V2)
  *
- * Converts grid cell coordinates to Konva pixel coordinates:
- * - x = gridCol * CELL_SIZE
- * - y = gridRow * CELL_SIZE
- * - width = colSpan * CELL_SIZE
- * - height = rowSpan * CELL_SIZE
+ * Uses component.canvasLayout for positioning:
+ * - x = canvasLayout.x * CELL_SIZE
+ * - y = canvasLayout.y * CELL_SIZE
+ * - width = canvasLayout.width * CELL_SIZE
+ * - height = canvasLayout.height * CELL_SIZE
  */
-export function ComponentNode({
+export function ComponentNodeV2({
   component,
-  gridRow,
-  gridCol,
-  rowSpan,
-  colSpan,
   isSelected,
   onClick,
   onDragEnd,
   onResizeEnd,
   gridRows,
   gridCols,
-}: ComponentNodeProps) {
-  const x = gridCol * CELL_SIZE
-  const y = gridRow * CELL_SIZE
-  const baseWidth = colSpan * CELL_SIZE
-  const baseHeight = rowSpan * CELL_SIZE
+}: ComponentNodeV2Props) {
+  // Early return if no canvasLayout
+  if (!component.canvasLayout) {
+    return null
+  }
+
+  const { x: gridX, y: gridY, width: gridWidth, height: gridHeight } = component.canvasLayout
+
+  const x = gridX * CELL_SIZE
+  const y = gridY * CELL_SIZE
+  const baseWidth = gridWidth * CELL_SIZE
+  const baseHeight = gridHeight * CELL_SIZE
 
   const [isResizing, setIsResizing] = useState(false)
-  const [resizeStartSize, setResizeStartSize] = useState({ width: baseWidth, height: baseHeight })
+  const [resizeSize, setResizeSize] = useState({ width: baseWidth, height: baseHeight })
 
-  // Use resizing size if actively resizing, otherwise use base size
-  const width = isResizing ? resizeStartSize.width : baseWidth
-  const height = isResizing ? resizeStartSize.height : baseHeight
+  // Always use latest size (resizeSize is updated during resize, baseWidth/baseHeight for non-resize)
+  const width = isResizing ? resizeSize.width : baseWidth
+  const height = isResizing ? resizeSize.height : baseHeight
+
+  // Ref to track latest width/height for use in closures
+  const widthRef = useRef(width)
+  const heightRef = useRef(height)
+
+  useEffect(() => {
+    widthRef.current = width
+    heightRef.current = height
+  }, [width, height])
 
   // Visual styling based on selection state
   const fillColor = isSelected ? "#eff6ff" : "#ffffff"
@@ -81,21 +85,21 @@ export function ComponentNode({
     e.cancelBubble = true
   }
 
-  // Calculate current span from resizing state
-  const currentColSpan = isResizing
-    ? Math.round(resizeStartSize.width / CELL_SIZE)
-    : colSpan
-  const currentRowSpan = isResizing
-    ? Math.round(resizeStartSize.height / CELL_SIZE)
-    : rowSpan
+  // Calculate current grid span from resizing state
+  const currentGridWidth = isResizing
+    ? Math.round(resizeSize.width / CELL_SIZE)
+    : gridWidth
+  const currentGridHeight = isResizing
+    ? Math.round(resizeSize.height / CELL_SIZE)
+    : gridHeight
 
   // Handle drag move - constrain to grid bounds
   const handleDragMove = (e: any) => {
     e.cancelBubble = true
 
     const node = e.target
-    const maxX = (gridCols - currentColSpan) * CELL_SIZE
-    const maxY = (gridRows - currentRowSpan) * CELL_SIZE
+    const maxX = (gridCols - currentGridWidth) * CELL_SIZE
+    const maxY = (gridRows - currentGridHeight) * CELL_SIZE
 
     // Clamp position
     const clampedX = Math.max(0, Math.min(node.x(), maxX))
@@ -119,20 +123,20 @@ export function ComponentNode({
     node.y(newY)
 
     // Calculate new grid position
-    const newGridCol = Math.round(newX / CELL_SIZE)
-    const newGridRow = Math.round(newY / CELL_SIZE)
+    const newGridX = Math.round(newX / CELL_SIZE)
+    const newGridY = Math.round(newY / CELL_SIZE)
 
     // Notify parent component
     if (onDragEnd) {
-      onDragEnd(newGridRow, newGridCol)
+      onDragEnd(newGridX, newGridY)
     }
   }
 
   // Handle resize - called during drag of resize handle
   const handleResize = (newWidth: number, newHeight: number) => {
     // Calculate max allowed size based on grid bounds
-    const maxWidth = (gridCols - gridCol) * CELL_SIZE
-    const maxHeight = (gridRows - gridRow) * CELL_SIZE
+    const maxWidth = (gridCols - gridX) * CELL_SIZE
+    const maxHeight = (gridRows - gridY) * CELL_SIZE
 
     // Clamp to grid bounds and snap to grid
     const clampedWidth = Math.min(newWidth, maxWidth)
@@ -141,7 +145,8 @@ export function ComponentNode({
     const snappedWidth = Math.max(CELL_SIZE, snapToGrid(clampedWidth))
     const snappedHeight = Math.max(CELL_SIZE, snapToGrid(clampedHeight))
 
-    setResizeStartSize({ width: snappedWidth, height: snappedHeight })
+    // Update resize state with latest values
+    setResizeSize({ width: snappedWidth, height: snappedHeight })
 
     // Return the snapped values for immediate use
     return { width: snappedWidth, height: snappedHeight }
@@ -149,18 +154,18 @@ export function ComponentNode({
 
   // Handle resize end
   const handleResizeEnd = () => {
-    // Calculate new span
-    const newColSpan = Math.max(1, Math.round(resizeStartSize.width / CELL_SIZE))
-    const newRowSpan = Math.max(1, Math.round(resizeStartSize.height / CELL_SIZE))
+    // Calculate new grid span from LATEST resizeSize
+    const newGridWidth = Math.max(1, Math.round(resizeSize.width / CELL_SIZE))
+    const newGridHeight = Math.max(1, Math.round(resizeSize.height / CELL_SIZE))
 
     // Notify parent if size changed
-    if (onResizeEnd && (newColSpan !== colSpan || newRowSpan !== rowSpan)) {
-      onResizeEnd(newRowSpan, newColSpan)
+    if (onResizeEnd && (newGridWidth !== gridWidth || newGridHeight !== gridHeight)) {
+      onResizeEnd(newGridWidth, newGridHeight)
     }
 
     // Reset resize state
     setIsResizing(false)
-    setResizeStartSize({ width: baseWidth, height: baseHeight })
+    setResizeSize({ width: baseWidth, height: baseHeight })
   }
 
   return (
@@ -228,6 +233,18 @@ export function ComponentNode({
         align="right"
       />
 
+      {/* Canvas position indicator (top right) */}
+      <Text
+        x={width - 80}
+        y={12}
+        width={68}
+        text={`[${gridX},${gridY}]`}
+        fontSize={10}
+        fontFamily="'Fira Code', monospace"
+        fill="#94a3b8"
+        align="right"
+      />
+
       {/* Resize Handles - only show when selected */}
       {isSelected && (
         <>
@@ -248,9 +265,10 @@ export function ComponentNode({
               e.cancelBubble = true
               const node = e.target
               const newWidth = node.x()
-              const snappedSize = handleResize(newWidth, height)
+              const currentHeight = heightRef.current
+              const snappedSize = handleResize(newWidth, currentHeight)
               node.x(snappedSize.width)
-              node.y(height / 2)
+              node.y(currentHeight / 2)
             }}
             onDragEnd={(e) => {
               e.cancelBubble = true
@@ -275,8 +293,9 @@ export function ComponentNode({
               e.cancelBubble = true
               const node = e.target
               const newHeight = node.y()
-              const snappedSize = handleResize(width, newHeight)
-              node.x(width / 2)
+              const currentWidth = widthRef.current
+              const snappedSize = handleResize(currentWidth, newHeight)
+              node.x(currentWidth / 2)
               node.y(snappedSize.height)
             }}
             onDragEnd={(e) => {

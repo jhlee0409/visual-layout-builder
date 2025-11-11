@@ -148,6 +148,7 @@ export function ComponentForm() {
               placeholder="MyComponent"
               value={name}
               onChange={(e) => setName(e.target.value)}
+              autoComplete="off"
               required
             />
             <p className="text-xs text-muted-foreground">
@@ -183,6 +184,7 @@ export function ComponentForm() {
               placeholder='{"children": "Default text"}'
               value={propsJson}
               onChange={(e) => setPropsJson(e.target.value)}
+              autoComplete="off"
               className="font-mono text-xs"
               rows={4}
             />

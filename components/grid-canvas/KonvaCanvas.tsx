@@ -1,7 +1,7 @@
 "use client"
 
 import { useRef, useState, useEffect } from "react"
-import { Stage, Layer, Rect } from "react-konva"
+import { Stage, Layer, Rect, Group, Circle, Text } from "react-konva"
 import Konva from "konva"
 import { useLayoutStore } from "@/store/layout-store"
 import { ComponentNode } from "./ComponentNode"
@@ -33,6 +33,7 @@ export function KonvaCanvas({ width, height }: KonvaCanvasProps) {
     (state) => state.setSelectedComponentId
   )
   const updateGridAreas = useLayoutStore((state) => state.updateGridAreas)
+  const updateGridSize = useLayoutStore((state) => state.updateGridSize)
 
   const bp = breakpoints.find((b) => b.name === currentBreakpoint)
   const gridCols = bp?.gridCols ?? 12
@@ -169,17 +170,7 @@ export function KonvaCanvas({ width, height }: KonvaCanvasProps) {
     newRow: number,
     newCol: number
   ) => {
-    // Create a copy of current areas and ensure it's gridRows × gridCols size
-    const newAreas: string[][] = []
-    for (let r = 0; r < gridRows; r++) {
-      const row: string[] = []
-      for (let c = 0; c < gridCols; c++) {
-        row.push(areas[r]?.[c] ?? "")
-      }
-      newAreas.push(row)
-    }
-
-    // Validate new position is within bounds
+    // Strictly validate bounds - must be within grid
     if (
       newRow < 0 ||
       newCol < 0 ||
@@ -188,6 +179,16 @@ export function KonvaCanvas({ width, height }: KonvaCanvasProps) {
     ) {
       console.warn("Component position out of bounds, reverting")
       return
+    }
+
+    // Create a copy of current areas
+    const newAreas: string[][] = []
+    for (let r = 0; r < gridRows; r++) {
+      const row: string[] = []
+      for (let c = 0; c < gridCols; c++) {
+        row.push(areas[r]?.[c] ?? "")
+      }
+      newAreas.push(row)
     }
 
     // Check for collision with other components
@@ -220,6 +221,75 @@ export function KonvaCanvas({ width, height }: KonvaCanvasProps) {
     // Set new position
     for (let r = newRow; r < newRow + rowSpan; r++) {
       for (let c = newCol; c < newCol + colSpan; c++) {
+        newAreas[r][c] = componentId
+      }
+    }
+
+    // Update store
+    updateGridAreas(currentBreakpoint, newAreas)
+  }
+
+  // Handle component resize end - update areas in store
+  const handleComponentResize = (
+    componentId: string,
+    gridRow: number,
+    gridCol: number,
+    oldRowSpan: number,
+    oldColSpan: number,
+    newRowSpan: number,
+    newColSpan: number
+  ) => {
+    // Strictly validate bounds - must be within grid
+    if (
+      gridRow < 0 ||
+      gridCol < 0 ||
+      gridRow + newRowSpan > gridRows ||
+      gridCol + newColSpan > gridCols
+    ) {
+      console.warn("Component size out of bounds, reverting")
+      return
+    }
+
+    // Create a copy of current areas
+    const newAreas: string[][] = []
+    for (let r = 0; r < gridRows; r++) {
+      const row: string[] = []
+      for (let c = 0; c < gridCols; c++) {
+        row.push(areas[r]?.[c] ?? "")
+      }
+      newAreas.push(row)
+    }
+
+    // Check for collision with other components in the new size
+    let hasCollision = false
+    for (let r = gridRow; r < gridRow + newRowSpan; r++) {
+      for (let c = gridCol; c < gridCol + newColSpan; c++) {
+        const cellId = newAreas[r]?.[c]
+        if (cellId && cellId !== componentId) {
+          hasCollision = true
+          break
+        }
+      }
+      if (hasCollision) break
+    }
+
+    if (hasCollision) {
+      console.warn("Component collision detected during resize, reverting")
+      return
+    }
+
+    // Clear old cells
+    for (let r = gridRow; r < gridRow + oldRowSpan; r++) {
+      for (let c = gridCol; c < gridCol + oldColSpan; c++) {
+        if (newAreas[r]?.[c] === componentId) {
+          newAreas[r][c] = ""
+        }
+      }
+    }
+
+    // Set new cells
+    for (let r = gridRow; r < gridRow + newRowSpan; r++) {
+      for (let c = gridCol; c < gridCol + newColSpan; c++) {
         newAreas[r][c] = componentId
       }
     }
@@ -296,7 +366,7 @@ export function KonvaCanvas({ width, height }: KonvaCanvasProps) {
       </div>
 
       {/* Canvas Area */}
-      <div className="flex-1 overflow-hidden bg-slate-50">
+      <div className="flex-1 overflow-hidden bg-slate-50 relative">
         <Stage
           ref={stageRef}
           width={canvasWidth}
@@ -316,7 +386,7 @@ export function KonvaCanvas({ width, height }: KonvaCanvasProps) {
         >
           {/* Grid Layer */}
           <Layer>
-            {/* Breakpoint-specific grid background */}
+            {/* Main grid cells */}
             {Array.from({ length: gridRows }).map((_, row) =>
               Array.from({ length: gridCols }).map((_, col) => (
                 <Rect
@@ -342,6 +412,8 @@ export function KonvaCanvas({ width, height }: KonvaCanvasProps) {
                 gridCol={pos.gridCol}
                 rowSpan={pos.rowSpan}
                 colSpan={pos.colSpan}
+                gridRows={gridRows}
+                gridCols={gridCols}
                 isSelected={selectedComponentId === pos.component.id}
                 onClick={() => setSelectedComponentId(pos.component.id)}
                 onDragEnd={(newRow, newCol) =>
@@ -355,10 +427,39 @@ export function KonvaCanvas({ width, height }: KonvaCanvasProps) {
                     newCol
                   )
                 }
+                onResizeEnd={(newRowSpan, newColSpan) =>
+                  handleComponentResize(
+                    pos.component.id,
+                    pos.gridRow,
+                    pos.gridCol,
+                    pos.rowSpan,
+                    pos.colSpan,
+                    newRowSpan,
+                    newColSpan
+                  )
+                }
               />
             ))}
           </Layer>
         </Stage>
+
+        {/* Sticky Add Column Button - right side */}
+        <button
+          onClick={() => updateGridSize(currentBreakpoint, gridRows, gridCols + 1)}
+          className="absolute right-4 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-blue-500 hover:bg-blue-600 text-white shadow-lg flex items-center justify-center transition-colors z-10"
+          title="열 추가"
+        >
+          <span className="text-2xl font-bold">+</span>
+        </button>
+
+        {/* Sticky Add Row Button - bottom side */}
+        <button
+          onClick={() => updateGridSize(currentBreakpoint, gridRows + 1, gridCols)}
+          className="absolute bottom-4 left-1/2 -translate-x-1/2 w-12 h-12 rounded-full bg-blue-500 hover:bg-blue-600 text-white shadow-lg flex items-center justify-center transition-colors z-10"
+          title="행 추가"
+        >
+          <span className="text-2xl font-bold">+</span>
+        </button>
       </div>
     </div>
   )

@@ -42,9 +42,9 @@ export const sampleSchema: LaydlerSchema = {
     },
   ],
   breakpoints: [
-    { name: "mobile", minWidth: 0, gridCols: 4, gridRows: 20 },
+    { name: "mobile", minWidth: 0, gridCols: 4, gridRows: 24 },
     { name: "tablet", minWidth: 768, gridCols: 8, gridRows: 20 },
-    { name: "desktop", minWidth: 1024, gridCols: 12, gridRows: 20 },
+    { name: "desktop", minWidth: 1024, gridCols: 12, gridRows: 16 },
   ],
   layouts: {
     mobile: {
@@ -116,9 +116,9 @@ export const simpleSingleColumnSchema: LaydlerSchema = {
     },
   ],
   breakpoints: [
-    { name: "mobile", minWidth: 0, gridCols: 4, gridRows: 20 },
+    { name: "mobile", minWidth: 0, gridCols: 4, gridRows: 24 },
     { name: "tablet", minWidth: 768, gridCols: 8, gridRows: 20 },
-    { name: "desktop", minWidth: 1024, gridCols: 12, gridRows: 20 },
+    { name: "desktop", minWidth: 1024, gridCols: 12, gridRows: 16 },
   ],
   layouts: {
     mobile: {
@@ -171,9 +171,9 @@ export const dashboardLayoutSchema: LaydlerSchema = {
     },
   ],
   breakpoints: [
-    { name: "mobile", minWidth: 0, gridCols: 4, gridRows: 20 },
+    { name: "mobile", minWidth: 0, gridCols: 4, gridRows: 24 },
     { name: "tablet", minWidth: 768, gridCols: 8, gridRows: 20 },
-    { name: "desktop", minWidth: 1024, gridCols: 12, gridRows: 20 },
+    { name: "desktop", minWidth: 1024, gridCols: 12, gridRows: 16 },
   ],
   layouts: {
     mobile: {
@@ -245,9 +245,9 @@ export const productPageSchema: LaydlerSchema = {
     },
   ],
   breakpoints: [
-    { name: "mobile", minWidth: 0, gridCols: 4, gridRows: 20 },
+    { name: "mobile", minWidth: 0, gridCols: 4, gridRows: 24 },
     { name: "tablet", minWidth: 768, gridCols: 8, gridRows: 20 },
-    { name: "desktop", minWidth: 1024, gridCols: 12, gridRows: 20 },
+    { name: "desktop", minWidth: 1024, gridCols: 12, gridRows: 16 },
   ],
   layouts: {
     mobile: {

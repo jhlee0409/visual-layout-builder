@@ -1,0 +1,152 @@
+import { useSortable } from "@dnd-kit/sortable"
+import { CSS } from "@dnd-kit/utilities"
+import { Badge } from "@/components/ui/badge"
+import {
+  ChevronDown,
+  ChevronRight,
+  Trash2,
+  Copy,
+  GripVertical,
+} from "lucide-react"
+import type { Component } from "@/types/schema-v2"
+
+interface SortableLayerItemProps {
+  component: Component
+  isSelected: boolean
+  isCollapsed: boolean
+  onSelect: () => void
+  onToggleCollapse: () => void
+  onDuplicate: () => void
+  onDelete: () => void
+}
+
+export function SortableLayerItem({
+  component,
+  isSelected,
+  isCollapsed,
+  onSelect,
+  onToggleCollapse,
+  onDuplicate,
+  onDelete,
+}: SortableLayerItemProps) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: component.id })
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  }
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={`
+        group relative border rounded-lg transition-all
+        ${
+          isSelected
+            ? "border-blue-500 bg-blue-50"
+            : "border-gray-200 hover:border-gray-300 hover:bg-gray-50"
+        }
+        ${isDragging ? "z-50 shadow-lg" : ""}
+      `}
+    >
+      {/* Main Row */}
+      <div className="flex items-center gap-2 p-2 cursor-pointer" onClick={onSelect}>
+        {/* Drag Handle */}
+        <div
+          {...attributes}
+          {...listeners}
+          className="cursor-grab active:cursor-grabbing opacity-0 group-hover:opacity-100 transition-opacity"
+        >
+          <GripVertical className="w-4 h-4 text-gray-400" />
+        </div>
+
+        {/* Collapse Toggle */}
+        <button
+          onClick={(e) => {
+            e.stopPropagation()
+            onToggleCollapse()
+          }}
+          className="p-0.5 hover:bg-gray-200 rounded"
+        >
+          {isCollapsed ? (
+            <ChevronRight className="w-3 h-3" />
+          ) : (
+            <ChevronDown className="w-3 h-3" />
+          )}
+        </button>
+
+        {/* Component Info */}
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2">
+            <span className="font-semibold text-sm truncate">
+              {component.name}
+            </span>
+            <Badge variant="secondary" className="text-xs">
+              {component.semanticTag}
+            </Badge>
+          </div>
+          {!isCollapsed && (
+            <div className="text-xs text-gray-500 mt-0.5">
+              {component.positioning.type} · {component.layout.type}
+            </div>
+          )}
+        </div>
+
+        {/* Actions */}
+        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+          <button
+            onClick={(e) => {
+              e.stopPropagation()
+              onDuplicate()
+            }}
+            className="p-1 hover:bg-gray-200 rounded"
+            title="Duplicate"
+          >
+            <Copy className="w-3.5 h-3.5" />
+          </button>
+          <button
+            onClick={(e) => {
+              e.stopPropagation()
+              onDelete()
+            }}
+            className="p-1 hover:bg-red-100 rounded text-red-600"
+            title="Delete"
+          >
+            <Trash2 className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      </div>
+
+      {/* Expanded Details */}
+      {!isCollapsed && (
+        <div className="px-8 pb-2 space-y-1 text-xs text-gray-600">
+          <div className="flex justify-between">
+            <span>ID:</span>
+            <span className="font-mono">{component.id}</span>
+          </div>
+          {component.styling?.background && (
+            <div className="flex justify-between">
+              <span>Background:</span>
+              <span>{component.styling.background}</span>
+            </div>
+          )}
+          {component.responsive && (
+            <div className="flex justify-between">
+              <span>Responsive:</span>
+              <span>Yes</span>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}

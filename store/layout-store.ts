@@ -37,6 +37,7 @@ interface LayoutState {
   // Actions: Grid layout management
   updateGridLayout: (breakpoint: string, layout: GridLayout) => void
   updateGridAreas: (breakpoint: string, areas: string[][]) => void
+  updateGridSize: (breakpoint: string, gridRows: number, gridCols: number) => void
 
   // Actions: Breakpoint management
   setCurrentBreakpoint: (breakpoint: string) => void
@@ -196,6 +197,47 @@ export const useLayoutStore = create<LayoutState>()(
             },
           }
         }, false, "updateGridAreas")
+      },
+
+      updateGridSize: (breakpoint, gridRows, gridCols) => {
+        set((state) => {
+          const currentLayout = state.schema.layouts[breakpoint]
+          if (!currentLayout) return state
+
+          // Update breakpoint config
+          const breakpoints = state.schema.breakpoints.map((bp) =>
+            bp.name === breakpoint ? { ...bp, gridRows, gridCols } : bp
+          )
+
+          // Resize areas array
+          const oldAreas = currentLayout.grid.areas
+          const newAreas: string[][] = []
+
+          for (let r = 0; r < gridRows; r++) {
+            const row: string[] = []
+            for (let c = 0; c < gridCols; c++) {
+              row.push(oldAreas[r]?.[c] ?? "")
+            }
+            newAreas.push(row)
+          }
+
+          return {
+            schema: {
+              ...state.schema,
+              breakpoints,
+              layouts: {
+                ...state.schema.layouts,
+                [breakpoint]: {
+                  grid: {
+                    rows: `repeat(${gridRows}, 100px)`,
+                    columns: `repeat(${gridCols}, 100px)`,
+                    areas: newAreas,
+                  },
+                },
+              },
+            },
+          }
+        }, false, "updateGridSize")
       },
 
       // Breakpoint management
