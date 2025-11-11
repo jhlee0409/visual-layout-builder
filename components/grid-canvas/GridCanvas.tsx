@@ -126,6 +126,7 @@ export function GridCanvas() {
   const [layout, setLayout] = useState<Layout[]>([])
   const [cols, setCols] = useState(12)
   const [rows, setRows] = useState(12)
+  const [isDragging, setIsDragging] = useState(false)
 
   // Convert areas to layout when current layout changes
   useEffect(() => {
@@ -160,8 +161,17 @@ export function GridCanvas() {
     }
   }
 
-  const getComponentName = (id: string) => {
-    return components.find((c) => c.id === id)?.name || id
+  const getComponent = (id: string) => {
+    return components.find((c) => c.id === id)
+  }
+
+  const handleClick = (itemId: string) => {
+    // Only handle click if not dragging
+    if (!isDragging) {
+      setSelectedComponentId(
+        selectedComponentId === itemId ? null : itemId
+      )
+    }
   }
 
   if (!currentLayout) {
@@ -185,7 +195,17 @@ export function GridCanvas() {
         </p>
       </div>
 
-      <div className="border-2 border-dashed border-muted rounded-lg p-4 bg-muted/10 min-h-[600px]">
+      <div
+        className="border-2 border-dashed border-muted rounded-lg p-4 min-h-[600px] relative"
+        style={{
+          backgroundImage: `
+            linear-gradient(to right, rgba(128, 128, 128, 0.1) 1px, transparent 1px),
+            linear-gradient(to bottom, rgba(128, 128, 128, 0.1) 1px, transparent 1px)
+          `,
+          backgroundSize: `${1200 / cols}px 50px`,
+          backgroundPosition: '16px 16px'
+        }}
+      >
         <GridLayout
           className="layout"
           layout={layout}
@@ -193,7 +213,8 @@ export function GridCanvas() {
           rowHeight={50}
           width={1200}
           onLayoutChange={handleLayoutChange}
-          draggableHandle=".drag-handle"
+          onDragStart={() => setIsDragging(true)}
+          onDragStop={() => setIsDragging(false)}
           compactType={null}
           preventCollision={true}
           autoSize={true}
@@ -203,50 +224,27 @@ export function GridCanvas() {
         >
           {layout.map((item) => {
             const isSelected = selectedComponentId === item.i
+            const component = getComponent(item.i)
             return (
               <div
                 key={item.i}
                 className={cn(
-                  "cursor-pointer rounded-lg border-2 bg-background shadow-sm transition-all",
+                  "cursor-move rounded-lg border-2 bg-background shadow-sm transition-all",
                   isSelected
                     ? "border-primary ring-2 ring-primary"
                     : "border-border hover:border-accent-foreground"
                 )}
-                onClick={() =>
-                  setSelectedComponentId(
-                    isSelected ? null : item.i
-                  )
-                }
+                onClick={() => handleClick(item.i)}
               >
-                <div className="h-full flex flex-col items-center justify-center p-4">
-                  <div
-                    className="drag-handle cursor-move mb-2 text-muted-foreground hover:text-foreground"
-                    title="Drag to move"
-                  >
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="20"
-                      height="20"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    >
-                      <circle cx="9" cy="12" r="1" />
-                      <circle cx="9" cy="5" r="1" />
-                      <circle cx="9" cy="19" r="1" />
-                      <circle cx="15" cy="12" r="1" />
-                      <circle cx="15" cy="5" r="1" />
-                      <circle cx="15" cy="19" r="1" />
-                    </svg>
-                  </div>
+                <div className="h-full flex flex-col items-center justify-center p-4 pointer-events-none">
                   <Badge variant={isSelected ? "default" : "secondary"}>
                     {item.i}
                   </Badge>
                   <div className="text-sm font-medium text-center mt-2">
-                    {getComponentName(item.i)}
+                    {component?.name || item.i}
+                  </div>
+                  <div className="text-xs text-muted-foreground mt-1">
+                    &lt;{component?.semanticTag || "div"}&gt;
                   </div>
                   <div className="text-xs text-muted-foreground mt-1">
                     {item.w} × {item.h}
