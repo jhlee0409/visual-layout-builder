@@ -1,6 +1,6 @@
 "use client"
 
-import { GridCanvas } from "@/components/grid-canvas"
+import { KonvaCanvas } from "@/components/grid-canvas"
 import { ComponentPanel } from "@/components/component-panel"
 import { BreakpointSwitcher, BreakpointManager } from "@/components/breakpoint-panel"
 import { GenerationModal } from "@/components/generation-modal"
@@ -41,10 +41,10 @@ export default function Home() {
 
         {/* Main Layout: Grid Canvas (70%) + Side Panels (30%) */}
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_400px] gap-6">
-          {/* Left: Grid Canvas */}
+          {/* Left: Konva Canvas */}
           <div className="min-w-0 space-y-4">
             <BreakpointSwitcher />
-            <GridCanvas />
+            <KonvaCanvas width={1200} height={800} />
           </div>
 
           {/* Right: Component Panel + Breakpoint Manager */}
