@@ -36,11 +36,14 @@
   - 문서화 시스템 구축 (MASTER_PLAN.md, PROGRESS.md)
   - 커밋: (pending)
 
-### **Phase 2: 핵심 UI 컴포넌트 구현** ⏳ PLANNED
-- ⏳ **Step 2.1** - 그리드 캔버스 구현 (PRD 3.1)
-  - CSS Grid 기반 캔버스
-  - DnD로 셀 병합
-  - 컴포넌트 배치/삭제
+### **Phase 2: 핵심 UI 컴포넌트 구현** 🔄 IN PROGRESS
+- ✅ **Step 2.1** - 그리드 캔버스 구현 (PRD 3.1)
+  - CSS Grid 기반 캔버스 렌더링
+  - 컴포넌트 선택 기능
+  - 그리드 행/열 추가/삭제
+  - 병합된 셀 표시
+  - shadcn/ui 컴포넌트 (Button, Card, Badge)
+  - 커밋: (pending)
 
 - ⏳ **Step 2.2** - 컴포넌트 속성 패널 구현 (PRD 3.2)
   - 컴포넌트 추가 폼
@@ -125,4 +128,4 @@
 
 ---
 
-_최종 업데이트: Step 1.2 완료 시점_
+_최종 업데이트: Step 2.1 완료 시점_

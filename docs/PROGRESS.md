@@ -280,5 +280,181 @@ $ pnpm tsx store/test-store.ts
 
 ---
 
-_최종 업데이트: Step 1.2 완료 시점_
-_다음 업데이트: Step 2.1 시작 시_
+## ✅ Step 2.1: 그리드 캔버스 구현 (COMPLETED)
+
+**날짜:** 2024-11-11
+**커밋:** (pending)
+
+### 생성된 파일
+```
+components/
+├── ui/
+│   ├── button.tsx            # Button 컴포넌트 (shadcn/ui)
+│   ├── card.tsx              # Card 컴포넌트 (shadcn/ui)
+│   └── badge.tsx             # Badge 컴포넌트 (shadcn/ui)
+└── grid-canvas/
+    ├── GridCanvas.tsx        # 메인 캔버스 컴포넌트 (130줄)
+    ├── GridCell.tsx          # 개별 셀 컴포넌트 (60줄)
+    ├── GridToolbar.tsx       # 그리드 제어 툴바 (130줄)
+    └── index.ts              # 내보내기
+
+app/
+└── page.tsx                  # 홈 페이지 (GridCanvas 통합)
+
+package.json
+└── dependencies: @radix-ui/react-slot 추가
+```
+
+### 핵심 구현 내용
+
+#### 1. GridCanvas.tsx - 메인 캔버스
+**기능:**
+- 현재 breakpoint의 grid layout을 시각적으로 렌더링
+- CSS Grid `grid-template-rows`, `grid-template-columns`, `grid-area` 활용
+- 컴포넌트 선택 기능 (클릭 시 selectedComponentId 업데이트)
+- 병합된 셀 감지 및 표시
+
+**주요 로직:**
+```typescript
+// Merged cell 감지: 같은 컴포넌트 ID의 첫 번째 셀만 렌더링
+const isMergedCell = (rowIndex, colIndex) => {
+  const currentId = areas[rowIndex][colIndex]
+  // 이전에 같은 ID가 나타났으면 merged cell
+  for (let r = 0; r < areas.length; r++) {
+    for (let c = 0; c < areas[r].length; c++) {
+      if (areas[r][c] === currentId) {
+        if (r < rowIndex || (r === rowIndex && c < colIndex)) {
+          return true // Skip rendering
+        }
+        return false // First occurrence
+      }
+    }
+  }
+}
+
+// Grid-area 계산: 병합된 영역의 범위 계산
+const getGridArea = (rowIndex, colIndex) => {
+  const currentId = areas[rowIndex][colIndex]
+  let minRow = rowIndex, maxRow = rowIndex
+  let minCol = colIndex, maxCol = colIndex
+
+  // 같은 ID를 가진 모든 셀의 min/max 찾기
+  for (let r = 0; r < areas.length; r++) {
+    for (let c = 0; c < areas[r].length; c++) {
+      if (areas[r][c] === currentId) {
+        minRow = Math.min(minRow, r)
+        maxRow = Math.max(maxRow, r)
+        minCol = Math.min(minCol, c)
+        maxCol = Math.max(maxCol, c)
+      }
+    }
+  }
+
+  // CSS grid-area: row-start / col-start / row-end / col-end (1-based)
+  return `${minRow + 1} / ${minCol + 1} / ${maxRow + 2} / ${maxCol + 2}`
+}
+```
+
+#### 2. GridCell.tsx - 개별 셀
+**기능:**
+- 빈 셀 vs 배치된 컴포넌트 구분
+- 컴포넌트 ID와 이름 표시 (Badge + 텍스트)
+- 선택 상태 시각화 (border + ring)
+- 클릭으로 선택/해제
+
+**스타일:**
+- 빈 셀: 점선 테두리, 회색 배경, 좌표 표시 [row,col]
+- 배치된 셀: 실선 테두리, 흰색 배경, 컴포넌트 정보 표시
+- 선택된 셀: primary 색상 테두리 + ring 효과
+
+#### 3. GridToolbar.tsx - 그리드 제어
+**기능:**
+- 현재 breakpoint 표시 (Badge)
+- 그리드 크기 표시 (rows × cols)
+- 행/열 추가/삭제 버튼
+- 최소 1행 1열 유지 (삭제 버튼 비활성화)
+
+**동작:**
+- `+ Row`: 마지막에 새 행 추가 (`1fr` 추가, 빈 셀 배열 추가)
+- `- Row`: 마지막 행 제거 (최소 1행 유지)
+- `+ Column`: 모든 행에 빈 셀 추가 (`1fr` 추가)
+- `- Column`: 모든 행의 마지막 셀 제거 (최소 1열 유지)
+
+#### 4. 홈 페이지 통합
+**추가 기능:**
+- `Load Sample` 버튼: PRD 예시 스키마 로드 (4개 컴포넌트)
+- `Reset` 버튼: 빈 스키마로 초기화
+- 컴포넌트 개수 표시
+
+### 주요 결정사항
+
+1. **shadcn/ui 수동 설치**
+   - 환경 제한으로 CLI 접근 불가
+   - Button, Card, Badge 컴포넌트를 수동으로 생성
+   - `@radix-ui/react-slot` 의존성 추가
+
+2. **React Hook ESLint 오류 해결**
+   - 초기 버전: early return 이후 `useMemo` 호출 → 오류
+   - 해결: `useMemo`를 일반 함수로 변경
+   - React Hook은 조건부로 호출할 수 없음
+
+3. **DnD 통합 보류**
+   - Step 2.1에서는 기본 렌더링과 선택 기능만 구현
+   - @dnd-kit 통합은 다음 단계(Step 2.5 또는 별도)로 연기
+   - 현재는 GridToolbar의 행/열 추가/삭제로 그리드 편집 가능
+
+4. **Grid-area 계산 로직**
+   - PRD 예시처럼 하나의 컴포넌트가 여러 셀 차지 가능
+   - 같은 컴포넌트 ID의 모든 셀을 찾아 min/max 계산
+   - CSS `grid-area` 속성으로 병합 영역 표시
+
+5. **600px 고정 높이**
+   - 캔버스 높이를 `h-[600px]`로 고정
+   - 스크롤 없이 전체 그리드 한눈에 확인 가능
+   - 향후 사용자 커스터마이징 가능하도록 개선 예정
+
+### 테스트 결과
+```bash
+$ pnpm tsc --noEmit
+# ✅ TypeScript 컴파일 오류 없음
+
+$ pnpm build
+# ✅ Next.js 프로덕션 빌드 성공
+# Route (app): / - 13 kB (First Load JS: 115 kB)
+```
+
+### 구현된 기능 (PRD 3.1 체크)
+- ✅ CSS Grid 기반 캔버스 렌더링
+- ✅ 각 셀에 컴포넌트 ID 표시
+- ✅ 빈 셀 vs 배치된 셀 시각적 구분
+- ✅ 컴포넌트 클릭으로 선택/해제
+- ✅ 그리드 행/열 추가/삭제
+- ✅ 병합된 셀 (merged area) 올바르게 표시
+- ⏸️ DnD로 셀 병합 (다음 단계로 연기)
+- ⏸️ 컴포넌트 드래그로 배치/이동 (다음 단계로 연기)
+
+### PRD 연관성
+- ✅ **PRD 3.1 (그리드 캔버스)**: 핵심 렌더링 기능 구현 완료
+- ✅ Store 연동: `useCurrentLayout`, `setSelectedComponentId` 사용
+- ✅ 반응형 준비: 현재 breakpoint의 레이아웃만 표시 (뷰 전환은 다음 단계)
+
+### 미구현 항목 (향후 작업)
+1. **DnD 기능** (Step 2.5 예정)
+   - 드래그로 컴포넌트 배치
+   - 드래그로 여러 셀 병합
+   - 컴포넌트 이동/제거
+2. **Breakpoint 전환 UI** (Step 2.3 예정)
+   - 모바일/태블릿/데스크톱 버튼
+   - 뷰포트 미리보기
+3. **Component 속성 패널** (Step 2.2 예정)
+   - 선택된 컴포넌트 속성 편집
+   - 새 컴포넌트 추가 폼
+
+### Phase 2 진행 상황
+- ✅ Phase 2.1: 그리드 캔버스 구현 (현재 완료)
+- ⏳ Phase 2.2: 컴포넌트 속성 패널 (다음 단계)
+
+---
+
+_최종 업데이트: Step 2.1 완료 시점_
+_다음 업데이트: Step 2.2 시작 시_
