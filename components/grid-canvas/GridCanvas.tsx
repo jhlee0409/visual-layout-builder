@@ -4,7 +4,7 @@ import { useLayoutStore } from "@/store/layout-store"
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import GridLayout, { Layout } from "react-grid-layout"
-import { useEffect, useState } from "react"
+import { useEffect, useState, useRef } from "react"
 import { cn } from "@/lib/utils"
 
 /**
@@ -127,6 +127,7 @@ export function GridCanvas() {
   const [cols, setCols] = useState(12)
   const [rows, setRows] = useState(12)
   const [isDragging, setIsDragging] = useState(false)
+  const dragTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
   // Convert areas to layout when current layout changes
   useEffect(() => {
@@ -165,6 +166,22 @@ export function GridCanvas() {
     return components.find((c) => c.id === id)
   }
 
+  const handleDragStart = () => {
+    setIsDragging(true)
+    // Clear any pending timeout
+    if (dragTimeoutRef.current) {
+      clearTimeout(dragTimeoutRef.current)
+      dragTimeoutRef.current = null
+    }
+  }
+
+  const handleDragStop = () => {
+    // Keep isDragging true for a short time to prevent onClick from firing
+    dragTimeoutRef.current = setTimeout(() => {
+      setIsDragging(false)
+    }, 100)
+  }
+
   const handleClick = (itemId: string) => {
     // Only handle click if not dragging
     if (!isDragging) {
@@ -195,33 +212,36 @@ export function GridCanvas() {
         </p>
       </div>
 
-      <div
-        className="border-2 border-dashed border-muted rounded-lg p-4 min-h-[600px] relative"
-        style={{
-          backgroundImage: `
-            linear-gradient(to right, rgba(128, 128, 128, 0.1) 1px, transparent 1px),
-            linear-gradient(to bottom, rgba(128, 128, 128, 0.1) 1px, transparent 1px)
-          `,
-          backgroundSize: `${1200 / cols}px 50px`,
-          backgroundPosition: '16px 16px'
-        }}
-      >
-        <GridLayout
-          className="layout"
-          layout={layout}
-          cols={cols}
-          rowHeight={50}
-          width={1200}
-          onLayoutChange={handleLayoutChange}
-          onDragStart={() => setIsDragging(true)}
-          onDragStop={() => setIsDragging(false)}
-          compactType={null}
-          preventCollision={true}
-          autoSize={true}
-          maxRows={Infinity}
-          isResizable={true}
-          isDraggable={true}
+      <div className="border-2 border-dashed border-muted rounded-lg p-4 min-h-[600px]">
+        <div
+          className="relative"
+          style={{
+            width: '1200px',
+            backgroundImage: `
+              linear-gradient(to right, rgba(128, 128, 128, 0.1) 1px, transparent 1px),
+              linear-gradient(to bottom, rgba(128, 128, 128, 0.1) 1px, transparent 1px)
+            `,
+            backgroundSize: `${1200 / cols}px 50px`,
+          }}
         >
+          <GridLayout
+            className="layout"
+            layout={layout}
+            cols={cols}
+            rowHeight={50}
+            width={1200}
+            onLayoutChange={handleLayoutChange}
+            onDragStart={handleDragStart}
+            onDragStop={handleDragStop}
+            onResizeStart={handleDragStart}
+            onResizeStop={handleDragStop}
+            compactType={null}
+            preventCollision={true}
+            autoSize={true}
+            maxRows={Infinity}
+            isResizable={true}
+            isDraggable={true}
+          >
           {layout.map((item) => {
             const isSelected = selectedComponentId === item.i
             const component = getComponent(item.i)
@@ -254,6 +274,7 @@ export function GridCanvas() {
             )
           })}
         </GridLayout>
+        </div>
       </div>
     </Card>
   )
