@@ -194,17 +194,48 @@ function konvaPositionsToAreas(positions: KonvaComponent[]): string[][]
 - desktop 브레이크포인트: 12열 × 20행 그리드 표시
 - 브레이크포인트 전환 시 그리드 크기 자동 업데이트
 
-### ⏳ Step 3: Pan & Zoom 구현
-- [ ] 마우스 휠 이벤트 핸들링
-- [ ] Pan (드래그) 구현
-- [ ] Zoom (Ctrl/Cmd + Wheel) 구현
-- [ ] 줌 레벨 제한 (0.1x ~ 3x)
+### ✅ Step 3: Pan & Zoom 구현
+- [x] 마우스 휠 이벤트 핸들링
+- [x] Pan (드래그) 구현
+- [x] Zoom (Ctrl/Cmd + Wheel) 구현
+- [x] 줌 레벨 제한 (0.1x ~ 3x)
 
-### ⏳ Step 4: 컴포넌트 렌더링
-- [ ] ComponentNode.tsx 생성
-- [ ] Store areas → Konva positions 변환
-- [ ] 컴포넌트 Group 렌더링
-- [ ] 선택 상태 표시
+**비고:** Step 1에서 이미 완전히 구현되었음
+
+### ✅ Step 4: 컴포넌트 렌더링 (그리드 스냅)
+- [x] ComponentNode.tsx 생성
+- [x] Store areas → Konva positions 변환
+- [x] 컴포넌트 렌더링 (그리드 셀 기반 위치/크기)
+- [x] 선택 상태 표시
+
+**상세 내역:**
+- **ComponentNode.tsx 생성**:
+  - Grid cell 좌표(gridRow, gridCol)를 Konva 픽셀 좌표로 변환 (x = col * 100, y = row * 100)
+  - rowSpan, colSpan 기반 컴포넌트 크기 계산
+  - 선택 상태에 따른 시각적 스타일링 (파란 테두리, 그림자)
+  - 컴포넌트 정보 표시: name (bold), semanticTag (monospace), id
+  - onClick 핸들러로 선택 기능 제공
+
+- **KonvaCanvas.tsx 업데이트**:
+  - Store에서 schema, selectedComponentId, setSelectedComponentId 가져오기
+  - 현재 브레이크포인트의 areas 데이터 가져오기
+  - **areas 분석 로직** (핵심):
+    - 2D areas 배열을 순회하며 각 컴포넌트 ID 발견
+    - 같은 ID의 연속된 셀을 하나의 컴포넌트로 병합
+    - colSpan 계산: 가로로 같은 ID가 연속된 개수
+    - rowSpan 계산: 세로로 같은 ID가 연속된 개수 (직사각형 보장)
+    - 처리된 셀은 Set으로 추적하여 중복 처리 방지
+  - Component Layer에서 ComponentNode 렌더링
+  - 클릭 시 선택 상태 업데이트
+
+- **테스트 조건**:
+  - sample schema의 desktop layout:
+    - c1 (Header): 0행, 0-2열 (1×3 span)
+    - c2 (Sidebar): 1행, 0열 (1×1 span)
+    - c3 (MainContent): 1행, 1열 (1×1 span)
+    - c4 (AdBanner): 1행, 2열 (1×1 span)
+
+- **빌드 성공:** Route (app) / - 261 kB
 
 ### ⏳ Step 5: 컴포넌트 D&D
 - [ ] Draggable 설정
@@ -259,9 +290,9 @@ function konvaPositionsToAreas(positions: KonvaComponent[]): string[][]
 | Step 0: 준비 | ✅ | 35d04f37 | 2025-11-11 | 롤백 완료 + Konva 10.0.8, react-konva 19.2.0 설치 |
 | Step 1: 기본 캔버스 | ✅ | 62545ac | 2025-11-11 | Konva Stage + 기본 Pan & Zoom |
 | Step 1.5: 브레이크포인트 그리드 | ✅ | f639ca7 | 2025-11-11 | 브레이크포인트별 gridCols/gridRows 정의 (4/8/12 × 20) |
-| Step 2: 그리드 배경 | ✅ | TBD | 2025-11-11 | 브레이크포인트 크기 기반 그리드 렌더링 |
-| Step 3: Pan & Zoom | ⏳ | - | - | 캔버스 이동/확대 (Step 1에서 기본 구현 완료) |
-| Step 4: 컴포넌트 렌더링 | ⏳ | - | - | Store 연동 |
+| Step 2: 그리드 배경 | ✅ | 69ba9d8 | 2025-11-11 | 브레이크포인트 크기 기반 그리드 렌더링 |
+| Step 3: Pan & Zoom | ✅ | 62545ac | 2025-11-11 | Step 1에서 이미 완전히 구현됨 |
+| Step 4: 컴포넌트 렌더링 | ✅ | TBD | 2025-11-11 | areas 분석 + ComponentNode 렌더링 |
 | Step 5: 컴포넌트 D&D | ⏳ | - | - | 드래그 앤 드롭 |
 | Step 6: 컴포넌트 Resize | ⏳ | - | - | 크기 조절 |
 | Step 7: 라이브러리 D&D | ⏳ | - | - | 외부 → 캔버스 |
@@ -348,4 +379,4 @@ function konvaPositionsToAreas(positions: KonvaComponent[]): string[][]
 ---
 
 _최초 작성: 2025-11-11_
-_최종 업데이트: 2025-11-11 - Step 1.5 완료 (브레이크포인트별 그리드 크기 정의)_
+_최종 업데이트: 2025-11-11 - Step 4 완료 (컴포넌트 렌더링 및 선택 기능)_

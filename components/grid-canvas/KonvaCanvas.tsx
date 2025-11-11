@@ -1,9 +1,11 @@
 "use client"
 
 import { useRef, useState } from "react"
-import { Stage, Layer, Rect, Text } from "react-konva"
+import { Stage, Layer, Rect } from "react-konva"
 import Konva from "konva"
 import { useLayoutStore } from "@/store/layout-store"
+import { ComponentNode } from "./ComponentNode"
+import type { Component } from "@/types/schema"
 
 // Grid constants
 const CELL_SIZE = 100
@@ -22,10 +24,84 @@ export function KonvaCanvas({ width = 1200, height = 800 }: KonvaCanvasProps) {
   // Get current breakpoint grid size
   const currentBreakpoint = useLayoutStore((state) => state.currentBreakpoint)
   const breakpoints = useLayoutStore((state) => state.schema.breakpoints)
+  const schema = useLayoutStore((state) => state.schema)
+  const selectedComponentId = useLayoutStore((state) => state.selectedComponentId)
+  const setSelectedComponentId = useLayoutStore(
+    (state) => state.setSelectedComponentId
+  )
 
   const bp = breakpoints.find((b) => b.name === currentBreakpoint)
   const gridCols = bp?.gridCols ?? 12
   const gridRows = bp?.gridRows ?? 20
+
+  // Get current layout's areas
+  const currentLayout = schema.layouts[currentBreakpoint]
+  const areas = currentLayout?.grid.areas ?? []
+
+  // Calculate component positions and spans from areas
+  interface ComponentPosition {
+    component: Component
+    gridRow: number
+    gridCol: number
+    rowSpan: number
+    colSpan: number
+  }
+
+  const componentPositions: ComponentPosition[] = []
+  const processed = new Set<string>() // Track processed cells as "row,col"
+
+  areas.forEach((row, rowIndex) => {
+    row.forEach((cellId, colIndex) => {
+      const cellKey = `${rowIndex},${colIndex}`
+
+      // Skip empty cells or already processed cells
+      if (!cellId || processed.has(cellKey)) return
+
+      // Find the component
+      const component = schema.components.find((c) => c.id === cellId)
+      if (!component) return
+
+      // Calculate span by finding all adjacent cells with same ID
+      let rowSpan = 1
+      let colSpan = 1
+
+      // Calculate colSpan (horizontal expansion)
+      while (
+        colIndex + colSpan < row.length &&
+        row[colIndex + colSpan] === cellId
+      ) {
+        colSpan++
+      }
+
+      // Calculate rowSpan (vertical expansion)
+      while (
+        rowIndex + rowSpan < areas.length &&
+        areas[rowIndex + rowSpan][colIndex] === cellId &&
+        // Ensure all cells in the row have same ID (rectangular check)
+        areas[rowIndex + rowSpan]
+          .slice(colIndex, colIndex + colSpan)
+          .every((id) => id === cellId)
+      ) {
+        rowSpan++
+      }
+
+      // Mark all cells in this component as processed
+      for (let r = rowIndex; r < rowIndex + rowSpan; r++) {
+        for (let c = colIndex; c < colIndex + colSpan; c++) {
+          processed.add(`${r},${c}`)
+        }
+      }
+
+      // Add component position
+      componentPositions.push({
+        component,
+        gridRow: rowIndex,
+        gridCol: colIndex,
+        rowSpan,
+        colSpan,
+      })
+    })
+  })
 
   // Handle wheel for Pan & Zoom
   const handleWheel = (e: Konva.KonvaEventObject<WheelEvent>) => {
@@ -133,34 +209,18 @@ export function KonvaCanvas({ width = 1200, height = 800 }: KonvaCanvasProps) {
 
           {/* Component Layer */}
           <Layer>
-            {/* Temporary: Test component */}
-            <Rect
-              x={100}
-              y={100}
-              width={200}
-              height={100}
-              fill="white"
-              stroke="#3b82f6"
-              strokeWidth={2}
-              cornerRadius={8}
-              shadowColor="black"
-              shadowBlur={4}
-              shadowOpacity={0.1}
-              shadowOffsetX={0}
-              shadowOffsetY={2}
-            />
-            <Text
-              x={100}
-              y={100}
-              width={200}
-              height={100}
-              text="Test Component"
-              fontSize={14}
-              fontFamily="Inter, sans-serif"
-              fill="#64748b"
-              align="center"
-              verticalAlign="middle"
-            />
+            {componentPositions.map((pos) => (
+              <ComponentNode
+                key={pos.component.id}
+                component={pos.component}
+                gridRow={pos.gridRow}
+                gridCol={pos.gridCol}
+                rowSpan={pos.rowSpan}
+                colSpan={pos.colSpan}
+                isSelected={selectedComponentId === pos.component.id}
+                onClick={() => setSelectedComponentId(pos.component.id)}
+              />
+            ))}
           </Layer>
         </Stage>
       </div>
