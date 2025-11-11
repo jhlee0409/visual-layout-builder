@@ -668,10 +668,223 @@ $ pnpm build
 
 ### Phase 2 진행 상황
 - ✅ Phase 2.1: 그리드 캔버스 구현
-- ✅ Phase 2.2: 컴포넌트 속성 패널 (현재 완료)
-- ⏳ Phase 2.3: 반응형 제어판 (다음 단계)
+- ✅ Phase 2.2: 컴포넌트 속성 패널
+- ✅ Phase 2.3: 반응형 제어판 (현재 완료)
+- ⏳ Phase 2.4: 생성 옵션 모달 (다음 단계)
 
 ---
 
-_최종 업데이트: Step 2.2 완료 시점_
-_다음 업데이트: Step 2.3 시작 시_
+## ✅ Step 2.3: 반응형 제어판 구현 (COMPLETED)
+
+**날짜:** 2024-11-11
+**커밋:** (pending)
+
+### 생성된 파일
+```
+components/breakpoint-panel/
+├── BreakpointSwitcher.tsx    # 뷰 전환 버튼 (65줄)
+├── BreakpointManager.tsx      # Breakpoint 관리 (230줄)
+└── index.ts                   # 내보내기
+
+app/
+└── page.tsx                   # BreakpointPanel 통합
+```
+
+### 핵심 구현 내용
+
+#### 1. BreakpointSwitcher.tsx - 뷰 전환 버튼
+
+**기능:**
+- 모든 breakpoint를 버튼으로 표시
+- 현재 활성 breakpoint 강조
+- 클릭 시 `setCurrentBreakpoint()` 호출 → GridCanvas 자동 갱신
+- 각 breakpoint의 minWidth 표시
+
+**아이콘 매핑:**
+```typescript
+const getIcon = (name: string) => {
+  const lowerName = name.toLowerCase()
+  if (lowerName.includes("mobile") || lowerName.includes("phone")) {
+    return <Smartphone />
+  }
+  if (lowerName.includes("tablet") || lowerName.includes("ipad")) {
+    return <Tablet />
+  }
+  return <Monitor />  // Desktop or custom
+}
+```
+
+**UI:**
+- 활성 breakpoint: primary 색상 버튼
+- 비활성 breakpoint: outline 버튼 + muted 텍스트
+- minWidth 배지: `≥ 768px` 형식으로 표시
+
+#### 2. BreakpointManager.tsx - Breakpoint 관리
+
+**기능:**
+- 모든 breakpoint 목록 표시
+- 개별 breakpoint 편집 (name, minWidth)
+- 새 breakpoint 추가
+- Breakpoint 삭제 (최소 1개 유지)
+- 입력 검증 및 에러 처리
+
+**추가 폼:**
+```typescript
+// 상태: isAdding = true일 때 표시
+<div className="p-3 border rounded-lg">
+  <Input placeholder="e.g., wide" />        // Name
+  <Input type="number" placeholder="1440" />// Min Width
+  <Button onClick={handleAdd}>Add Breakpoint</Button>
+</div>
+```
+
+**편집 모드:**
+```typescript
+// 상태: editingId = breakpoint.name일 때 인라인 편집
+<div className="p-3 border rounded-lg">
+  <Input value={editName} />
+  <Input type="number" value={editMinWidth} />
+  <Button onClick={() => handleSaveEdit(oldName)}>Save</Button>
+  <Button onClick={handleCancelEdit}>Cancel</Button>
+</div>
+```
+
+**검증 로직:**
+```typescript
+// 1. Name 검증
+if (!newName.trim()) {
+  setError("Breakpoint name is required")
+}
+
+// 2. 중복 name 체크
+if (breakpoints.some((bp) => bp.name === newName.trim())) {
+  setError("Breakpoint name already exists")
+}
+
+// 3. MinWidth 검증
+const minWidth = parseInt(newMinWidth, 10)
+if (isNaN(minWidth) || minWidth < 0) {
+  setError("Min width must be a positive number")
+}
+
+// 4. Breakpoint 추가 (자동 정렬)
+addBreakpoint({ name: newName.trim(), minWidth })
+```
+
+**삭제 제한:**
+```typescript
+if (breakpoints.length <= 1) {
+  alert("Cannot delete the last breakpoint. At least one breakpoint is required.")
+  return
+}
+
+if (confirm(`Are you sure you want to delete breakpoint "${name}"?
+This will remove its layout.`)) {
+  deleteBreakpoint(name)
+}
+```
+
+#### 3. 홈 페이지 통합
+
+**변경 사항:**
+```typescript
+// 좌측: BreakpointSwitcher + GridCanvas
+<div className="space-y-4">
+  <BreakpointSwitcher />    {/* 상단: 뷰 전환 */}
+  <GridCanvas />            {/* 하단: 그리드 */}
+</div>
+
+// 우측: ComponentPanel + BreakpointManager
+<div className="space-y-6">
+  <ComponentPanel />        {/* 상단: 컴포넌트 */}
+  <BreakpointManager />     {/* 하단: Breakpoint 관리 */}
+</div>
+```
+
+**워크플로우:**
+1. 사용자가 "Tablet" 버튼 클릭
+2. `setCurrentBreakpoint("tablet")` 호출
+3. GridCanvas가 자동으로 tablet 레이아웃 표시
+4. ComponentList의 가시성 배지도 "Visible in tablet" 으로 갱신
+5. 사용자가 tablet 뷰에서 그리드 편집 (행/열 추가 등)
+6. Mobile 버튼 클릭 → mobile 레이아웃은 독립적으로 유지됨
+
+### 주요 결정사항
+
+1. **아이콘 기반 버튼**
+   - lucide-react의 Smartphone, Tablet, Monitor 아이콘 사용
+   - Breakpoint 이름으로 자동 매핑 (mobile → Smartphone, tablet → Tablet, 기타 → Monitor)
+   - 시각적으로 직관적
+
+2. **인라인 편집 모드**
+   - Edit 버튼 클릭 시 해당 breakpoint만 편집 폼으로 전환
+   - Save/Cancel 버튼으로 확정/취소
+   - 다른 breakpoint는 계속 목록으로 표시
+
+3. **Breakpoint 자동 정렬**
+   - `addBreakpoint`, `updateBreakpoint` 호출 시 Store가 자동으로 minWidth 오름차순 정렬
+   - UI에서는 항상 mobile → tablet → desktop 순서로 표시
+
+4. **최소 1개 Breakpoint 유지**
+   - 마지막 breakpoint는 삭제 불가 (버튼 비활성화)
+   - 삭제 시도 시 alert로 경고
+
+5. **minWidth 배지 표시**
+   - `≥ 768px` 형식으로 표시
+   - 사용자가 각 breakpoint의 범위를 한눈에 파악
+
+6. **에러 처리**
+   - 검증 실패 시 빨간 배경 박스로 에러 메시지 표시
+   - 성공 시 폼 초기화 및 에러 클리어
+
+### 테스트 결과
+```bash
+$ pnpm tsc --noEmit
+# ✅ TypeScript 컴파일 오류 없음
+
+$ pnpm build
+# ✅ Next.js 프로덕션 빌드 성공
+# Route (app): / - 42.4 kB (First Load JS: 144 kB)
+# 번들 크기 증가: 41 kB → 42.4 kB (아이콘 추가로 미미한 증가)
+```
+
+### 구현된 기능 (PRD 3.3 체크)
+- ✅ 모바일/태블릿/데스크톱 뷰 전환
+- ✅ 각 breakpoint별 독립 상태 (GridCanvas 자동 갱신)
+- ✅ Breakpoint 커스터마이징 (추가/편집/삭제)
+- ✅ minWidth 값 편집
+- ✅ 아이콘 기반 직관적 UI
+- ✅ 입력 검증 및 에러 처리
+
+### PRD 연관성
+- ✅ **PRD 3.3 (반응형 제어판)**: 완전히 구현
+- ✅ Store 연동: `setCurrentBreakpoint`, `addBreakpoint`, `updateBreakpoint`, `deleteBreakpoint`
+- ✅ 반응형 아키텍처: 각 breakpoint별 독립 레이아웃 편집
+- ✅ PRD 핵심 철학: "각 breakpoint는 완전히 독립적인 그리드 레이아웃을 가질 수 있습니다"
+
+### 사용자 시나리오 예시
+```
+1. "Load Sample" 클릭 → 4개 컴포넌트 로드
+2. BreakpointSwitcher에서 "Mobile" 버튼 클릭
+3. GridCanvas에 mobile 레이아웃 표시 (4행 1열)
+4. "Tablet" 버튼 클릭
+5. GridCanvas에 tablet 레이아웃 표시 (2행 2열, AdBanner 숨김)
+6. "Desktop" 버튼 클릭
+7. GridCanvas에 desktop 레이아웃 표시 (2행 3열, AdBanner 표시)
+8. BreakpointManager에서 "Add" 버튼 클릭
+9. Name: "wide", Min Width: "1440" 입력 → Add
+10. BreakpointSwitcher에 "Wide" 버튼 추가됨
+11. "Wide" 버튼 클릭 → 새 빈 레이아웃 표시
+12. Wide 뷰에서 독립적으로 레이아웃 구성 가능
+```
+
+### Phase 2 진행 상황
+- ✅ Phase 2.1: 그리드 캔버스 구현
+- ✅ Phase 2.2: 컴포넌트 속성 패널
+- ✅ Phase 2.3: 반응형 제어판 (현재 완료)
+- ⏳ Phase 2.4: 생성 옵션 모달 (다음 단계)
+
+---
+
+_최종 업데이트: Step 2.3 완료 시점_
+_다음 업데이트: Step 2.4 시작 시_

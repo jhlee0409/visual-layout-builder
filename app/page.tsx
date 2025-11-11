@@ -2,6 +2,7 @@
 
 import { GridCanvas } from "@/components/grid-canvas"
 import { ComponentPanel } from "@/components/component-panel"
+import { BreakpointSwitcher, BreakpointManager } from "@/components/breakpoint-panel"
 import { Button } from "@/components/ui/button"
 import { useLayoutStore } from "@/store/layout-store"
 
@@ -36,16 +37,18 @@ export default function Home() {
           Components: {componentCount}
         </div>
 
-        {/* Main Layout: Grid Canvas (70%) + Component Panel (30%) */}
+        {/* Main Layout: Grid Canvas (70%) + Side Panels (30%) */}
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_400px] gap-6">
           {/* Left: Grid Canvas */}
-          <div className="min-w-0">
+          <div className="min-w-0 space-y-4">
+            <BreakpointSwitcher />
             <GridCanvas />
           </div>
 
-          {/* Right: Component Panel */}
-          <div className="min-w-0">
+          {/* Right: Component Panel + Breakpoint Manager */}
+          <div className="min-w-0 space-y-6">
             <ComponentPanel />
+            <BreakpointManager />
           </div>
         </div>
       </div>
