@@ -49,6 +49,8 @@ export const ComponentSchema = z.object({
 export const BreakpointSchema = z.object({
   name: z.string().min(1, "Breakpoint name is required"),
   minWidth: z.number().min(0, "minWidth must be >= 0"),
+  gridCols: z.number().min(1, "gridCols must be >= 1"),
+  gridRows: z.number().min(1, "gridRows must be >= 1"),
 }) satisfies z.ZodType<Breakpoint>
 
 /**

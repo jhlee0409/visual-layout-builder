@@ -40,13 +40,13 @@ export function createEmptyGrid(rows: number = 3, cols: number = 1) {
 
 /**
  * Create default breakpoints
- * @returns Standard mobile/tablet/desktop breakpoints
+ * @returns Standard mobile/tablet/desktop breakpoints with grid sizes
  */
 export function createDefaultBreakpoints(): Breakpoint[] {
   return [
-    { name: "mobile", minWidth: 0 },
-    { name: "tablet", minWidth: 768 },
-    { name: "desktop", minWidth: 1024 },
+    { name: "mobile", minWidth: 0, gridCols: 4, gridRows: 20 },
+    { name: "tablet", minWidth: 768, gridCols: 8, gridRows: 20 },
+    { name: "desktop", minWidth: 1024, gridCols: 12, gridRows: 20 },
   ]
 }
 

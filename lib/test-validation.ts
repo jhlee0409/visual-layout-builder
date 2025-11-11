@@ -54,7 +54,7 @@ console.log("Test 4: Testing invalid schema (should fail)...")
 const invalidSchema = {
   schemaVersion: "1.1",
   components: [], // Empty components (invalid - needs at least one)
-  breakpoints: [{ name: "mobile", minWidth: 0 }],
+  breakpoints: [{ name: "mobile", minWidth: 0, gridCols: 4, gridRows: 20 }],
   layouts: {
     mobile: {
       grid: {
@@ -87,7 +87,7 @@ const invalidIdSchema = {
       semanticTag: "div",
     },
   ],
-  breakpoints: [{ name: "mobile", minWidth: 0 }],
+  breakpoints: [{ name: "mobile", minWidth: 0, gridCols: 4, gridRows: 20 }],
   layouts: {
     mobile: {
       grid: {
@@ -120,7 +120,7 @@ const invalidRefSchema = {
       semanticTag: "div" as const,
     },
   ],
-  breakpoints: [{ name: "mobile", minWidth: 0 }],
+  breakpoints: [{ name: "mobile", minWidth: 0, gridCols: 4, gridRows: 20 }],
   layouts: {
     mobile: {
       grid: {

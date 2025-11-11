@@ -43,6 +43,12 @@ export interface Breakpoint {
 
   /** Minimum width in pixels (0 for mobile-first) */
   minWidth: number
+
+  /** Number of grid columns for this breakpoint (e.g., mobile: 4, tablet: 8, desktop: 12) */
+  gridCols: number
+
+  /** Number of grid rows for this breakpoint (e.g., 20 for all breakpoints) */
+  gridRows: number
 }
 
 /**

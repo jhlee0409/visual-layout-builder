@@ -127,14 +127,57 @@ function konvaPositionsToAreas(positions: KonvaComponent[]): string[][]
   - `react-grid-layout@1.5.2`
   - `@types/react-grid-layout@1.3.5`
 
-### ⏳ Step 1: Konva 기본 캔버스
-- [ ] KonvaCanvas.tsx 생성
-- [ ] Konva Stage 초기화
-- [ ] 기본 레이어 구조 설정
-- [ ] 홈 페이지에 통합
+### ✅ Step 1: Konva 기본 캔버스
+- [x] KonvaCanvas.tsx 생성
+- [x] Konva Stage 초기화 (1200x800px)
+- [x] 기본 레이어 구조 설정 (Grid Layer + Component Layer)
+- [x] 홈 페이지에 통합
+- [x] 기본 Pan & Zoom 구현
+- [x] 임시 그리드 배경 (20x20 셀)
+- [x] 테스트 컴포넌트 렌더링
+
+**상세 내역:**
+- 파일 생성: `components/grid-canvas/KonvaCanvas.tsx` (177줄)
+- 기존 파일 백업:
+  - `GridCanvas.tsx` → `GridCanvas.tsx.backup`
+  - `GridCell.tsx` → `GridCell.tsx.backup`
+  - `GridToolbar.tsx` → `GridToolbar.tsx.backup`
+- `globals.css`에서 react-grid-layout CSS import 제거
+- Pan & Zoom 기능:
+  - Ctrl/Cmd + Wheel: 확대/축소 (0.1x ~ 3x)
+  - Shift + Wheel: 수평 이동
+  - Wheel: 수직 이동
+  - Drag: 캔버스 전체 이동
+- 임시 그리드: 20×20 셀 (CELL_SIZE = 100px)
+- 테스트 컴포넌트: 100,100 위치에 200×100 크기
+- 빌드 성공: Route (app) / - 158 kB
+
+### ✅ Step 1.5: 브레이크포인트별 그리드 크기 정의
+- [x] Breakpoint 타입에 gridCols/gridRows 추가
+- [x] 샘플 데이터에 gridCols/gridRows 추가 (mobile: 4×20, tablet: 8×20, desktop: 12×20)
+- [x] Store 로직 업데이트 (addBreakpoint에서 gridCols/gridRows 기반 레이아웃 생성)
+- [x] BreakpointManager UI 업데이트 (gridCols/gridRows 입력 필드)
+- [x] Validation 스키마 업데이트 (Zod)
+
+**상세 내역:**
+- 타입 변경: `types/schema.ts` - Breakpoint에 gridCols, gridRows 필드 추가
+- 샘플 데이터 업데이트: `lib/sample-data.ts` - 모든 breakpoints에 gridCols/gridRows 추가
+- 유틸리티 업데이트: `lib/schema-utils.ts` - createDefaultBreakpoints() 함수 업데이트
+- Store 업데이트: `store/layout-store.ts` - addBreakpoint 로직에서 gridCols/gridRows 기반 areas 생성
+- UI 업데이트: `components/breakpoint-panel/BreakpointManager.tsx` - gridCols/gridRows 입력 필드 추가
+- Validation: `lib/validation.ts` - Zod schema에 gridCols/gridRows 검증 추가
+- 테스트 파일 업데이트: `lib/test-validation.ts`, `store/test-store.ts`
+- 빌드 성공: Route (app) / - 260 kB
+
+**핵심 결정:**
+- 브레이크포인트별 고정 그리드 크기 방식 채택
+- 무한 캔버스 UX + 고정 데이터 구조 = AI 코드 생성 가능
+- 기본 그리드 크기: mobile(4열), tablet(8열), desktop(12열), 모두 20행
+- CELL_SIZE = 100px 유지
 
 ### ⏳ Step 2: 무한 그리드 배경
 - [ ] GridBackground.tsx 생성
+- [ ] 브레이크포인트별 gridCols × gridRows 크기로 그리드 렌더링
 - [ ] 뷰포트 기반 그리드 라인 렌더링
 - [ ] Pan 시 그리드 업데이트
 - [ ] Zoom 시 그리드 스케일링
@@ -202,9 +245,10 @@ function konvaPositionsToAreas(positions: KonvaComponent[]): string[][]
 | 단계 | 상태 | 커밋 | 완료일 | 비고 |
 |-----|------|------|--------|------|
 | Step 0: 준비 | ✅ | 35d04f37 | 2025-11-11 | 롤백 완료 + Konva 10.0.8, react-konva 19.2.0 설치 |
-| Step 1: 기본 캔버스 | ⏳ | - | - | Konva Stage 초기화 |
-| Step 2: 무한 그리드 | ⏳ | - | - | 그리드 배경 렌더링 |
-| Step 3: Pan & Zoom | ⏳ | - | - | 캔버스 이동/확대 |
+| Step 1: 기본 캔버스 | ✅ | 62545ac | 2025-11-11 | Konva Stage + 기본 Pan & Zoom |
+| Step 1.5: 브레이크포인트 그리드 | ✅ | TBD | 2025-11-11 | 브레이크포인트별 gridCols/gridRows 정의 (4/8/12 × 20) |
+| Step 2: 무한 그리드 | ⏳ | - | - | 브레이크포인트 크기 기반 그리드 배경 렌더링 |
+| Step 3: Pan & Zoom | ⏳ | - | - | 캔버스 이동/확대 (Step 1에서 기본 구현 완료) |
 | Step 4: 컴포넌트 렌더링 | ⏳ | - | - | Store 연동 |
 | Step 5: 컴포넌트 D&D | ⏳ | - | - | 드래그 앤 드롭 |
 | Step 6: 컴포넌트 Resize | ⏳ | - | - | 크기 조절 |
@@ -292,4 +336,4 @@ function konvaPositionsToAreas(positions: KonvaComponent[]): string[][]
 ---
 
 _최초 작성: 2025-11-11_
-_최종 업데이트: 2025-11-11 - Step 0 완료 (준비 작업)_
+_최종 업데이트: 2025-11-11 - Step 1.5 완료 (브레이크포인트별 그리드 크기 정의)_

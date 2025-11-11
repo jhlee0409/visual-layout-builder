@@ -22,9 +22,13 @@ export function BreakpointManager() {
   const [isAdding, setIsAdding] = useState(false)
   const [newName, setNewName] = useState("")
   const [newMinWidth, setNewMinWidth] = useState("")
+  const [newGridCols, setNewGridCols] = useState("12")
+  const [newGridRows, setNewGridRows] = useState("20")
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editName, setEditName] = useState("")
   const [editMinWidth, setEditMinWidth] = useState("")
+  const [editGridCols, setEditGridCols] = useState("")
+  const [editGridRows, setEditGridRows] = useState("")
   const [error, setError] = useState<string | null>(null)
 
   const handleAdd = () => {
@@ -49,21 +53,41 @@ export function BreakpointManager() {
       return
     }
 
+    // Validate gridCols
+    const gridCols = parseInt(newGridCols, 10)
+    if (isNaN(gridCols) || gridCols < 1) {
+      setError("Grid columns must be at least 1")
+      return
+    }
+
+    // Validate gridRows
+    const gridRows = parseInt(newGridRows, 10)
+    if (isNaN(gridRows) || gridRows < 1) {
+      setError("Grid rows must be at least 1")
+      return
+    }
+
     addBreakpoint({
       name: newName.trim(),
       minWidth,
+      gridCols,
+      gridRows,
     })
 
     // Reset form
     setIsAdding(false)
     setNewName("")
     setNewMinWidth("")
+    setNewGridCols("12")
+    setNewGridRows("20")
   }
 
-  const handleStartEdit = (name: string, minWidth: number) => {
+  const handleStartEdit = (name: string, minWidth: number, gridCols: number, gridRows: number) => {
     setEditingId(name)
     setEditName(name)
     setEditMinWidth(minWidth.toString())
+    setEditGridCols(gridCols.toString())
+    setEditGridRows(gridRows.toString())
     setError(null)
   }
 
@@ -92,9 +116,25 @@ export function BreakpointManager() {
       return
     }
 
+    // Validate gridCols
+    const gridCols = parseInt(editGridCols, 10)
+    if (isNaN(gridCols) || gridCols < 1) {
+      setError("Grid columns must be at least 1")
+      return
+    }
+
+    // Validate gridRows
+    const gridRows = parseInt(editGridRows, 10)
+    if (isNaN(gridRows) || gridRows < 1) {
+      setError("Grid rows must be at least 1")
+      return
+    }
+
     updateBreakpoint(oldName, {
       name: editName.trim(),
       minWidth,
+      gridCols,
+      gridRows,
     })
 
     setEditingId(null)
@@ -158,6 +198,28 @@ export function BreakpointManager() {
                 onChange={(e) => setNewMinWidth(e.target.value)}
               />
             </div>
+            <div className="grid grid-cols-2 gap-2">
+              <div className="space-y-2">
+                <Label htmlFor="newGridCols">Grid Columns</Label>
+                <Input
+                  id="newGridCols"
+                  type="number"
+                  placeholder="e.g., 12"
+                  value={newGridCols}
+                  onChange={(e) => setNewGridCols(e.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="newGridRows">Grid Rows</Label>
+                <Input
+                  id="newGridRows"
+                  type="number"
+                  placeholder="e.g., 20"
+                  value={newGridRows}
+                  onChange={(e) => setNewGridRows(e.target.value)}
+                />
+              </div>
+            </div>
             {error && (
               <div className="text-sm text-destructive bg-destructive/10 p-2 rounded">
                 {error}
@@ -206,6 +268,24 @@ export function BreakpointManager() {
                     onChange={(e) => setEditMinWidth(e.target.value)}
                   />
                 </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="space-y-2">
+                    <Label>Grid Columns</Label>
+                    <Input
+                      type="number"
+                      value={editGridCols}
+                      onChange={(e) => setEditGridCols(e.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Grid Rows</Label>
+                    <Input
+                      type="number"
+                      value={editGridRows}
+                      onChange={(e) => setEditGridRows(e.target.value)}
+                    />
+                  </div>
+                </div>
                 {error && (
                   <div className="text-sm text-destructive bg-destructive/10 p-2 rounded">
                     {error}
@@ -238,12 +318,17 @@ export function BreakpointManager() {
               key={breakpoint.name}
               className="flex items-center justify-between p-3 border rounded-lg hover:bg-accent/50 transition-colors"
             >
-              <div className="flex items-center gap-3">
-                <Badge variant="secondary" className="capitalize">
-                  {breakpoint.name}
-                </Badge>
-                <span className="text-sm text-muted-foreground font-mono">
-                  ≥ {breakpoint.minWidth}px
+              <div className="flex flex-col gap-1">
+                <div className="flex items-center gap-3">
+                  <Badge variant="secondary" className="capitalize">
+                    {breakpoint.name}
+                  </Badge>
+                  <span className="text-sm text-muted-foreground font-mono">
+                    ≥ {breakpoint.minWidth}px
+                  </span>
+                </div>
+                <span className="text-xs text-muted-foreground">
+                  Grid: {breakpoint.gridCols} × {breakpoint.gridRows}
                 </span>
               </div>
 
@@ -253,7 +338,7 @@ export function BreakpointManager() {
                   size="icon"
                   className="h-8 w-8"
                   onClick={() =>
-                    handleStartEdit(breakpoint.name, breakpoint.minWidth)
+                    handleStartEdit(breakpoint.name, breakpoint.minWidth, breakpoint.gridCols, breakpoint.gridRows)
                   }
                 >
                   <Edit2 className="h-4 w-4" />

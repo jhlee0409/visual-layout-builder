@@ -211,6 +211,12 @@ export const useLayoutStore = create<LayoutState>()(
           )
           if (exists) return state
 
+          // Create empty layout matching breakpoint grid size
+          const { gridCols, gridRows } = breakpoint
+          const emptyAreas = Array(gridRows)
+            .fill(null)
+            .map(() => Array(gridCols).fill(""))
+
           // Add breakpoint and create empty layout
           return {
             schema: {
@@ -222,9 +228,9 @@ export const useLayoutStore = create<LayoutState>()(
                 ...state.schema.layouts,
                 [breakpoint.name]: {
                   grid: {
-                    rows: "1fr",
-                    columns: "1fr",
-                    areas: [[""]],
+                    rows: `repeat(${gridRows}, 100px)`,
+                    columns: `repeat(${gridCols}, 100px)`,
+                    areas: emptyAreas,
                   },
                 },
               },

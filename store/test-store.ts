@@ -85,6 +85,8 @@ console.log("Test 7: Adding custom breakpoint...")
 store.addBreakpoint({
   name: "wide",
   minWidth: 1440,
+  gridCols: 16,
+  gridRows: 20,
 })
 const afterAddBp = useLayoutStore.getState()
 console.log("✅ Breakpoint added")
@@ -153,7 +155,7 @@ const customSchema = {
     { id: "c1", name: "Header", semanticTag: "header" as const, props: {} },
     { id: "c2", name: "Main", semanticTag: "main" as const, props: {} },
   ],
-  breakpoints: [{ name: "mobile", minWidth: 0 }],
+  breakpoints: [{ name: "mobile", minWidth: 0, gridCols: 4, gridRows: 20 }],
   layouts: {
     mobile: {
       grid: {
