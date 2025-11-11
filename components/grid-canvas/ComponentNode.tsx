@@ -56,8 +56,17 @@ export function ComponentNode({
     return Math.round(value / CELL_SIZE) * CELL_SIZE
   }
 
+  // Handle drag start - prevent event propagation to Stage
+  const handleDragStart = (e: any) => {
+    // Stop event from bubbling to Stage
+    e.cancelBubble = true
+  }
+
   // Handle drag end - snap to grid and update position
   const handleDragEnd = (e: any) => {
+    // Stop event from bubbling to Stage
+    e.cancelBubble = true
+
     const node = e.target
     const newX = snapToGrid(node.x())
     const newY = snapToGrid(node.y())
@@ -83,6 +92,7 @@ export function ComponentNode({
       draggable
       onClick={onClick}
       onTap={onClick}
+      onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
     >
       {/* Component background */}
