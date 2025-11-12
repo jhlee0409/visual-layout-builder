@@ -10,16 +10,36 @@ import type {
 } from "@/types/schema-v2"
 
 /**
- * Create an empty Schema V2
+ * Default Grid Configuration for each breakpoint type
+ */
+export const DEFAULT_GRID_CONFIG = {
+  mobile: { gridCols: 4, gridRows: 8 },
+  tablet: { gridCols: 8, gridRows: 8 },
+  desktop: { gridCols: 12, gridRows: 8 },
+  custom: { gridCols: 6, gridRows: 8 },
+} as const
+
+/**
+ * Grid size constraints
+ */
+export const GRID_CONSTRAINTS = {
+  minCols: 2,
+  minRows: 2,
+  maxCols: 24,
+  maxRows: 24,
+} as const
+
+/**
+ * Create an empty Schema V2 with all breakpoints
  */
 export function createEmptySchemaV2(): LaydlerSchemaV2 {
   return {
     schemaVersion: "2.0",
     components: [],
     breakpoints: [
-      { name: "mobile", minWidth: 0, gridCols: 6, gridRows: 12 },
-      { name: "tablet", minWidth: 768, gridCols: 8, gridRows: 10 },
-      { name: "desktop", minWidth: 1024, gridCols: 12, gridRows: 10 },
+      { name: "mobile", minWidth: 0, ...DEFAULT_GRID_CONFIG.mobile },
+      { name: "tablet", minWidth: 768, ...DEFAULT_GRID_CONFIG.tablet },
+      { name: "desktop", minWidth: 1024, ...DEFAULT_GRID_CONFIG.desktop },
     ],
     layouts: {
       mobile: {
@@ -35,6 +55,37 @@ export function createEmptySchemaV2(): LaydlerSchemaV2 {
         components: [],
       },
     },
+  }
+}
+
+/**
+ * Create Schema V2 with a single breakpoint
+ */
+export function createSchemaWithBreakpoint(
+  breakpointType: "mobile" | "tablet" | "desktop"
+): LaydlerSchemaV2 {
+  const minWidthMap = {
+    mobile: 0,
+    tablet: 768,
+    desktop: 1024,
+  }
+
+  return {
+    schemaVersion: "2.0",
+    components: [],
+    breakpoints: [
+      {
+        name: breakpointType,
+        minWidth: minWidthMap[breakpointType],
+        ...DEFAULT_GRID_CONFIG[breakpointType],
+      },
+    ],
+    layouts: {
+      [breakpointType]: {
+        structure: "vertical",
+        components: [],
+      },
+    } as any, // Type assertion for dynamic key
   }
 }
 

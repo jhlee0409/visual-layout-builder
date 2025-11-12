@@ -38,6 +38,10 @@ export function KonvaCanvasV2({
   const currentBreakpoint = useLayoutStoreV2((state) => state.currentBreakpoint)
   const addComponentToLayout = useLayoutStoreV2((state) => state.addComponentToLayout)
   const deleteComponent = useLayoutStoreV2((state) => state.deleteComponent)
+  const addGridRow = useLayoutStoreV2((state) => state.addGridRow)
+  const addGridColumn = useLayoutStoreV2((state) => state.addGridColumn)
+  const removeGridRow = useLayoutStoreV2((state) => state.removeGridRow)
+  const removeGridColumn = useLayoutStoreV2((state) => state.removeGridColumn)
 
   // Get current breakpoint's grid size
   const currentBreakpointConfig = schema.breakpoints.find((bp) => bp.name === currentBreakpoint)
@@ -470,9 +474,48 @@ export function KonvaCanvasV2({
               Pan & Zoom
             </span>
             <div className="h-4 w-px bg-border" />
-            <span className="text-xs font-mono text-muted-foreground">
-              Grid: {gridRows} × {gridCols}
-            </span>
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-medium text-muted-foreground">Grid:</span>
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={() => removeGridRow(currentBreakpoint)}
+                  disabled={gridRows <= 2}
+                  className="px-1.5 py-0.5 text-xs bg-gray-100 hover:bg-gray-200 disabled:bg-gray-50 disabled:text-gray-300 rounded transition-colors"
+                  title="Remove Row"
+                >
+                  −
+                </button>
+                <span className="text-xs font-mono min-w-[2ch] text-center">{gridRows}</span>
+                <button
+                  onClick={() => addGridRow(currentBreakpoint)}
+                  disabled={gridRows >= 24}
+                  className="px-1.5 py-0.5 text-xs bg-gray-100 hover:bg-gray-200 disabled:bg-gray-50 disabled:text-gray-300 rounded transition-colors"
+                  title="Add Row"
+                >
+                  +
+                </button>
+              </div>
+              <span className="text-xs text-muted-foreground">×</span>
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={() => removeGridColumn(currentBreakpoint)}
+                  disabled={gridCols <= 2}
+                  className="px-1.5 py-0.5 text-xs bg-gray-100 hover:bg-gray-200 disabled:bg-gray-50 disabled:text-gray-300 rounded transition-colors"
+                  title="Remove Column"
+                >
+                  −
+                </button>
+                <span className="text-xs font-mono min-w-[2ch] text-center">{gridCols}</span>
+                <button
+                  onClick={() => addGridColumn(currentBreakpoint)}
+                  disabled={gridCols >= 24}
+                  className="px-1.5 py-0.5 text-xs bg-gray-100 hover:bg-gray-200 disabled:bg-gray-50 disabled:text-gray-300 rounded transition-colors"
+                  title="Add Column"
+                >
+                  +
+                </button>
+              </div>
+            </div>
           </div>
           <div className="relative group">
             <button className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs text-muted-foreground hover:text-foreground hover:bg-muted/50 rounded-md transition-colors">

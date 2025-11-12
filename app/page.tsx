@@ -8,6 +8,7 @@ import { KonvaCanvasV2 } from "@/components/canvas-v2"
 import { PropertiesPanelV2 } from "@/components/properties-panel-v2"
 import { ExportModalV2 } from "@/components/export-modal-v2"
 import { ThemeSelectorV2 } from "@/components/theme-selector-v2"
+import { InitialBreakpointModal } from "@/components/initial-breakpoint-modal"
 import { Button } from "@/components/ui/button"
 import { useLayoutStoreV2 } from "@/store/layout-store-v2"
 import {
@@ -32,11 +33,20 @@ import { RotateCcw } from "lucide-react"
 export default function Home() {
   const panelGroupRef = useRef<ImperativePanelGroupHandle>(null)
 
+  const breakpoints = useLayoutStoreV2((state) => state.schema.breakpoints)
   const componentCount = useLayoutStoreV2(
     (state) => state.schema.components.length
   )
+  const initializeSchema = useLayoutStoreV2((state) => state.initializeSchema)
   const resetSchema = useLayoutStoreV2((state) => state.resetSchema)
   const loadSampleSchema = useLayoutStoreV2((state) => state.loadSampleSchema)
+
+  // 브레이크포인트가 없으면 모달 표시
+  const showInitialModal = breakpoints.length === 0
+
+  const handleBreakpointSelect = (breakpoint: "mobile" | "tablet" | "desktop") => {
+    initializeSchema(breakpoint)
+  }
 
   const resetLayout = () => {
     // 기본 레이아웃: Library 20%, Canvas 58%, Right 22%
@@ -160,6 +170,12 @@ export default function Home() {
           </PanelGroup>
         </Panel>
       </PanelGroup>
+
+      {/* Initial Breakpoint Selection Modal */}
+      <InitialBreakpointModal
+        open={showInitialModal}
+        onSelect={handleBreakpointSelect}
+      />
     </main>
   )
 }

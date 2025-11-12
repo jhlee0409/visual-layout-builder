@@ -26,9 +26,12 @@ import type {
 } from "@/types/schema-v2"
 import {
   createEmptySchemaV2,
+  createSchemaWithBreakpoint,
   generateComponentId,
   cloneSchemaV2,
   normalizeSchemaV2,
+  GRID_CONSTRAINTS,
+  DEFAULT_GRID_CONFIG,
 } from "@/lib/schema-utils-v2"
 import { sampleSchemasV2 } from "@/lib/sample-data-v2"
 
@@ -66,12 +69,19 @@ interface LayoutStateV2 extends HistoryActions {
   updateBreakpoint: (oldName: string, newBreakpoint: Breakpoint) => void
   deleteBreakpoint: (name: string) => void
 
+  // Actions: Grid management
+  addGridRow: (breakpointName: string) => void
+  addGridColumn: (breakpointName: string) => void
+  removeGridRow: (breakpointName: string) => void
+  removeGridColumn: (breakpointName: string) => void
+
   // Actions: Selection
   setSelectedComponentId: (id: string | null) => void
 
   // Actions: Schema operations
   exportSchema: () => LaydlerSchemaV2
   importSchema: (schema: LaydlerSchemaV2) => void
+  initializeSchema: (breakpointType: "mobile" | "tablet" | "desktop") => void
   resetSchema: () => void
   loadSampleSchema: (sampleName: "github" | "dashboard" | "marketing" | "cardGallery") => void
 }
@@ -91,8 +101,17 @@ interface ThemeState {
 export const useLayoutStoreV2 = create<LayoutStateV2>()(
   devtools(
     (set, get) => ({
-      // Initial state
-      schema: createEmptySchemaV2(),
+      // Initial state - 빈 스키마로 시작 (사용자가 브레이크포인트 선택 후 초기화)
+      schema: {
+        schemaVersion: "2.0",
+        components: [],
+        breakpoints: [],
+        layouts: {
+          mobile: { structure: "vertical", components: [] },
+          tablet: { structure: "vertical", components: [] },
+          desktop: { structure: "vertical", components: [] },
+        },
+      },
       currentBreakpoint: "mobile",
       selectedComponentId: null,
 
@@ -359,23 +378,36 @@ export const useLayoutStoreV2 = create<LayoutStateV2>()(
           )
           if (exists) return state
 
+          // Apply default grid config if not provided
+          const breakpointWithDefaults = {
+            ...breakpoint,
+            gridCols: breakpoint.gridCols ?? DEFAULT_GRID_CONFIG[breakpoint.name as keyof typeof DEFAULT_GRID_CONFIG]?.gridCols ?? 12,
+            gridRows: breakpoint.gridRows ?? DEFAULT_GRID_CONFIG[breakpoint.name as keyof typeof DEFAULT_GRID_CONFIG]?.gridRows ?? 8,
+          }
+
           // Create empty layout for new breakpoint
           const emptyLayout: LayoutConfig = {
             structure: "vertical",
             components: [],
           }
 
-          return {
-            schema: {
-              ...state.schema,
-              breakpoints: [...state.schema.breakpoints, breakpoint].sort(
-                (a, b) => a.minWidth - b.minWidth
-              ),
-              layouts: {
-                ...state.schema.layouts,
-                [breakpoint.name]: emptyLayout,
-              },
+          // Create updated schema
+          const updatedSchema: LaydlerSchemaV2 = {
+            ...state.schema,
+            breakpoints: [...state.schema.breakpoints, breakpointWithDefaults].sort(
+              (a, b) => a.minWidth - b.minWidth
+            ),
+            layouts: {
+              ...state.schema.layouts,
+              [breakpoint.name]: emptyLayout,
             },
+          }
+
+          // Apply normalization to handle component responsiveCanvasLayout inheritance
+          const normalizedSchema = normalizeSchemaV2(updatedSchema)
+
+          return {
+            schema: normalizedSchema,
           }
         }, false, "addBreakpoint")
       },
@@ -421,6 +453,21 @@ export const useLayoutStoreV2 = create<LayoutStateV2>()(
           const layouts = { ...state.schema.layouts }
           delete layouts[name as keyof typeof layouts]
 
+          // Remove responsiveCanvasLayout for deleted breakpoint from all components
+          const components = state.schema.components.map((component) => {
+            if (component.responsiveCanvasLayout) {
+              const rcl = { ...component.responsiveCanvasLayout }
+              delete rcl[name as keyof typeof rcl]
+
+              // If no layouts left, remove responsiveCanvasLayout entirely
+              const hasLayouts = Object.keys(rcl).length > 0
+              return hasLayouts
+                ? { ...component, responsiveCanvasLayout: rcl }
+                : { ...component, responsiveCanvasLayout: undefined }
+            }
+            return component
+          })
+
           // If deleted breakpoint was selected, switch to first available
           let currentBreakpoint = state.currentBreakpoint
           if (currentBreakpoint === name) {
@@ -432,10 +479,88 @@ export const useLayoutStoreV2 = create<LayoutStateV2>()(
               ...state.schema,
               breakpoints,
               layouts,
+              components,
             },
             currentBreakpoint,
           }
         }, false, "deleteBreakpoint")
+      },
+
+      // Grid management
+      addGridRow: (breakpointName) => {
+        set((state) => {
+          const breakpoints = state.schema.breakpoints.map((bp) => {
+            if (bp.name === breakpointName) {
+              const newGridRows = Math.min(bp.gridRows + 1, GRID_CONSTRAINTS.maxRows)
+              return { ...bp, gridRows: newGridRows }
+            }
+            return bp
+          })
+
+          return {
+            schema: {
+              ...state.schema,
+              breakpoints,
+            },
+          }
+        }, false, "addGridRow")
+      },
+
+      addGridColumn: (breakpointName) => {
+        set((state) => {
+          const breakpoints = state.schema.breakpoints.map((bp) => {
+            if (bp.name === breakpointName) {
+              const newGridCols = Math.min(bp.gridCols + 1, GRID_CONSTRAINTS.maxCols)
+              return { ...bp, gridCols: newGridCols }
+            }
+            return bp
+          })
+
+          return {
+            schema: {
+              ...state.schema,
+              breakpoints,
+            },
+          }
+        }, false, "addGridColumn")
+      },
+
+      removeGridRow: (breakpointName) => {
+        set((state) => {
+          const breakpoints = state.schema.breakpoints.map((bp) => {
+            if (bp.name === breakpointName) {
+              const newGridRows = Math.max(bp.gridRows - 1, GRID_CONSTRAINTS.minRows)
+              return { ...bp, gridRows: newGridRows }
+            }
+            return bp
+          })
+
+          return {
+            schema: {
+              ...state.schema,
+              breakpoints,
+            },
+          }
+        }, false, "removeGridRow")
+      },
+
+      removeGridColumn: (breakpointName) => {
+        set((state) => {
+          const breakpoints = state.schema.breakpoints.map((bp) => {
+            if (bp.name === breakpointName) {
+              const newGridCols = Math.max(bp.gridCols - 1, GRID_CONSTRAINTS.minCols)
+              return { ...bp, gridCols: newGridCols }
+            }
+            return bp
+          })
+
+          return {
+            schema: {
+              ...state.schema,
+              breakpoints,
+            },
+          }
+        }, false, "removeGridColumn")
       },
 
       // Selection
@@ -457,6 +582,18 @@ export const useLayoutStoreV2 = create<LayoutStateV2>()(
           },
           false,
           "importSchema"
+        )
+      },
+
+      initializeSchema: (breakpointType) => {
+        set(
+          {
+            schema: createSchemaWithBreakpoint(breakpointType),
+            currentBreakpoint: breakpointType,
+            selectedComponentId: null,
+          },
+          false,
+          "initializeSchema"
         )
       },
 
