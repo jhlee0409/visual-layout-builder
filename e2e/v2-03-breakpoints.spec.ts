@@ -1,6 +1,7 @@
 import { test, expect } from '@playwright/test'
 
-test.describe('V2 브레이크포인트', () => {
+// V2 경로가 legacy로 이동되어 테스트 비활성화
+test.describe.skip('V2 브레이크포인트', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/v2')
     // 샘플 로드
