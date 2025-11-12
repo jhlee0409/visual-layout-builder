@@ -11,9 +11,9 @@ test.describe('Resizable Panels - Phase 1', () => {
     // 헤더 확인
     await expect(page.getByRole('heading', { name: 'Laylder' })).toBeVisible()
 
-    // 주요 패널 확인
-    await expect(page.getByText('Layers')).toBeVisible()
-    await expect(page.getByText('Properties')).toBeVisible()
+    // 주요 패널 확인 (우측 패널 내부의 헤더 선택)
+    await expect(page.getByRole('heading', { name: 'Layers', level: 2 })).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'Properties', level: 2 })).toBeVisible()
   })
 
   test('Library 패널이 리사이징 가능하다', async ({ page }) => {
@@ -45,12 +45,12 @@ test.describe('Resizable Panels - Phase 1', () => {
   })
 
   test('Layers와 Properties가 수직 분할되어 있다', async ({ page }) => {
-    // Layers 헤더
-    const layersHeader = page.getByText('Layers', { exact: true })
+    // Layers 헤더 (h2 태그로 특정)
+    const layersHeader = page.getByRole('heading', { name: 'Layers', level: 2 })
     await expect(layersHeader).toBeVisible()
 
-    // Properties 헤더
-    const propertiesHeader = page.getByText('Properties', { exact: true })
+    // Properties 헤더 (h2 태그로 특정)
+    const propertiesHeader = page.getByRole('heading', { name: 'Properties', level: 2 })
     await expect(propertiesHeader).toBeVisible()
 
     // 두 패널의 위치 확인 (Layers가 위, Properties가 아래)
