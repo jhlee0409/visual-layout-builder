@@ -17,9 +17,9 @@ export function createEmptySchemaV2(): LaydlerSchemaV2 {
     schemaVersion: "2.0",
     components: [],
     breakpoints: [
-      { name: "mobile", minWidth: 0 },
-      { name: "tablet", minWidth: 768 },
-      { name: "desktop", minWidth: 1024 },
+      { name: "mobile", minWidth: 0, gridCols: 6, gridRows: 24 },
+      { name: "tablet", minWidth: 768, gridCols: 8, gridRows: 20 },
+      { name: "desktop", minWidth: 1024, gridCols: 12, gridRows: 20 },
     ],
     layouts: {
       mobile: {
@@ -255,4 +255,66 @@ export function isValidSchemaV2(schema: unknown): schema is LaydlerSchemaV2 {
     typeof s.layouts === "object" &&
     s.layouts !== null
   )
+}
+
+/**
+ * Normalize Schema V2 with Breakpoint Inheritance
+ *
+ * Mobile-first cascade: Mobile → Tablet → Desktop
+ * - 명시되지 않은 breakpoint는 이전 breakpoint 설정 자동 상속
+ * - 명시적 override 시 cascade 끊김
+ * - ResponsiveCanvasLayout도 동일하게 상속 처리
+ *
+ * @param schema - Original Schema V2
+ * @returns Normalized Schema V2 with inherited values
+ */
+export function normalizeSchemaV2(schema: LaydlerSchemaV2): LaydlerSchemaV2 {
+  const normalized = cloneSchemaV2(schema)
+
+  // 1. Layout Inheritance: Mobile → Tablet → Desktop
+  // Tablet이 명시되지 않으면 Mobile 복사
+  if (!normalized.layouts.tablet ||
+      normalized.layouts.tablet.components.length === 0) {
+    normalized.layouts.tablet = {
+      ...cloneSchemaV2(normalized.layouts.mobile),
+    }
+  }
+
+  // Desktop이 명시되지 않으면 Tablet 복사
+  if (!normalized.layouts.desktop ||
+      normalized.layouts.desktop.components.length === 0) {
+    normalized.layouts.desktop = {
+      ...cloneSchemaV2(normalized.layouts.tablet),
+    }
+  }
+
+  // 2. Canvas Layout Inheritance per Component
+  normalized.components = normalized.components.map(comp => {
+    if (comp.responsiveCanvasLayout) {
+      const rcl = { ...comp.responsiveCanvasLayout }
+
+      // Mobile → Tablet
+      if (!rcl.tablet && rcl.mobile) {
+        rcl.tablet = { ...rcl.mobile }
+      }
+
+      // Tablet → Desktop (Tablet이 있으면 Tablet에서, 없으면 Mobile에서)
+      if (!rcl.desktop) {
+        if (rcl.tablet) {
+          rcl.desktop = { ...rcl.tablet }
+        } else if (rcl.mobile) {
+          rcl.desktop = { ...rcl.mobile }
+        }
+      }
+
+      return {
+        ...comp,
+        responsiveCanvasLayout: rcl,
+      }
+    }
+
+    return comp
+  })
+
+  return normalized
 }

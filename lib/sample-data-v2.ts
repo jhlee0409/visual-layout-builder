@@ -1,6 +1,11 @@
 /**
  * Sample data for Schema V2
  * Real-world layout patterns using Component-first, Flexbox-first approach
+ *
+ * **Breakpoint Inheritance 예시:**
+ * - Mobile만 설정 → Tablet/Desktop 자동 상속
+ * - Mobile + Tablet 설정 → Desktop은 Tablet에서 상속
+ * - 모든 breakpoint 명시 → 상속 없음
  */
 
 import type {
@@ -114,9 +119,9 @@ export const githubStyleSchema: LaydlerSchemaV2 = {
     },
   ],
   breakpoints: [
-    { name: "mobile", minWidth: 0 },
-    { name: "tablet", minWidth: 768 },
-    { name: "desktop", minWidth: 1024 },
+    { name: "mobile", minWidth: 0, gridCols: 6, gridRows: 24 },
+    { name: "tablet", minWidth: 768, gridCols: 8, gridRows: 20 },
+    { name: "desktop", minWidth: 1024, gridCols: 12, gridRows: 20 },
   ],
   layouts: {
     mobile: {
@@ -262,9 +267,9 @@ export const dashboardSchema: LaydlerSchemaV2 = {
     },
   ],
   breakpoints: [
-    { name: "mobile", minWidth: 0 },
-    { name: "tablet", minWidth: 768 },
-    { name: "desktop", minWidth: 1024 },
+    { name: "mobile", minWidth: 0, gridCols: 6, gridRows: 24 },
+    { name: "tablet", minWidth: 768, gridCols: 8, gridRows: 20 },
+    { name: "desktop", minWidth: 1024, gridCols: 12, gridRows: 20 },
   ],
   layouts: {
     mobile: {
@@ -395,9 +400,9 @@ export const marketingSiteSchema: LaydlerSchemaV2 = {
     },
   ],
   breakpoints: [
-    { name: "mobile", minWidth: 0 },
-    { name: "tablet", minWidth: 768 },
-    { name: "desktop", minWidth: 1024 },
+    { name: "mobile", minWidth: 0, gridCols: 6, gridRows: 24 },
+    { name: "tablet", minWidth: 768, gridCols: 8, gridRows: 20 },
+    { name: "desktop", minWidth: 1024, gridCols: 12, gridRows: 20 },
   ],
   layouts: {
     mobile: {
@@ -519,9 +524,9 @@ export const cardGallerySchema: LaydlerSchemaV2 = {
     },
   ],
   breakpoints: [
-    { name: "mobile", minWidth: 0 },
-    { name: "tablet", minWidth: 768 },
-    { name: "desktop", minWidth: 1024 },
+    { name: "mobile", minWidth: 0, gridCols: 6, gridRows: 24 },
+    { name: "tablet", minWidth: 768, gridCols: 8, gridRows: 20 },
+    { name: "desktop", minWidth: 1024, gridCols: 12, gridRows: 20 },
   ],
   layouts: {
     mobile: {

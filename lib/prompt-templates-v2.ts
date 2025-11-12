@@ -45,12 +45,14 @@ export const reactTailwindTemplateV2: PromptTemplateV2 = {
 - **Flexbox First**: Use Flexbox for page structure, CSS Grid only for card/content layouts
 - **Semantic HTML**: Follow HTML5 semantic principles
 - **Mobile First**: Implement responsive design with mobile-first approach
+- **Breakpoint Inheritance**: Mobile → Tablet → Desktop cascade (명시되지 않은 breakpoint는 이전 breakpoint 설정 자동 상속)
 
 **Requirements:**
 - Use React functional components with TypeScript
 - Use Tailwind CSS utility classes for all styling
 - Each component must implement its specified positioning, layout, and styling
-- Follow the exact specifications provided for each component`,
+- Follow the exact specifications provided for each component
+- Apply mobile-first responsive design: base styles for mobile, then md: for tablet, lg: for desktop`,
 
   componentSection: (components: Component[]) => {
     let section = `## Components\n\n`
@@ -174,7 +176,9 @@ export const reactTailwindTemplateV2: PromptTemplateV2 = {
       `   - \`container\`: Wrap content in a container div with max-width and centering\n` +
       `   - \`none\`: No specific layout - let content flow naturally\n\n` +
       `5. **Responsive Behavior:**\n` +
-      `   - Implement mobile-first approach\n` +
+      `   - **Mobile First Approach**: Base styles apply to mobile, use md: and lg: prefixes for larger breakpoints\n` +
+      `   - **Breakpoint Inheritance**: Styles cascade upward (Mobile → Tablet → Desktop)\n` +
+      `   - **Override Strategy**: Use responsive prefixes to override inherited styles (e.g., \`hidden md:block\` = hidden on mobile, visible on tablet+)\n` +
       `   - Use Tailwind responsive prefixes (\`md:\`, \`lg:\`) for tablet and desktop\n` +
       `   - Handle visibility changes (hidden/block) as specified\n` +
       `   - Apply responsive width/order changes as specified\n\n` +

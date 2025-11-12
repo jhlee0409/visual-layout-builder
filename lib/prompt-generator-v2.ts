@@ -8,6 +8,7 @@
 import type { LaydlerSchemaV2 } from "@/types/schema-v2"
 import { getTemplateV2 } from "./prompt-templates-v2"
 import { validateSchemaV2 } from "./schema-validation-v2"
+import { normalizeSchemaV2 } from "./schema-utils-v2"
 
 /**
  * Prompt Generation Result for Schema V2
@@ -45,8 +46,11 @@ export function generatePromptV2(
   framework: string,
   cssSolution: string
 ): GenerationResultV2 {
+  // 0. Normalize schema with breakpoint inheritance (Mobile → Tablet → Desktop)
+  const normalizedSchema = normalizeSchemaV2(schema)
+
   // 1. Validate schema using V2 validation
-  const validationResult = validateSchemaV2(schema)
+  const validationResult = validateSchemaV2(normalizedSchema)
 
   if (!validationResult.valid) {
     return {
@@ -79,11 +83,11 @@ export function generatePromptV2(
   sections.push("\n---\n")
 
   // Components section - positioning, layout, styling, responsive 포함
-  sections.push(template.componentSection(schema.components))
+  sections.push(template.componentSection(normalizedSchema.components))
   sections.push("---\n")
 
   // Layouts section - structure 기반 (vertical/horizontal/sidebar-main)
-  sections.push(template.layoutSection(schema.breakpoints, schema.layouts))
+  sections.push(template.layoutSection(normalizedSchema.breakpoints, normalizedSchema.layouts))
   sections.push("---\n")
 
   // Instructions section - V2 특화 구현 지침
@@ -96,7 +100,7 @@ export function generatePromptV2(
     "For reference, here is the complete Schema V2 in JSON format:\n\n"
   )
   sections.push("```json\n")
-  sections.push(JSON.stringify(schema, null, 2))
+  sections.push(JSON.stringify(normalizedSchema, null, 2))
   sections.push("\n```\n")
 
   const prompt = sections.join("\n")
@@ -104,7 +108,7 @@ export function generatePromptV2(
   return {
     success: true,
     prompt,
-    schema,
+    schema: normalizedSchema,
     warnings: validationResult.warnings.map((w) => {
       const location = w.componentId
         ? `${w.componentId}${w.field ? `.${w.field}` : ""}`

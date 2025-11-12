@@ -5,12 +5,14 @@ You are an expert React developer. Generate a responsive layout component based 
 - **Flexbox First**: Use Flexbox for page structure, CSS Grid only for card/content layouts
 - **Semantic HTML**: Follow HTML5 semantic principles
 - **Mobile First**: Implement responsive design with mobile-first approach
+- **Breakpoint Inheritance**: Mobile → Tablet → Desktop cascade (명시되지 않은 breakpoint는 이전 breakpoint 설정 자동 상속)
 
 **Requirements:**
 - Use React functional components with TypeScript
 - Use Tailwind CSS utility classes for all styling
 - Each component must implement its specified positioning, layout, and styling
 - Follow the exact specifications provided for each component
+- Apply mobile-first responsive design: base styles for mobile, then md: for tablet, lg: for desktop
 
 ---
 
@@ -207,7 +209,9 @@ Implement the following page structures for each breakpoint:
    - `none`: No specific layout - let content flow naturally
 
 5. **Responsive Behavior:**
-   - Implement mobile-first approach
+   - **Mobile First Approach**: Base styles apply to mobile, use md: and lg: prefixes for larger breakpoints
+   - **Breakpoint Inheritance**: Styles cascade upward (Mobile → Tablet → Desktop)
+   - **Override Strategy**: Use responsive prefixes to override inherited styles (e.g., `hidden md:block` = hidden on mobile, visible on tablet+)
    - Use Tailwind responsive prefixes (`md:`, `lg:`) for tablet and desktop
    - Handle visibility changes (hidden/block) as specified
    - Apply responsive width/order changes as specified
