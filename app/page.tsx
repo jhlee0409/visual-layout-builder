@@ -1,5 +1,6 @@
 "use client"
 
+import { useRef } from "react"
 import { BreakpointSwitcherV2 } from "@/components/breakpoint-panel-v2"
 import { LibraryPanelV2 } from "@/components/library-panel-v2"
 import { LayersTreeV2 } from "@/components/layers-tree-v2"
@@ -9,24 +10,38 @@ import { ExportModalV2 } from "@/components/export-modal-v2"
 import { ThemeSelectorV2 } from "@/components/theme-selector-v2"
 import { Button } from "@/components/ui/button"
 import { useLayoutStoreV2 } from "@/store/layout-store-v2"
-import { Panel, PanelGroup, PanelResizeHandle } from "react-resizable-panels"
+import {
+  Panel,
+  PanelGroup,
+  PanelResizeHandle,
+  ImperativePanelGroupHandle,
+} from "react-resizable-panels"
+import { RotateCcw } from "lucide-react"
 
 /**
  * Laylder - Visual Layout Builder
  *
- * Component Independence 아키텍처 + Resizable Panels
- * - Library Panel: 컴포넌트 템플릿 추가 (리사이징 가능)
+ * Component Independence 아키텍처 + Resizable Panels (Phase 2)
+ * - Library Panel: 컴포넌트 템플릿 추가 (리사이징 가능, Collapsible)
  * - Layers Tree: 드래그로 순서 변경 (수직 분할)
  * - Canvas: 실시간 프리뷰
  * - Properties Panel: 속성 편집 (수직 분할)
  * - Breakpoint Switcher: 반응형 전환
+ * - Reset Layout: 레이아웃 초기화 기능
  */
 export default function Home() {
+  const panelGroupRef = useRef<ImperativePanelGroupHandle>(null)
+
   const componentCount = useLayoutStoreV2(
     (state) => state.schema.components.length
   )
   const resetSchema = useLayoutStoreV2((state) => state.resetSchema)
   const loadSampleSchema = useLayoutStoreV2((state) => state.loadSampleSchema)
+
+  const resetLayout = () => {
+    // 기본 레이아웃: Library 20%, Canvas 58%, Right 22%
+    panelGroupRef.current?.setLayout([20, 58, 22])
+  }
 
   return (
     <main className="h-screen flex flex-col">
@@ -56,6 +71,15 @@ export default function Home() {
             <Button variant="outline" size="sm" onClick={resetSchema}>
               Reset
             </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={resetLayout}
+              title="레이아웃을 기본값으로 초기화"
+            >
+              <RotateCcw className="w-4 h-4 mr-1" />
+              Reset Layout
+            </Button>
             <ExportModalV2 />
           </div>
         </div>
@@ -66,12 +90,14 @@ export default function Home() {
         direction="horizontal"
         autoSaveId="laylder-main-layout"
         className="flex-1"
+        ref={panelGroupRef}
       >
-        {/* Left Panel: Library (Resizable) */}
+        {/* Left Panel: Library (Resizable + Collapsible) */}
         <Panel
           defaultSize={20}
           minSize={15}
           maxSize={35}
+          collapsible
           className="border-r bg-gray-50"
         >
           <div className="h-full overflow-y-auto">
@@ -98,11 +124,12 @@ export default function Home() {
 
         <PanelResizeHandle className="w-1 bg-gray-200 hover:bg-blue-500 transition-colors" />
 
-        {/* Right Panel: Layers + Properties (Vertical Split) */}
+        {/* Right Panel: Layers + Properties (Vertical Split + Collapsible) */}
         <Panel
           defaultSize={22}
           minSize={15}
           maxSize={40}
+          collapsible
           className="border-l bg-white"
         >
           <PanelGroup direction="vertical">
