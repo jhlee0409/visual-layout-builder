@@ -287,12 +287,8 @@ export interface LaydlerSchema {
   components: Component[]
   /** Breakpoints: 반응형 breakpoint 정의 */
   breakpoints: Breakpoint[]
-  /** Layouts: breakpoint별 레이아웃 설정 */
-  layouts: {
-    mobile: LayoutConfig
-    tablet: LayoutConfig
-    desktop: LayoutConfig
-  }
+  /** Layouts: breakpoint별 레이아웃 설정 (동적 키 지원) */
+  layouts: Record<string, LayoutConfig>
 }
 
 /**

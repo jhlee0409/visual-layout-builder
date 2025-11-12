@@ -88,20 +88,20 @@ export function validateSchema(
   errors.push(...breakpointErrors.errors)
   warnings.push(...breakpointErrors.warnings)
 
-  // 4. Layouts 검증
-  const requiredBreakpoints = ["mobile", "tablet", "desktop"] as const
-  requiredBreakpoints.forEach((bp) => {
-    if (!schema.layouts[bp]) {
+  // 4. Layouts 검증 - 정의된 브레이크포인트에 대한 레이아웃 존재 확인
+  const breakpointNames = schema.breakpoints.map((bp) => bp.name)
+  breakpointNames.forEach((bpName) => {
+    if (!schema.layouts[bpName]) {
       errors.push({
         code: "MISSING_LAYOUT",
-        message: `Missing layout configuration for breakpoint: ${bp}`,
-        field: `layouts.${bp}`,
+        message: `Missing layout configuration for breakpoint: ${bpName}`,
+        field: `layouts.${bpName}`,
       })
     } else {
       const layoutErrors = validateLayoutConfig(
-        schema.layouts[bp] as LayoutConfig,
+        schema.layouts[bpName] as LayoutConfig,
         schema.components,
-        bp
+        bpName
       )
       errors.push(...layoutErrors.errors)
       warnings.push(...layoutErrors.warnings)
@@ -364,19 +364,28 @@ function validateBreakpoints(breakpoints: Breakpoint[]): ValidationResult {
   const errors: ValidationError[] = []
   const warnings: ValidationWarning[] = []
 
-  // 필수 breakpoint 확인
-  const requiredNames = ["mobile", "tablet", "desktop"]
-  const breakpointNames = breakpoints.map((bp) => bp.name)
+  // 최소 1개 이상의 브레이크포인트 필요
+  if (!breakpoints || breakpoints.length === 0) {
+    errors.push({
+      code: "NO_BREAKPOINTS",
+      message: "Schema must have at least one breakpoint",
+      field: "breakpoints",
+    })
+    return { valid: false, errors, warnings }
+  }
 
-  requiredNames.forEach((name) => {
-    if (!breakpointNames.includes(name)) {
-      errors.push({
-        code: "MISSING_BREAKPOINT",
-        message: `Missing required breakpoint: ${name}`,
-        field: "breakpoints",
-      })
-    }
-  })
+  // 브레이크포인트 이름 중복 검사
+  const breakpointNames = breakpoints.map((bp) => bp.name)
+  const duplicateNames = breakpointNames.filter(
+    (name, index) => breakpointNames.indexOf(name) !== index
+  )
+  if (duplicateNames.length > 0) {
+    errors.push({
+      code: "DUPLICATE_BREAKPOINT_NAME",
+      message: `Duplicate breakpoint names found: ${duplicateNames.join(", ")}`,
+      field: "breakpoints",
+    })
+  }
 
   // minWidth 순서 검증
   const sortedByMinWidth = [...breakpoints].sort(
