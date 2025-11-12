@@ -1,6 +1,5 @@
 "use client"
 
-import { useState } from "react"
 import { BreakpointSwitcherV2 } from "@/components/breakpoint-panel-v2"
 import { LibraryPanelV2 } from "@/components/library-panel-v2"
 import { LayersTreeV2 } from "@/components/layers-tree-v2"
@@ -10,22 +9,19 @@ import { ExportModalV2 } from "@/components/export-modal-v2"
 import { ThemeSelectorV2 } from "@/components/theme-selector-v2"
 import { Button } from "@/components/ui/button"
 import { useLayoutStoreV2 } from "@/store/layout-store-v2"
-import Link from "next/link"
-import { History } from "lucide-react"
+import { Panel, PanelGroup, PanelResizeHandle } from "react-resizable-panels"
 
 /**
  * Laylder - Visual Layout Builder
  *
- * Component Independence 아키텍처
- * - Library Panel: 컴포넌트 템플릿 추가
- * - Layers Tree: 드래그로 순서 변경
+ * Component Independence 아키텍처 + Resizable Panels
+ * - Library Panel: 컴포넌트 템플릿 추가 (리사이징 가능)
+ * - Layers Tree: 드래그로 순서 변경 (수직 분할)
  * - Canvas: 실시간 프리뷰
- * - Properties Panel: 속성 편집
+ * - Properties Panel: 속성 편집 (수직 분할)
  * - Breakpoint Switcher: 반응형 전환
  */
 export default function Home() {
-  const [activeTab, setActiveTab] = useState<"layers" | "properties">("layers")
-
   const componentCount = useLayoutStoreV2(
     (state) => state.schema.components.length
   )
@@ -65,62 +61,79 @@ export default function Home() {
         </div>
       </header>
 
-      {/* Main 3-Panel Layout */}
-      <div className="flex-1 flex min-h-0">
-        {/* Left Panel: Library */}
-        <aside className="w-[280px] border-r bg-gray-50 overflow-y-auto flex-shrink-0">
-          <LibraryPanelV2 />
-        </aside>
+      {/* Main Resizable Panel Layout */}
+      <PanelGroup
+        direction="horizontal"
+        autoSaveId="laylder-main-layout"
+        className="flex-1"
+      >
+        {/* Left Panel: Library (Resizable) */}
+        <Panel
+          defaultSize={20}
+          minSize={15}
+          maxSize={35}
+          className="border-r bg-gray-50"
+        >
+          <div className="h-full overflow-y-auto">
+            <LibraryPanelV2 />
+          </div>
+        </Panel>
+
+        <PanelResizeHandle className="w-1 bg-gray-200 hover:bg-blue-500 transition-colors" />
 
         {/* Center Panel: Canvas + Breakpoint Switcher */}
-        <div className="flex-1 flex flex-col min-w-0 bg-white">
-          {/* Breakpoint Switcher */}
-          <div className="flex-shrink-0 p-4 border-b">
-            <BreakpointSwitcherV2 />
-          </div>
+        <Panel minSize={30} className="bg-white">
+          <div className="h-full flex flex-col">
+            {/* Breakpoint Switcher */}
+            <div className="flex-shrink-0 p-4 border-b">
+              <BreakpointSwitcherV2 />
+            </div>
 
-          {/* Konva Canvas - 브레이크포인트별 동적 그리드 */}
-          <div className="flex-1 overflow-hidden">
-            <KonvaCanvasV2 />
-          </div>
-        </div>
-
-        {/* Right Panel: Layers + Properties (Tabs) */}
-        <aside className="w-[320px] border-l bg-white flex flex-col overflow-hidden flex-shrink-0">
-          {/* Tabs */}
-          <div className="flex-shrink-0 border-b">
-            <div className="flex">
-              <button
-                className={`flex-1 px-4 py-3 text-sm font-medium transition-colors ${
-                  activeTab === "layers"
-                    ? "border-b-2 border-blue-500 bg-blue-50 text-blue-700"
-                    : "text-muted-foreground hover:bg-gray-50"
-                }`}
-                onClick={() => setActiveTab("layers")}
-              >
-                Layers
-              </button>
-              <button
-                className={`flex-1 px-4 py-3 text-sm font-medium transition-colors ${
-                  activeTab === "properties"
-                    ? "border-b-2 border-blue-500 bg-blue-50 text-blue-700"
-                    : "text-muted-foreground hover:bg-gray-50"
-                }`}
-                onClick={() => setActiveTab("properties")}
-              >
-                Properties
-              </button>
+            {/* Konva Canvas - 브레이크포인트별 동적 그리드 */}
+            <div className="flex-1 overflow-hidden">
+              <KonvaCanvasV2 />
             </div>
           </div>
+        </Panel>
 
-          {/* Tab Content */}
-          <div className="flex-1 overflow-hidden">
-            <div className="h-full overflow-y-auto">
-              {activeTab === "layers" ? <LayersTreeV2 /> : <PropertiesPanelV2 />}
-            </div>
-          </div>
-        </aside>
-      </div>
+        <PanelResizeHandle className="w-1 bg-gray-200 hover:bg-blue-500 transition-colors" />
+
+        {/* Right Panel: Layers + Properties (Vertical Split) */}
+        <Panel
+          defaultSize={22}
+          minSize={15}
+          maxSize={40}
+          className="border-l bg-white"
+        >
+          <PanelGroup direction="vertical">
+            {/* Layers Tree */}
+            <Panel defaultSize={60} minSize={30}>
+              <div className="h-full flex flex-col">
+                <div className="flex-shrink-0 px-4 py-3 border-b bg-gray-50">
+                  <h2 className="text-sm font-semibold">Layers</h2>
+                </div>
+                <div className="flex-1 overflow-y-auto">
+                  <LayersTreeV2 />
+                </div>
+              </div>
+            </Panel>
+
+            <PanelResizeHandle className="h-1 bg-gray-200 hover:bg-blue-500 transition-colors" />
+
+            {/* Properties Panel */}
+            <Panel minSize={20}>
+              <div className="h-full flex flex-col">
+                <div className="flex-shrink-0 px-4 py-3 border-b bg-gray-50">
+                  <h2 className="text-sm font-semibold">Properties</h2>
+                </div>
+                <div className="flex-1 overflow-y-auto">
+                  <PropertiesPanelV2 />
+                </div>
+              </div>
+            </Panel>
+          </PanelGroup>
+        </Panel>
+      </PanelGroup>
     </main>
   )
 }
