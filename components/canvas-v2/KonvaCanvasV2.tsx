@@ -330,22 +330,17 @@ export function KonvaCanvasV2({
       const pointerY = e.clientY - containerRect.top
 
       // Convert to grid coordinates (accounting for stage transform)
-      const gridX = Math.floor((pointerX - stagePosition.x) / stageScale / CELL_SIZE)
-      const gridY = Math.floor((pointerY - stagePosition.y) / stageScale / CELL_SIZE)
+      // Formula: (screenPos / scale - stagePan) / cellSize
+      let gridX = Math.floor((pointerX / stageScale - stagePosition.x) / CELL_SIZE)
+      let gridY = Math.floor((pointerY / stageScale - stagePosition.y) / CELL_SIZE)
 
-      // Validate position is within grid bounds
+      // Default component size
       const defaultWidth = 4
       const defaultHeight = 3
 
-      if (
-        gridX < 0 ||
-        gridY < 0 ||
-        gridX + defaultWidth > gridCols ||
-        gridY + defaultHeight > gridRows
-      ) {
-        console.warn("Drop position out of bounds")
-        return
-      }
+      // Adjust position to ensure component fits within grid bounds
+      gridX = Math.max(0, Math.min(gridX, gridCols - defaultWidth))
+      gridY = Math.max(0, Math.min(gridY, gridRows - defaultHeight))
 
       // Get fresh components in current layout for collision check (동기화)
       const freshState = useLayoutStoreV2.getState()

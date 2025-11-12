@@ -40,12 +40,7 @@ export function ComponentNodeV2({
   gridRows,
   gridCols,
 }: ComponentNodeV2Props) {
-  // Early return if no canvasLayout
-  if (!component.canvasLayout) {
-    return null
-  }
-
-  const { x: gridX, y: gridY, width: gridWidth, height: gridHeight } = component.canvasLayout
+  const { x: gridX = 0, y: gridY = 0, width: gridWidth = 1, height: gridHeight = 1 } = component.canvasLayout || {}
 
   const x = gridX * CELL_SIZE
   const y = gridY * CELL_SIZE
@@ -75,6 +70,11 @@ export function ComponentNodeV2({
     heightRef.current = height
     positionRef.current = { x: groupX, y: groupY }
   }, [width, height, groupX, groupY])
+
+  // Early return if no canvasLayout
+  if (!component.canvasLayout) {
+    return null
+  }
 
   // Visual styling based on selection state
   const fillColor = isSelected ? "#eff6ff" : "#ffffff"

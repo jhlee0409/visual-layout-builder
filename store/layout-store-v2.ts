@@ -101,8 +101,8 @@ export const useLayoutStoreV2 = create<LayoutStateV2>()(
         set((state) => {
           const newId = generateComponentId(state.schema.components)
           const newComponent: Component = {
-            id: newId,
             ...componentData,
+            id: newId,  // Override with generated ID (must be last to ensure it's not overwritten)
           }
 
           // V2: Components are independent, just add to array
