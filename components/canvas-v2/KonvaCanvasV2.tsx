@@ -107,7 +107,7 @@ export function KonvaCanvasV2({
   // Get current breakpoint's canvas layout for each component
   const componentsWithCanvas = componentsInCurrentLayout
     .map((c) => {
-      // Try responsive layout first, fallback to legacy canvasLayout
+      // Use responsive layout (responsiveCanvasLayout) or fallback to canvasLayout
       const layout =
         c.responsiveCanvasLayout?.[currentBreakpoint as keyof typeof c.responsiveCanvasLayout] ||
         c.canvasLayout
@@ -205,7 +205,7 @@ export function KonvaCanvasV2({
         },
       }
     } else {
-      // Fallback: update legacy canvasLayout
+      // Fallback: update canvasLayout (backwards compatibility)
       updatedComponent.canvasLayout = {
         ...currentLayout,
         x: newX,
@@ -301,7 +301,7 @@ export function KonvaCanvasV2({
         },
       }
     } else {
-      // Fallback: update legacy canvasLayout
+      // Fallback: update canvasLayout (backwards compatibility)
       updatedComponent.canvasLayout = {
         ...currentLayout,
         width: newWidth,

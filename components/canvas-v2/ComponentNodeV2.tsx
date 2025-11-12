@@ -27,11 +27,15 @@ interface ComponentNodeV2Props {
 /**
  * ComponentNodeV2 - Renders a single component on the Konva canvas (V2)
  *
- * Uses component.canvasLayout for positioning:
+ * Positioning based on canvasLayout (passed from parent):
  * - x = canvasLayout.x * CELL_SIZE
  * - y = canvasLayout.y * CELL_SIZE
  * - width = canvasLayout.width * CELL_SIZE
  * - height = canvasLayout.height * CELL_SIZE
+ *
+ * Note: Parent (KonvaCanvasV2) determines layout source:
+ * - Prefers responsiveCanvasLayout[breakpoint]
+ * - Falls back to canvasLayout for backwards compatibility
  */
 export function ComponentNodeV2({
   component,

@@ -1,6 +1,5 @@
 import { test, expect } from '@playwright/test'
 
-// V2 경로가 legacy로 이동되어 테스트 비활성화
 test.describe.skip('V2 코드 Export', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/v2')

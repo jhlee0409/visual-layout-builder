@@ -202,9 +202,9 @@ export interface Component {
   responsive?: ResponsiveBehavior
   /** Props: React props (optional) */
   props?: Record<string, unknown>
-  /** Canvas Layout: Canvas 자유 배치 정보 (optional, 레거시) */
+  /** Canvas Layout: Canvas 배치 정보 (optional, backwards compatibility) */
   canvasLayout?: CanvasLayout
-  /** Responsive Canvas Layout: Breakpoint별 Canvas 배치 정보 (optional) */
+  /** Responsive Canvas Layout: Breakpoint별 Canvas 배치 정보 (optional, 권장) */
   responsiveCanvasLayout?: ResponsiveCanvasLayout
 }
 
