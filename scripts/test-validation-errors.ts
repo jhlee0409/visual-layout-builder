@@ -5,10 +5,10 @@
  */
 
 import {
-  validateSchemaV2,
+  validateSchema,
   formatValidationResult,
-} from "../lib/schema-validation-v2"
-import type { LaydlerSchemaV2 } from "../types/schema-v2"
+} from "../lib/schema-validation"
+import type { LaydlerSchema } from "../types/schema"
 
 console.log("🔍 Testing Validation Error Detection\n")
 console.log("=" .repeat(60))
@@ -16,7 +16,7 @@ console.log("=" .repeat(60))
 // Test 1: 잘못된 Schema Version
 console.log("\n📋 Test 1: Invalid Schema Version")
 console.log("-".repeat(60))
-const invalidVersion: LaydlerSchemaV2 = {
+const invalidVersion: LaydlerSchema = {
   schemaVersion: "1.0" as any,
   components: [
     {
@@ -47,12 +47,12 @@ const invalidVersion: LaydlerSchemaV2 = {
     },
   },
 }
-console.log(formatValidationResult(validateSchemaV2(invalidVersion)))
+console.log(formatValidationResult(validateSchema(invalidVersion)))
 
 // Test 2: 중복된 Component ID
 console.log("\n\n📋 Test 2: Duplicate Component IDs")
 console.log("-".repeat(60))
-const duplicateIds: LaydlerSchemaV2 = {
+const duplicateIds: LaydlerSchema = {
   schemaVersion: "2.0",
   components: [
     {
@@ -90,12 +90,12 @@ const duplicateIds: LaydlerSchemaV2 = {
     },
   },
 }
-console.log(formatValidationResult(validateSchemaV2(duplicateIds)))
+console.log(formatValidationResult(validateSchema(duplicateIds)))
 
 // Test 3: 잘못된 Component Name (not PascalCase)
 console.log("\n\n📋 Test 3: Invalid Component Name")
 console.log("-".repeat(60))
-const invalidName: LaydlerSchemaV2 = {
+const invalidName: LaydlerSchema = {
   schemaVersion: "2.0",
   components: [
     {
@@ -126,12 +126,12 @@ const invalidName: LaydlerSchemaV2 = {
     },
   },
 }
-console.log(formatValidationResult(validateSchemaV2(invalidName)))
+console.log(formatValidationResult(validateSchema(invalidName)))
 
 // Test 4: Layout에서 존재하지 않는 컴포넌트 참조
 console.log("\n\n📋 Test 4: Layout References Non-existent Component")
 console.log("-".repeat(60))
-const invalidReference: LaydlerSchemaV2 = {
+const invalidReference: LaydlerSchema = {
   schemaVersion: "2.0",
   components: [
     {
@@ -162,12 +162,12 @@ const invalidReference: LaydlerSchemaV2 = {
     },
   },
 }
-console.log(formatValidationResult(validateSchemaV2(invalidReference)))
+console.log(formatValidationResult(validateSchema(invalidReference)))
 
 // Test 5: Breakpoint 누락
 console.log("\n\n📋 Test 5: Missing Required Breakpoint")
 console.log("-".repeat(60))
-const missingBreakpoint: LaydlerSchemaV2 = {
+const missingBreakpoint: LaydlerSchema = {
   schemaVersion: "2.0",
   components: [
     {
@@ -198,12 +198,12 @@ const missingBreakpoint: LaydlerSchemaV2 = {
     },
   },
 }
-console.log(formatValidationResult(validateSchemaV2(missingBreakpoint)))
+console.log(formatValidationResult(validateSchema(missingBreakpoint)))
 
 // Test 6: Header가 fixed/sticky가 아닌 경우 (warning)
 console.log("\n\n📋 Test 6: Header with Static Positioning (Warning)")
 console.log("-".repeat(60))
-const headerStatic: LaydlerSchemaV2 = {
+const headerStatic: LaydlerSchema = {
   schemaVersion: "2.0",
   components: [
     {
@@ -234,7 +234,7 @@ const headerStatic: LaydlerSchemaV2 = {
     },
   },
 }
-console.log(formatValidationResult(validateSchemaV2(headerStatic)))
+console.log(formatValidationResult(validateSchema(headerStatic)))
 
 console.log("\n" + "=".repeat(60))
 console.log("✅ Error detection test completed")

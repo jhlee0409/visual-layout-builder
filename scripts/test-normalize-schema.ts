@@ -1,13 +1,13 @@
 /**
- * Test Script for normalizeSchemaV2()
+ * Test Script for normalizeSchema()
  *
  * Mobile → Tablet → Desktop 자동 상속 테스트
  */
 
-import { normalizeSchemaV2 } from "../lib/schema-utils-v2"
-import type { LaydlerSchemaV2 } from "../types/schema-v2"
+import { normalizeSchema } from "../lib/schema-utils"
+import type { LaydlerSchema } from "../types/schema"
 
-console.log("🧪 normalizeSchemaV2() Test")
+console.log("🧪 normalizeSchema() Test")
 console.log("=".repeat(70))
 console.log()
 
@@ -15,7 +15,7 @@ console.log()
 console.log("📋 Test 1: Mobile만 설정 → Tablet/Desktop 자동 상속")
 console.log("-".repeat(70))
 
-const testSchema1: LaydlerSchemaV2 = {
+const testSchema1: LaydlerSchema = {
   schemaVersion: "2.0",
   components: [
     {
@@ -50,7 +50,7 @@ const testSchema1: LaydlerSchemaV2 = {
   },
 }
 
-const normalized1 = normalizeSchemaV2(testSchema1)
+const normalized1 = normalizeSchema(testSchema1)
 
 console.log("✅ layouts.mobile.components:", normalized1.layouts.mobile.components)
 console.log("✅ layouts.tablet.components:", normalized1.layouts.tablet.components, "(Mobile에서 상속)")
@@ -65,7 +65,7 @@ console.log()
 console.log("📋 Test 2: Mobile + Tablet 설정 → Desktop 자동 상속")
 console.log("-".repeat(70))
 
-const testSchema2: LaydlerSchemaV2 = {
+const testSchema2: LaydlerSchema = {
   schemaVersion: "2.0",
   components: [
     {
@@ -101,7 +101,7 @@ const testSchema2: LaydlerSchemaV2 = {
   },
 }
 
-const normalized2 = normalizeSchemaV2(testSchema2)
+const normalized2 = normalizeSchema(testSchema2)
 
 console.log("✅ layouts.mobile.structure:", normalized2.layouts.mobile.structure)
 console.log("✅ layouts.tablet.structure:", normalized2.layouts.tablet.structure, "(명시적 설정)")
@@ -117,7 +117,7 @@ console.log()
 console.log("📋 Test 3: 모든 breakpoint 명시 → 상속 없음")
 console.log("-".repeat(70))
 
-const testSchema3: LaydlerSchemaV2 = {
+const testSchema3: LaydlerSchema = {
   schemaVersion: "2.0",
   components: [
     {
@@ -154,7 +154,7 @@ const testSchema3: LaydlerSchemaV2 = {
   },
 }
 
-const normalized3 = normalizeSchemaV2(testSchema3)
+const normalized3 = normalizeSchema(testSchema3)
 
 console.log("✅ layouts.mobile.structure:", normalized3.layouts.mobile.structure)
 console.log("✅ layouts.tablet.structure:", normalized3.layouts.tablet.structure)
@@ -166,5 +166,5 @@ console.log("✅ responsiveCanvasLayout.desktop.width:", normalized3.components[
 console.log()
 
 console.log("=".repeat(70))
-console.log("🎉 normalizeSchemaV2() Test Complete")
+console.log("🎉 normalizeSchema() Test Complete")
 console.log()

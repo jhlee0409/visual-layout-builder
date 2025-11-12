@@ -1,16 +1,16 @@
 "use client"
 
 import { useRef } from "react"
-import { BreakpointSwitcherV2 } from "@/components/breakpoint-panel-v2"
-import { LibraryPanelV2 } from "@/components/library-panel-v2"
-import { LayersTreeV2 } from "@/components/layers-tree-v2"
-import { KonvaCanvasV2 } from "@/components/canvas-v2"
-import { PropertiesPanelV2 } from "@/components/properties-panel-v2"
-import { ExportModalV2 } from "@/components/export-modal-v2"
-import { ThemeSelectorV2 } from "@/components/theme-selector-v2"
+import { BreakpointSwitcher} from "@/components/breakpoint-panel"
+import { LibraryPanel} from "@/components/library-panel"
+import { LayersTree} from "@/components/layers-tree"
+import { KonvaCanvas} from "@/components/canvas"
+import { PropertiesPanel} from "@/components/properties-panel"
+import { ExportModal} from "@/components/export-modal"
+import { ThemeSelector} from "@/components/theme-selector"
 import { InitialBreakpointModal } from "@/components/initial-breakpoint-modal"
 import { Button } from "@/components/ui/button"
-import { useLayoutStoreV2 } from "@/store/layout-store-v2"
+import { useLayoutStore } from "@/store/layout-store"
 import {
   Panel,
   PanelGroup,
@@ -33,13 +33,13 @@ import { RotateCcw } from "lucide-react"
 export default function Home() {
   const panelGroupRef = useRef<ImperativePanelGroupHandle>(null)
 
-  const breakpoints = useLayoutStoreV2((state) => state.schema.breakpoints)
-  const componentCount = useLayoutStoreV2(
+  const breakpoints = useLayoutStore((state) => state.schema.breakpoints)
+  const componentCount = useLayoutStore(
     (state) => state.schema.components.length
   )
-  const initializeSchema = useLayoutStoreV2((state) => state.initializeSchema)
-  const resetSchema = useLayoutStoreV2((state) => state.resetSchema)
-  const loadSampleSchema = useLayoutStoreV2((state) => state.loadSampleSchema)
+  const initializeSchema = useLayoutStore((state) => state.initializeSchema)
+  const resetSchema = useLayoutStore((state) => state.resetSchema)
+  const loadSampleSchema = useLayoutStore((state) => state.loadSampleSchema)
 
   // 브레이크포인트가 없으면 모달 표시
   const showInitialModal = breakpoints.length === 0
@@ -70,7 +70,7 @@ export default function Home() {
             <span className="text-sm text-muted-foreground">
               {componentCount} components
             </span>
-            <ThemeSelectorV2 />
+            <ThemeSelector />
             <Button
               variant="outline"
               size="sm"
@@ -90,7 +90,7 @@ export default function Home() {
               <RotateCcw className="w-4 h-4 mr-1" />
               Reset Layout
             </Button>
-            <ExportModalV2 />
+            <ExportModal />
           </div>
         </div>
       </header>
@@ -111,7 +111,7 @@ export default function Home() {
           className="border-r bg-gray-50"
         >
           <div className="h-full overflow-y-auto">
-            <LibraryPanelV2 />
+            <LibraryPanel />
           </div>
         </Panel>
 
@@ -122,12 +122,12 @@ export default function Home() {
           <div className="h-full flex flex-col">
             {/* Breakpoint Switcher */}
             <div className="flex-shrink-0 p-4 border-b">
-              <BreakpointSwitcherV2 />
+              <BreakpointSwitcher />
             </div>
 
             {/* Konva Canvas - 브레이크포인트별 동적 그리드 */}
             <div className="flex-1 overflow-hidden">
-              <KonvaCanvasV2 />
+              <KonvaCanvas />
             </div>
           </div>
         </Panel>
@@ -149,7 +149,7 @@ export default function Home() {
                   <h2 className="text-sm font-semibold">Layers</h2>
                 </div>
                 <div className="flex-1 overflow-y-auto">
-                  <LayersTreeV2 />
+                  <LayersTree />
                 </div>
               </div>
             </Panel>
@@ -163,7 +163,7 @@ export default function Home() {
                   <h2 className="text-sm font-semibold">Properties</h2>
                 </div>
                 <div className="flex-1 overflow-y-auto">
-                  <PropertiesPanelV2 />
+                  <PropertiesPanel />
                 </div>
               </div>
             </Panel>
