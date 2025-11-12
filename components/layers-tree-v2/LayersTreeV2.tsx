@@ -4,6 +4,7 @@ import { useLayoutStoreV2 } from "@/store/layout-store-v2"
 import { Card } from "@/components/ui/card"
 import { useState } from "react"
 import { LayerItem } from "./LayerItem"
+import { useConfirm } from "@/store/alert-dialog-store"
 
 /**
  * Layers Tree V2 - 컴포넌트 계층 구조
@@ -21,6 +22,8 @@ export function LayersTreeV2() {
   )
   const deleteComponent = useLayoutStoreV2((state) => state.deleteComponent)
   const duplicateComponent = useLayoutStoreV2((state) => state.duplicateComponent)
+
+  const confirm = useConfirm()
 
   const currentLayout =
     schema.layouts[currentBreakpoint as keyof typeof schema.layouts]
@@ -53,8 +56,16 @@ export function LayersTreeV2() {
   }
 
   // 컴포넌트 삭제
-  const handleDelete = (componentId: string) => {
-    if (confirm(`Delete ${componentId}?`)) {
+  const handleDelete = async (componentId: string) => {
+    const confirmed = await confirm({
+      title: "컴포넌트 삭제",
+      description: `"${componentId}" 컴포넌트를 삭제하시겠습니까?`,
+      confirmText: "삭제",
+      cancelText: "취소",
+      variant: "destructive",
+    })
+
+    if (confirmed) {
       deleteComponent(componentId)
     }
   }

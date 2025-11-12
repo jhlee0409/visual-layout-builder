@@ -1,5 +1,7 @@
 import type { Metadata } from "next"
 import "./globals.css"
+import { Toaster } from "@/components/ui/toaster"
+import { AlertDialogProvider } from "@/components/ui/alert-dialog-provider"
 
 export const metadata: Metadata = {
   title: "Laylder - AI Layout Builder",
@@ -13,7 +15,11 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className="antialiased">{children}</body>
+      <body className="antialiased">
+        {children}
+        <Toaster />
+        <AlertDialogProvider />
+      </body>
     </html>
   )
 }

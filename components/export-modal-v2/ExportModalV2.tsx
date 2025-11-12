@@ -15,6 +15,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
 import { FileCode, Sparkles, Check, Copy } from "lucide-react"
+import { useToast } from "@/store/toast-store"
 
 /**
  * Export Modal V2 - Schema V2 AI Prompt Generation UI
@@ -38,13 +39,14 @@ export function ExportModalV2() {
   const [copiedJson, setCopiedJson] = useState(false)
 
   const schema = useLayoutStoreV2((state) => state.schema)
+  const { error } = useToast()
 
   const handleGenerate = () => {
     // Generate AI prompt from Schema V2
     const result = generatePromptV2(schema, framework, cssSolution)
 
     if (!result.success) {
-      alert(`Generation failed:\n${result.errors?.join("\n")}`)
+      error(result.errors?.join("\n") || "알 수 없는 오류가 발생했습니다.", "생성 실패")
       return
     }
 

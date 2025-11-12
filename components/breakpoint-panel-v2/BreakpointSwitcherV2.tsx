@@ -12,6 +12,8 @@ import { Smartphone, Tablet, Monitor, Plus, X } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { DEFAULT_GRID_CONFIG } from "@/lib/schema-utils-v2"
 import type { Breakpoint } from "@/types/schema-v2"
+import { useToast } from "@/store/toast-store"
+import { useConfirm } from "@/store/alert-dialog-store"
 
 /**
  * BreakpointSwitcherV2 - Breakpoint 전환 UI (Schema V2)
@@ -32,6 +34,9 @@ export function BreakpointSwitcherV2() {
   const deleteBreakpoint = useLayoutStoreV2((state) => state.deleteBreakpoint)
   const currentBreakpointConfig = useCurrentBreakpointConfigV2()
 
+  const { warning, error } = useToast()
+  const confirm = useConfirm()
+
   // Breakpoint 이름에 따라 아이콘 매핑
   const getIcon = (name: string) => {
     const lowerName = name.toLowerCase()
@@ -47,19 +52,19 @@ export function BreakpointSwitcherV2() {
   // 브레이크포인트 추가
   const handleAddBreakpoint = () => {
     if (!newBreakpointName.trim() || !newBreakpointMinWidth) {
-      alert("브레이크포인트 이름과 최소 너비를 입력하세요.")
+      warning("브레이크포인트 이름과 최소 너비를 입력하세요.")
       return
     }
 
     const minWidth = parseInt(newBreakpointMinWidth, 10)
     if (isNaN(minWidth) || minWidth < 0) {
-      alert("올바른 최소 너비를 입력하세요.")
+      error("올바른 최소 너비를 입력하세요.")
       return
     }
 
     // 중복 이름 체크
     if (breakpoints.some(bp => bp.name === newBreakpointName)) {
-      alert("이미 존재하는 브레이크포인트 이름입니다.")
+      error("이미 존재하는 브레이크포인트 이름입니다.")
       return
     }
 
@@ -77,13 +82,21 @@ export function BreakpointSwitcherV2() {
   }
 
   // 브레이크포인트 삭제
-  const handleDeleteBreakpoint = (name: string) => {
+  const handleDeleteBreakpoint = async (name: string) => {
     if (breakpoints.length <= 1) {
-      alert("최소 1개의 브레이크포인트가 필요합니다.")
+      warning("최소 1개의 브레이크포인트가 필요합니다.")
       return
     }
 
-    if (confirm(`"${name}" 브레이크포인트를 삭제하시겠습니까?`)) {
+    const confirmed = await confirm({
+      title: "브레이크포인트 삭제",
+      description: `"${name}" 브레이크포인트를 삭제하시겠습니까?`,
+      confirmText: "삭제",
+      cancelText: "취소",
+      variant: "destructive",
+    })
+
+    if (confirmed) {
       deleteBreakpoint(name)
     }
   }
