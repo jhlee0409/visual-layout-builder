@@ -6,6 +6,7 @@ import Konva from "konva"
 import { useLayoutStore, useComponentsInCurrentLayout } from "@/store/layout-store"
 import { ComponentNode } from "./ComponentNode"
 import { createComponentFromTemplate } from "@/lib/component-library"
+import { calculateSmartPosition } from "@/lib/smart-layout"
 import type { Component } from "@/types/schema"
 import type { ComponentTemplate } from "@/lib/component-library"
 
@@ -335,28 +336,25 @@ export function KonvaCanvas({
       const stage = stageRef.current
       if (!stage) return
 
-      // Calculate position considering stage scale and position
-      const pointerX = e.clientX - containerRect.left
-      const pointerY = e.clientY - containerRect.top
-
-      // Convert to grid coordinates (accounting for stage transform)
-      // Formula: (screenPos / scale - stagePan) / cellSize
-      let gridX = Math.floor((pointerX / stageScale - stagePosition.x) / CELL_SIZE)
-      let gridY = Math.floor((pointerY / stageScale - stagePosition.y) / CELL_SIZE)
-
-      // Default component size
-      const defaultWidth = 4
-      const defaultHeight = 3
-
-      // Adjust position to ensure component fits within grid bounds
-      gridX = Math.max(0, Math.min(gridX, gridCols - defaultWidth))
-      gridY = Math.max(0, Math.min(gridY, gridRows - defaultHeight))
-
-      // Get fresh components in current layout for collision check (동기화)
+      // Get fresh components in current layout for smart positioning (동기화)
       const freshState = useLayoutStore.getState()
       const freshCurrentLayout = freshState.schema.layouts[currentBreakpoint as keyof typeof freshState.schema.layouts]
       const freshComponentIds = new Set(freshCurrentLayout.components)
       const freshComponentsInLayout = freshState.schema.components.filter((c) => freshComponentIds.has(c.id))
+
+      // Calculate smart position based on semantic tag and positioning (2025 layout patterns)
+      const smartPosition = calculateSmartPosition(
+        template,
+        gridCols,
+        gridRows,
+        freshComponentsInLayout,
+        currentBreakpoint
+      )
+
+      const gridX = smartPosition.x
+      const gridY = smartPosition.y
+      const defaultWidth = smartPosition.width
+      const defaultHeight = smartPosition.height
 
       const freshComponentsWithCanvas = freshComponentsInLayout
         .map((c) => {
