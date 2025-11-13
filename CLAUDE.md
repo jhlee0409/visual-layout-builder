@@ -119,6 +119,25 @@ interface CanvasLayout {
 
 Canvas는 **Grid 기반 좌표계** (기본 12×20)를 사용하여 자유로운 드래그 앤 드롭을 지원합니다.
 
+**Smart Layout System** (2025-11-13 추가):
+
+`lib/smart-layout.ts`가 positioning/layout 기반 스마트 배치를 담당합니다.
+
+**핵심 함수**:
+- `calculateSmartPosition()`: semanticTag와 positioning을 기반으로 최적 배치 위치 자동 계산
+- `findEmptySlot()`: 빈 공간 찾기 (collision 방지)
+- `getRecommendedSize()`: 컴포넌트 타입별 추천 크기 반환
+
+**배치 전략 (2025년 최신 웹 레이아웃 패턴 반영)**:
+- **Header** (sticky/fixed): 최상단 (y=0), 전체 너비
+- **Footer** (static): 최하단, 전체 너비
+- **Sidebar** (aside): 좌측 (x=0) 또는 우측 끝단, 전체 높이의 1/4 너비
+- **Nav** (sticky/fixed): Header 아래 또는 최상단
+- **Main**: 중앙 영역 (header/sidebar 고려하여 가용 공간 최대 활용)
+- **기타** (section, article, div, form): 빈 공간에 1x1 크기로 자동 배치
+
+**기본 그리드 크기**: 드롭 시 기본 1×1 크기 (스마트 배치 로직이 semanticTag에 따라 자동 조정)
+
 ### AI Prompt Generation
 
 **lib/prompt-generator-v2.ts**가 Schema V2를 AI 프롬프트로 변환합니다.
@@ -213,6 +232,7 @@ Canvas는 **Grid 기반 좌표계** (기본 12×20)를 사용하여 자유로운
 - **lib/schema-validation-v2.ts**: Schema 검증 + 에러/경고
 - **lib/prompt-generator-v2.ts**: AI 프롬프트 생성
 - **lib/component-library-v2.ts**: 사전 정의 템플릿
+- **lib/smart-layout.ts**: 스마트 배치 로직 (positioning/semanticTag 기반 자동 배치)
 
 ### UI 컴포넌트
 - **components/canvas-v2/KonvaCanvasV2.tsx**: Canvas 렌더링
