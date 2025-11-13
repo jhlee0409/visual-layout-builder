@@ -10,7 +10,7 @@
  * 4. Collision 방지 및 빈 공간 최적화
  */
 
-import type { Component, SemanticTag, ComponentPositioning, CanvasLayout } from "@/types/schema"
+import type { Component, SemanticTag, CanvasLayout } from "@/types/schema"
 import type { ComponentTemplate } from "@/lib/component-library"
 
 /**
@@ -62,8 +62,9 @@ export function calculateSmartPosition(
     }
   }
 
-  // 3. Nav (sticky/fixed) → 최상단 (header와 유사)
-  if (semanticTag === "nav" && (positioning.type === "sticky" || positioning.type === "fixed")) {
+  // 3. Nav → 최상단 (header와 유사)
+  // Note: Semantic tag를 신뢰하고 positioning type은 체크하지 않음 (일관성)
+  if (semanticTag === "nav") {
     // Header가 이미 있으면 그 아래, 없으면 최상단
     const hasHeader = existingComponents.some((c) => c.semanticTag === "header")
 
@@ -75,13 +76,11 @@ export function calculateSmartPosition(
     }
   }
 
-  // 4. Sidebar (aside, sticky/fixed) → 좌측 또는 우측
+  // 4. Sidebar (aside) → 좌측 또는 우측
   if (semanticTag === "aside") {
     // Header 존재 여부 확인
     const hasHeader = existingComponents.some((c) => c.semanticTag === "header")
-    const hasNav = existingComponents.some(
-      (c) => c.semanticTag === "nav" && (c.positioning.type === "sticky" || c.positioning.type === "fixed")
-    )
+    const hasNav = existingComponents.some((c) => c.semanticTag === "nav")
     const topOffset = hasHeader || hasNav ? 1 : 0
 
     // 좌측에 이미 sidebar가 있는지 확인
@@ -114,9 +113,7 @@ export function calculateSmartPosition(
   // 5. Main → 중앙 영역 (header, sidebar 고려)
   if (semanticTag === "main") {
     const hasHeader = existingComponents.some((c) => c.semanticTag === "header")
-    const hasNav = existingComponents.some(
-      (c) => c.semanticTag === "nav" && (c.positioning.type === "sticky" || c.positioning.type === "fixed")
-    )
+    const hasNav = existingComponents.some((c) => c.semanticTag === "nav")
     const topOffset = hasHeader || hasNav ? 1 : 0
 
     // 좌측 sidebar 확인
@@ -164,6 +161,12 @@ export function calculateSmartPosition(
  * @param width - 배치할 컴포넌트의 너비
  * @param height - 배치할 컴포넌트의 높이
  * @returns 빈 공간 위치
+ *
+ * Performance Note:
+ * - Time Complexity: O(gridRows × gridCols × existingComponents.length)
+ * - For default grid (12×20) with 20 components: ~4,800 iterations
+ * - Acceptable for typical use (<50 components)
+ * - For future optimization with 100+ components, consider spatial hashing or quad-tree
  */
 export function findEmptySlot(
   existingComponents: Component[],
@@ -217,7 +220,8 @@ export function findEmptySlot(
         return currentBottom > maxBottom ? current : max
       })
 
-      const newY = Math.min(bottomMost.layout.y + bottomMost.layout.height, gridRows - height)
+      // Ensure newY is within valid grid bounds (prevent negative values)
+      const newY = Math.max(0, Math.min(bottomMost.layout.y + bottomMost.layout.height, gridRows - height))
 
       return {
         x: 0,
