@@ -33,6 +33,7 @@ import {
   GRID_CONSTRAINTS,
   DEFAULT_GRID_CONFIG,
 } from "@/lib/schema-utils"
+import { calculateMinimumGridSize } from "@/lib/grid-constraints"
 
 /**
  * Layout store state
@@ -525,12 +526,35 @@ export const useLayoutStore = create<LayoutState>()(
 
       removeGridRow: (breakpointName) => {
         set((state) => {
-          const breakpoints = state.schema.breakpoints.map((bp) => {
-            if (bp.name === breakpointName) {
-              const newGridRows = Math.max(bp.gridRows - 1, GRID_CONSTRAINTS.minRows)
-              return { ...bp, gridRows: newGridRows }
+          // Get components in current breakpoint's layout
+          const currentLayout = state.schema.layouts[breakpointName as keyof typeof state.schema.layouts]
+          const componentIds = new Set(currentLayout.components)
+          const components = state.schema.components.filter((c) => componentIds.has(c.id))
+
+          // Find current breakpoint config
+          const bp = state.schema.breakpoints.find((b) => b.name === breakpointName)
+          if (!bp) return state
+
+          const newGridRows = bp.gridRows - 1
+
+          // Calculate dynamic minimum based on component positions
+          const { minRows } = calculateMinimumGridSize(components, breakpointName)
+          const absoluteMin = Math.max(GRID_CONSTRAINTS.minRows, minRows)
+
+          // Validate: Don't allow reducing if it would clip components
+          if (newGridRows < absoluteMin) {
+            console.warn(
+              `❌ Cannot reduce rows to ${newGridRows}: Components occupy up to row ${minRows}. Minimum required: ${absoluteMin}`
+            )
+            return state // Reject the change
+          }
+
+          // Safe to reduce
+          const breakpoints = state.schema.breakpoints.map((b) => {
+            if (b.name === breakpointName) {
+              return { ...b, gridRows: newGridRows }
             }
-            return bp
+            return b
           })
 
           return {
@@ -544,12 +568,35 @@ export const useLayoutStore = create<LayoutState>()(
 
       removeGridColumn: (breakpointName) => {
         set((state) => {
-          const breakpoints = state.schema.breakpoints.map((bp) => {
-            if (bp.name === breakpointName) {
-              const newGridCols = Math.max(bp.gridCols - 1, GRID_CONSTRAINTS.minCols)
-              return { ...bp, gridCols: newGridCols }
+          // Get components in current breakpoint's layout
+          const currentLayout = state.schema.layouts[breakpointName as keyof typeof state.schema.layouts]
+          const componentIds = new Set(currentLayout.components)
+          const components = state.schema.components.filter((c) => componentIds.has(c.id))
+
+          // Find current breakpoint config
+          const bp = state.schema.breakpoints.find((b) => b.name === breakpointName)
+          if (!bp) return state
+
+          const newGridCols = bp.gridCols - 1
+
+          // Calculate dynamic minimum based on component positions
+          const { minCols } = calculateMinimumGridSize(components, breakpointName)
+          const absoluteMin = Math.max(GRID_CONSTRAINTS.minCols, minCols)
+
+          // Validate: Don't allow reducing if it would clip components
+          if (newGridCols < absoluteMin) {
+            console.warn(
+              `❌ Cannot reduce columns to ${newGridCols}: Components occupy up to column ${minCols}. Minimum required: ${absoluteMin}`
+            )
+            return state // Reject the change
+          }
+
+          // Safe to reduce
+          const breakpoints = state.schema.breakpoints.map((b) => {
+            if (b.name === breakpointName) {
+              return { ...b, gridCols: newGridCols }
             }
-            return bp
+            return b
           })
 
           return {

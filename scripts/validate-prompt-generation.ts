@@ -86,7 +86,7 @@ function validatePromptContent(
 
       checks.push({
         name: `${comp.name} flex configuration`,
-        passed: hasFlexConfig,
+        passed: !!hasFlexConfig,
         details: hasFlexConfig
           ? "Flex configuration found"
           : "Flex configuration NOT FOUND",
@@ -103,7 +103,7 @@ function validatePromptContent(
 
       checks.push({
         name: `${comp.name} grid configuration`,
-        passed: hasGridConfig,
+        passed: !!hasGridConfig,
         details: hasGridConfig
           ? "Grid configuration found"
           : "Grid configuration NOT FOUND",
@@ -119,7 +119,7 @@ function validatePromptContent(
 
       checks.push({
         name: `${comp.name} container configuration`,
-        passed: hasContainerConfig,
+        passed: !!hasContainerConfig,
         details: hasContainerConfig
           ? "Container configuration found"
           : "Container configuration NOT FOUND",
@@ -141,7 +141,7 @@ function validatePromptContent(
 
       checks.push({
         name: `${comp.name} styling`,
-        passed: hasStyling,
+        passed: !!hasStyling,
         details: hasStyling
           ? "Styling information found"
           : "Styling information NOT FOUND",
