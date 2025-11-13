@@ -16,12 +16,32 @@ import type {
   IPromptStrategyFactory,
   ModelRecommendationCriteria,
   ModelRecommendation,
+  AIProvider,
 } from "@/types/ai-models"
-import { recommendModels, getActiveModels } from "@/lib/ai-model-registry"
+import { recommendModels, getActiveModels, getModelMetadata } from "@/lib/ai-model-registry"
 import { ClaudeStrategy } from "./claude-strategy"
 import { GPTStrategy } from "./gpt-strategy"
 import { GeminiStrategy } from "./gemini-strategy"
 import { DeepSeekStrategy } from "./deepseek-strategy"
+import { GrokStrategy } from "./grok-strategy"
+
+/**
+ * Provider to Strategy Class Mapping
+ *
+ * Provider 기반으로 Strategy 클래스 결정
+ * 새로운 provider 추가 시 여기만 수정하면 됨
+ */
+const PROVIDER_STRATEGY_MAP: Record<
+  AIProvider,
+  new (modelId: AIModelId) => IPromptStrategy
+> = {
+  anthropic: ClaudeStrategy,
+  openai: GPTStrategy,
+  google: GeminiStrategy,
+  deepseek: DeepSeekStrategy,
+  xai: GrokStrategy,
+  custom: ClaudeStrategy, // fallback to Claude
+}
 
 /**
  * Prompt Strategy Factory
@@ -51,11 +71,12 @@ export class PromptStrategyFactory implements IPromptStrategyFactory {
    * 전략 생성 (Factory Method)
    *
    * 모델 ID에 따라 적절한 전략 인스턴스 생성
+   * Provider 기반 mapping을 사용하여 확장 가능
    * 캐싱을 통해 동일한 모델에 대해 재사용
    *
    * @param modelId - AI 모델 ID
    * @returns 프롬프트 전략 인스턴스
-   * @throws Error if model is not supported
+   * @throws Error if model is not supported or metadata not found
    */
   createStrategy(modelId: AIModelId): IPromptStrategy {
     // 캐시 확인
@@ -63,57 +84,20 @@ export class PromptStrategyFactory implements IPromptStrategyFactory {
       return this.strategyCache.get(modelId)!
     }
 
-    // 모델별 전략 생성
-    let strategy: IPromptStrategy
+    // 모델 메타데이터 가져오기
+    const metadata = getModelMetadata(modelId)
+    if (!metadata) {
+      throw new Error(`Model metadata not found for: ${modelId}`)
+    }
 
-    // Anthropic Claude
-    if (
-      modelId === "claude-sonnet-4.5" ||
-      modelId === "claude-sonnet-4" ||
-      modelId === "claude-opus-4" ||
-      modelId === "claude-haiku-3.5"
-    ) {
-      strategy = new ClaudeStrategy(modelId)
+    // Provider 기반으로 Strategy 클래스 선택
+    const StrategyClass = PROVIDER_STRATEGY_MAP[metadata.provider]
+    if (!StrategyClass) {
+      throw new Error(`No strategy found for provider: ${metadata.provider}`)
     }
-    // OpenAI GPT
-    else if (
-      modelId === "gpt-4.1" ||
-      modelId === "gpt-4-turbo" ||
-      modelId === "gpt-4" ||
-      modelId === "o1" ||
-      modelId === "o1-mini" ||
-      modelId === "o3-mini"
-    ) {
-      strategy = new GPTStrategy(modelId)
-    }
-    // Google Gemini
-    else if (
-      modelId === "gemini-2.5-pro" ||
-      modelId === "gemini-2.0-pro" ||
-      modelId === "gemini-2.0-flash"
-    ) {
-      strategy = new GeminiStrategy(modelId)
-    }
-    // DeepSeek
-    else if (
-      modelId === "deepseek-r1" ||
-      modelId === "deepseek-v3" ||
-      modelId === "deepseek-coder-v2"
-    ) {
-      strategy = new DeepSeekStrategy(modelId)
-    }
-    // xAI Grok (fallback to GPT strategy)
-    else if (modelId === "grok-3" || modelId === "grok-2") {
-      // Grok은 GPT와 유사한 패턴 사용
-      strategy = new GPTStrategy(modelId)
-    }
-    // Custom or unknown
-    else if (modelId === "custom") {
-      // Custom 모델은 기본 Claude 전략 사용
-      strategy = new ClaudeStrategy(modelId)
-    } else {
-      throw new Error(`Unsupported model: ${modelId}`)
-    }
+
+    // 전략 인스턴스 생성
+    const strategy = new StrategyClass(modelId)
 
     // 캐시에 저장
     this.strategyCache.set(modelId, strategy)

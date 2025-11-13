@@ -41,6 +41,8 @@ export { GeminiStrategy, createGemini25ProStrategy, createGemini20ProStrategy, c
 
 export { DeepSeekStrategy, createDeepSeekR1Strategy, createDeepSeekV3Strategy, createDeepSeekCoderV2Strategy } from "./deepseek-strategy"
 
+export { GrokStrategy, createGrok3Strategy, createGrok2Strategy } from "./grok-strategy"
+
 // Factory
 export {
   PromptStrategyFactory,

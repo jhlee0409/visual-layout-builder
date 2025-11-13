@@ -341,8 +341,8 @@ export abstract class BasePromptStrategy implements IPromptStrategy {
         ? this.optimizePrompt(prompt, options)
         : prompt
 
-      // 6. Estimate tokens
-      const estimatedTokens = Math.ceil(finalPrompt.length / 4)
+      // 6. Estimate tokens (improved accuracy)
+      const estimatedTokens = this.estimateTokens(finalPrompt)
 
       return {
         success: true,
@@ -373,4 +373,51 @@ export abstract class BasePromptStrategy implements IPromptStrategy {
    * 하위 클래스에서 구현 가능
    */
   optimizePrompt?(prompt: string, options?: PromptGenerationOptions): string
+
+  /**
+   * 토큰 수 추정 (개선된 정확도)
+   *
+   * 영어/코드와 한글/CJK를 구분하여 더 정확한 추정
+   *
+   * Rules:
+   * - 영어/숫자/기호: 1 token ≈ 4 characters
+   * - 한글/CJK: 1 token ≈ 2 characters (multibyte)
+   * - 공백/줄바꿈: 별도 처리
+   * - 코드 블록: 더 정확한 카운팅
+   *
+   * @param text - 프롬프트 텍스트
+   * @returns 예상 토큰 수
+   */
+  protected estimateTokens(text: string): number {
+    // 1. 코드 블록 추출 및 별도 처리
+    const codeBlocks: string[] = []
+    let textWithoutCode = text.replace(/```[\s\S]*?```/g, (match) => {
+      codeBlocks.push(match)
+      return "" // 임시 제거
+    })
+
+    // 2. 한글/CJK 문자 카운트 (multibyte characters)
+    const cjkRegex = /[\u3131-\uD79D\u4e00-\u9fff\u3040-\u309f\u30a0-\u30ff]/g
+    const cjkMatches = textWithoutCode.match(cjkRegex) || []
+    const cjkCount = cjkMatches.length
+
+    // CJK 제거한 나머지 텍스트
+    const textWithoutCJK = textWithoutCode.replace(cjkRegex, "")
+
+    // 3. 영어/숫자/기호 카운트
+    const latinCount = textWithoutCJK.length
+
+    // 4. 코드 블록 토큰 추정 (코드는 더 압축적)
+    let codeTokens = 0
+    codeBlocks.forEach((block) => {
+      // 코드는 1 token ≈ 3.5 characters (더 압축적)
+      codeTokens += Math.ceil(block.length / 3.5)
+    })
+
+    // 5. 최종 토큰 계산
+    const latinTokens = Math.ceil(latinCount / 4) // 영어: 1 token ≈ 4 chars
+    const cjkTokens = Math.ceil(cjkCount / 2) // 한글/CJK: 1 token ≈ 2 chars
+
+    return latinTokens + cjkTokens + codeTokens
+  }
 }

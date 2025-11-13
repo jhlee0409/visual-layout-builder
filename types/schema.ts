@@ -292,7 +292,15 @@ export interface LaydlerSchema {
 }
 
 /**
- * Generation Package 
+ * Type Aliases for V2 Clarity
+ * V2 타입임을 명시적으로 표현하기 위한 alias
+ */
+export type LaydlerSchemaV2 = LaydlerSchema
+export type ComponentV2 = Component
+export type BreakpointV2 = Breakpoint
+
+/**
+ * Generation Package
  * AI 프롬프트로 전달될 최종 패키지
  */
 export interface GenerationPackage {
