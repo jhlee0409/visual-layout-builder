@@ -7,7 +7,9 @@ import type {
   LaydlerSchema,
   Component,
   Breakpoint,
+  LayoutConfig,
 } from "@/types/schema"
+import { sortComponentsByCanvasCoordinates } from "./canvas-sort-utils"
 
 /**
  * Default Grid Configuration for each breakpoint type
@@ -364,6 +366,53 @@ export function normalizeSchema(schema: LaydlerSchema): LaydlerSchema {
 
     return comp
   })
+
+  // 3. Sync layouts[breakpoint].components with Canvas layouts
+  // Canvas layout이 있는 컴포넌트를 자동으로 layouts[breakpoint].components에 추가
+  // 이렇게 하면 Desktop으로 시작 → Mobile 추가 → Mobile Canvas 배치 시
+  // layouts.mobile.components가 자동으로 업데이트됨
+
+  // FIX: Use dynamic breakpoint names from schema.breakpoints instead of hardcoded values
+  // This supports custom breakpoint names beyond 'mobile', 'tablet', 'desktop'
+  for (const breakpoint of normalized.breakpoints) {
+    const breakpointName = breakpoint.name
+
+    // Edge Case: Auto-create layout if it doesn't exist but components have Canvas data
+    if (!normalized.layouts[breakpointName]) {
+      const hasCanvasData = normalized.components.some(
+        comp => comp.responsiveCanvasLayout?.[breakpointName as keyof typeof comp.responsiveCanvasLayout]
+      )
+
+      if (hasCanvasData) {
+        // Auto-create missing layout
+        normalized.layouts[breakpointName] = {
+          structure: 'vertical',
+          components: [],
+        } as LayoutConfig
+      } else {
+        // Skip this breakpoint if no Canvas data and no layout
+        continue
+      }
+    }
+
+    const componentsWithCanvas = normalized.components
+      .filter(comp => comp.responsiveCanvasLayout?.[breakpointName as keyof typeof comp.responsiveCanvasLayout])
+      .map(comp => comp.id)
+
+    // 기존 components와 Canvas components를 합침 (중복 제거)
+    const existingComponents = normalized.layouts[breakpointName].components
+    const allComponents = new Set([...existingComponents, ...componentsWithCanvas])
+
+    // Performance: Use shared utility function with Map-based O(n log n) sorting
+    // Previous implementation: O(n²) due to Array.find() in sort comparator
+    const sortedComponents = sortComponentsByCanvasCoordinates(
+      Array.from(allComponents),
+      normalized.components,
+      breakpointName
+    )
+
+    normalized.layouts[breakpointName].components = sortedComponents
+  }
 
   return normalized
 }

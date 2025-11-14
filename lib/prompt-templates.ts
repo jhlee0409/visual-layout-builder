@@ -9,6 +9,7 @@ import type {
 } from "@/types/schema"
 import { describeVisualLayout } from "./visual-layout-descriptor"
 import { generateGridCSS, generateTailwindClasses } from "./canvas-to-grid"
+import { sortComponentsByCanvasCoordinates, getComponentCanvasLayout } from "./canvas-sort-utils"
 
 /**
  * Prompt Template Types for Schema
@@ -170,13 +171,35 @@ export const reactTailwindTemplate: PromptTemplate = {
       // Structure type (기존)
       section += `**Layout Structure:** \`${layout.structure}\`\n\n`
 
-      // Component order (DOM 순서)
+      // Component order (DOM 순서) - Canvas 좌표 기준으로 정렬
       section += `**Component Order (DOM):**\n\n`
-      section += `For accessibility and SEO, the DOM order is:\n\n`
-      layout.components.forEach((componentId: string, idx: number) => {
-        section += `${idx + 1}. ${componentId}\n`
+      section += `For accessibility and SEO, the DOM order should follow visual layout (top to bottom, left to right):\n\n`
+
+      // Performance: Use shared utility function with Map-based O(n log n) sorting
+      // Previous implementation: O(n²) due to Array.find() in sort comparator
+      const sortedComponents = sortComponentsByCanvasCoordinates(
+        layout.components,
+        components,
+        layoutKey
+      )
+
+      sortedComponents.forEach((componentId: string, idx: number) => {
+        const comp = components.find(c => c.id === componentId)
+        if (!comp) return
+
+        const canvasLayout = getComponentCanvasLayout(comp, layoutKey)
+        section += `${idx + 1}. ${componentId}`
+        if (canvasLayout) {
+          section += ` (Canvas row ${canvasLayout.y})`
+        }
+        section += `\n`
       })
       section += "\n"
+      section += `**⚠️ IMPORTANT - Layout Priority:**\n\n`
+      section += `1. **PRIMARY**: Use the **Visual Layout (Canvas Grid)** positioning above as your main guide\n`
+      section += `2. **SECONDARY**: The DOM order below is for reference only (accessibility/SEO)\n`
+      section += `3. **RULE**: Components with the same Y-coordinate range MUST be placed side-by-side horizontally\n`
+      section += `4. **DO NOT** stack components vertically if they share the same row in the Canvas Grid\n\n`
       section += `**Note:** Visual positioning (above) may differ from DOM order.\n\n`
 
       // Roles (if structure is sidebar-main)
