@@ -624,4 +624,218 @@ describe('Schema Utils', () => {
       expect(normalized.layouts.desktop.components).toHaveLength(2)
     })
   })
+
+  describe('normalizeSchema - Canvas coordinate based sorting', () => {
+    it('should sort components by Canvas Y coordinate (top to bottom)', () => {
+      const schema: LaydlerSchema = {
+        schemaVersion: '2.0',
+        components: [
+          {
+            id: 'c1',
+            name: 'Header',
+            semanticTag: 'header',
+            positioning: { type: 'sticky', position: { top: 0 } },
+            layout: { type: 'flex', flex: { direction: 'row' } },
+            responsiveCanvasLayout: {
+              desktop: { x: 0, y: 0, width: 12, height: 1 }, // Row 0 (top)
+            },
+          },
+          {
+            id: 'c3',
+            name: 'Footer',
+            semanticTag: 'footer',
+            positioning: { type: 'static' },
+            layout: { type: 'flex', flex: { direction: 'row' } },
+            responsiveCanvasLayout: {
+              desktop: { x: 0, y: 7, width: 12, height: 1 }, // Row 7 (bottom)
+            },
+          },
+          {
+            id: 'c4',
+            name: 'Section',
+            semanticTag: 'section',
+            positioning: { type: 'static' },
+            layout: { type: 'flex', flex: { direction: 'column' } },
+            responsiveCanvasLayout: {
+              desktop: { x: 0, y: 1, width: 6, height: 6 }, // Row 1 (middle-left)
+            },
+          },
+          {
+            id: 'c5',
+            name: 'Section2',
+            semanticTag: 'section',
+            positioning: { type: 'static' },
+            layout: { type: 'flex', flex: { direction: 'column' } },
+            responsiveCanvasLayout: {
+              desktop: { x: 6, y: 1, width: 6, height: 6 }, // Row 1 (middle-right)
+            },
+          },
+        ],
+        breakpoints: [
+          { name: 'desktop', minWidth: 1024, gridCols: 12, gridRows: 8 },
+        ],
+        layouts: {
+          desktop: { structure: 'vertical', components: ['c1', 'c3', 'c4', 'c5'] }, // Wrong order
+        },
+      }
+
+      const normalized = normalizeSchema(schema)
+
+      // Should be sorted: c1 (row 0) → c4, c5 (row 1, left to right) → c3 (row 7)
+      expect(normalized.layouts.desktop.components).toEqual(['c1', 'c4', 'c5', 'c3'])
+    })
+
+    it('should sort components by X coordinate when Y is the same (left to right)', () => {
+      const schema: LaydlerSchema = {
+        schemaVersion: '2.0',
+        components: [
+          {
+            id: 'c2',
+            name: 'Middle',
+            semanticTag: 'section',
+            positioning: { type: 'static' },
+            layout: { type: 'flex', flex: { direction: 'column' } },
+            responsiveCanvasLayout: {
+              desktop: { x: 4, y: 1, width: 4, height: 1 }, // Row 1, col 4
+            },
+          },
+          {
+            id: 'c1',
+            name: 'Left',
+            semanticTag: 'section',
+            positioning: { type: 'static' },
+            layout: { type: 'flex', flex: { direction: 'column' } },
+            responsiveCanvasLayout: {
+              desktop: { x: 0, y: 1, width: 4, height: 1 }, // Row 1, col 0
+            },
+          },
+          {
+            id: 'c3',
+            name: 'Right',
+            semanticTag: 'section',
+            positioning: { type: 'static' },
+            layout: { type: 'flex', flex: { direction: 'column' } },
+            responsiveCanvasLayout: {
+              desktop: { x: 8, y: 1, width: 4, height: 1 }, // Row 1, col 8
+            },
+          },
+        ],
+        breakpoints: [
+          { name: 'desktop', minWidth: 1024, gridCols: 12, gridRows: 8 },
+        ],
+        layouts: {
+          desktop: { structure: 'horizontal', components: ['c2', 'c1', 'c3'] }, // Wrong order
+        },
+      }
+
+      const normalized = normalizeSchema(schema)
+
+      // Should be sorted: c1 (x=0) → c2 (x=4) → c3 (x=8)
+      expect(normalized.layouts.desktop.components).toEqual(['c1', 'c2', 'c3'])
+    })
+
+    it('should handle complex layout with multiple rows (real-world scenario)', () => {
+      const schema: LaydlerSchema = {
+        schemaVersion: '2.0',
+        components: [
+          {
+            id: 'c1',
+            name: 'Header',
+            semanticTag: 'header',
+            positioning: { type: 'sticky', position: { top: 0 } },
+            layout: { type: 'container' },
+            responsiveCanvasLayout: {
+              desktop: { x: 0, y: 0, width: 12, height: 1 }, // Row 0
+            },
+          },
+          {
+            id: 'c2',
+            name: 'Sidebar',
+            semanticTag: 'aside',
+            positioning: { type: 'static' },
+            layout: { type: 'flex', flex: { direction: 'column' } },
+            responsiveCanvasLayout: {
+              desktop: { x: 0, y: 1, width: 3, height: 6 }, // Row 1-6, left
+            },
+          },
+          {
+            id: 'c3',
+            name: 'Main',
+            semanticTag: 'main',
+            positioning: { type: 'static' },
+            layout: { type: 'container' },
+            responsiveCanvasLayout: {
+              desktop: { x: 3, y: 1, width: 9, height: 6 }, // Row 1-6, right
+            },
+          },
+          {
+            id: 'c4',
+            name: 'Footer',
+            semanticTag: 'footer',
+            positioning: { type: 'static' },
+            layout: { type: 'container' },
+            responsiveCanvasLayout: {
+              desktop: { x: 0, y: 7, width: 12, height: 1 }, // Row 7
+            },
+          },
+        ],
+        breakpoints: [
+          { name: 'desktop', minWidth: 1024, gridCols: 12, gridRows: 8 },
+        ],
+        layouts: {
+          desktop: { structure: 'sidebar-main', components: ['c4', 'c1', 'c3', 'c2'] }, // Completely wrong order
+        },
+      }
+
+      const normalized = normalizeSchema(schema)
+
+      // Should be sorted: c1 (row 0) → c2 (row 1, x=0) → c3 (row 1, x=3) → c4 (row 7)
+      expect(normalized.layouts.desktop.components).toEqual(['c1', 'c2', 'c3', 'c4'])
+    })
+
+    it('should preserve order for components without Canvas layout', () => {
+      const schema: LaydlerSchema = {
+        schemaVersion: '2.0',
+        components: [
+          {
+            id: 'c1',
+            name: 'Header',
+            semanticTag: 'header',
+            positioning: { type: 'sticky', position: { top: 0 } },
+            layout: { type: 'flex', flex: { direction: 'row' } },
+            responsiveCanvasLayout: {
+              desktop: { x: 0, y: 0, width: 12, height: 1 },
+            },
+          },
+          {
+            id: 'c2',
+            name: 'NoCanvas1',
+            semanticTag: 'section',
+            positioning: { type: 'static' },
+            layout: { type: 'flex', flex: { direction: 'column' } },
+            // No Canvas layout
+          },
+          {
+            id: 'c3',
+            name: 'NoCanvas2',
+            semanticTag: 'section',
+            positioning: { type: 'static' },
+            layout: { type: 'flex', flex: { direction: 'column' } },
+            // No Canvas layout
+          },
+        ],
+        breakpoints: [
+          { name: 'desktop', minWidth: 1024, gridCols: 12, gridRows: 8 },
+        ],
+        layouts: {
+          desktop: { structure: 'vertical', components: ['c2', 'c3'] }, // Only c2, c3 initially
+        },
+      }
+
+      const normalized = normalizeSchema(schema)
+
+      // c1 should come first (has Canvas), then c2, c3 in original order
+      expect(normalized.layouts.desktop.components).toEqual(['c1', 'c2', 'c3'])
+    })
+  })
 })

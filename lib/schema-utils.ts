@@ -375,11 +375,36 @@ export function normalizeSchema(schema: LaydlerSchema): LaydlerSchema {
         .filter(comp => comp.responsiveCanvasLayout?.[breakpointName])
         .map(comp => comp.id)
 
-      // 기존 components와 Canvas components를 합침 (중복 제거, 순서 유지)
+      // 기존 components와 Canvas components를 합침 (중복 제거)
       const existingComponents = normalized.layouts[breakpointName].components
       const allComponents = new Set([...existingComponents, ...componentsWithCanvas])
 
-      normalized.layouts[breakpointName].components = Array.from(allComponents)
+      // Canvas 좌표 기준으로 정렬 (위에서 아래로, 왼쪽에서 오른쪽으로)
+      // 이렇게 하면 DOM 순서가 시각적 순서와 일치함
+      const sortedComponents = Array.from(allComponents).sort((a, b) => {
+        const compA = normalized.components.find(c => c.id === a)
+        const compB = normalized.components.find(c => c.id === b)
+
+        const layoutA = compA?.responsiveCanvasLayout?.[breakpointName]
+        const layoutB = compB?.responsiveCanvasLayout?.[breakpointName]
+
+        // If both have Canvas layout, sort by Y (row) then X (column)
+        if (layoutA && layoutB) {
+          if (layoutA.y !== layoutB.y) {
+            return layoutA.y - layoutB.y // Top to bottom
+          }
+          return layoutA.x - layoutB.x // Left to right
+        }
+
+        // If only one has Canvas layout, prioritize it
+        if (layoutA) return -1
+        if (layoutB) return 1
+
+        // Neither has Canvas layout, keep original order
+        return 0
+      })
+
+      normalized.layouts[breakpointName].components = sortedComponents
     }
   }
 

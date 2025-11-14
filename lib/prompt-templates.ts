@@ -170,14 +170,44 @@ export const reactTailwindTemplate: PromptTemplate = {
       // Structure type (기존)
       section += `**Layout Structure:** \`${layout.structure}\`\n\n`
 
-      // Component order (DOM 순서)
+      // Component order (DOM 순서) - Canvas 좌표 기준으로 정렬
       section += `**Component Order (DOM):**\n\n`
-      section += `For accessibility and SEO, the DOM order is:\n\n`
-      layout.components.forEach((componentId: string, idx: number) => {
-        section += `${idx + 1}. ${componentId}\n`
+      section += `For accessibility and SEO, the DOM order should follow visual layout (top to bottom, left to right):\n\n`
+
+      // Sort components by Canvas Y coordinate (top to bottom), then X (left to right)
+      const sortedComponents = [...layout.components].sort((a, b) => {
+        const compA = components.find(c => c.id === a)
+        const compB = components.find(c => c.id === b)
+
+        const layoutA = compA?.responsiveCanvasLayout?.[layoutKey] || compA?.canvasLayout
+        const layoutB = compB?.responsiveCanvasLayout?.[layoutKey] || compB?.canvasLayout
+
+        // If both have Canvas layout, sort by Y (row) then X (column)
+        if (layoutA && layoutB) {
+          if (layoutA.y !== layoutB.y) {
+            return layoutA.y - layoutB.y // Top to bottom
+          }
+          return layoutA.x - layoutB.x // Left to right
+        }
+
+        // If only one has Canvas layout, keep original order
+        if (layoutA) return -1
+        if (layoutB) return 1
+
+        // Neither has Canvas layout, keep original order
+        return 0
+      })
+
+      sortedComponents.forEach((componentId: string, idx: number) => {
+        const comp = components.find(c => c.id === componentId)
+        const canvasLayout = comp?.responsiveCanvasLayout?.[layoutKey] || comp?.canvasLayout
+        section += `${idx + 1}. ${componentId}`
+        if (canvasLayout) {
+          section += ` (Canvas row ${canvasLayout.y})`
+        }
+        section += `\n`
       })
       section += "\n"
-      section += `**Note:** Visual positioning (above) may differ from DOM order.\n\n`
 
       // Roles (if structure is sidebar-main)
       if (layout.roles && Object.keys(layout.roles).length > 0) {
