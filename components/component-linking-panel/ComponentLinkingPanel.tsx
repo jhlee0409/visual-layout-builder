@@ -40,6 +40,14 @@ export function ComponentLinkingPanel({ onClose }: { onClose: () => void }) {
   const removeComponentLink = useLayoutStore((state) => state.removeComponentLink)
   const clearAllLinks = useLayoutStore((state) => state.clearAllLinks)
   const autoLinkSimilar = useLayoutStore((state) => state.autoLinkSimilarComponents)
+  const mergeLinkedComponents = useLayoutStore((state) => state.mergeLinkedComponents)
+
+  // Apply changes when closing
+  const handleClose = useCallback(() => {
+    // Merge all linked components before closing
+    mergeLinkedComponents()
+    onClose()
+  }, [mergeLinkedComponents, onClose])
 
   // 브레이크포인트별로 이미 추가된 컴포넌트만 그룹화
   const componentsByBreakpoint = useMemo(() => {
@@ -242,7 +250,7 @@ export function ComponentLinkingPanel({ onClose }: { onClose: () => void }) {
             Clear All Links
           </Button>
 
-          <Button variant="ghost" size="icon" onClick={onClose}>
+          <Button variant="ghost" size="icon" onClick={handleClose}>
             <X className="w-5 h-5" />
           </Button>
         </div>

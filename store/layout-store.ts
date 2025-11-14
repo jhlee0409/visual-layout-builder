@@ -207,12 +207,18 @@ export const useLayoutStore = create<LayoutState>()(
             }
           }
 
+          // Remove all component links related to this component (orphaned links cleanup)
+          const componentLinks = state.componentLinks.filter(
+            (link) => link.source !== id && link.target !== id
+          )
+
           return {
             schema: {
               ...state.schema,
               components,
               layouts,
             },
+            componentLinks,
             selectedComponentId:
               state.selectedComponentId === id ? null : state.selectedComponentId,
           }
@@ -671,6 +677,28 @@ export const useLayoutStore = create<LayoutState>()(
 
       // Component Linking actions
       addComponentLink: (sourceId, targetId) => {
+        const state = get()
+
+        // Validation: Check if both components exist
+        const sourceExists = state.schema.components.some((c) => c.id === sourceId)
+        const targetExists = state.schema.components.some((c) => c.id === targetId)
+
+        if (!sourceExists) {
+          console.warn(`Cannot link: source component "${sourceId}" does not exist`)
+          return
+        }
+
+        if (!targetExists) {
+          console.warn(`Cannot link: target component "${targetId}" does not exist`)
+          return
+        }
+
+        // Validation: Cannot link component to itself
+        if (sourceId === targetId) {
+          console.warn(`Cannot link component "${sourceId}" to itself`)
+          return
+        }
+
         set((state) => {
           // 중복 체크
           const exists = state.componentLinks.some(
@@ -689,8 +717,8 @@ export const useLayoutStore = create<LayoutState>()(
           }
         }, false, "addComponentLink")
 
-        // 연결 후 자동으로 병합 수행
-        get().mergeLinkedComponents()
+        // Note: mergeLinkedComponents() should be called manually
+        // (e.g., when closing ComponentLinkingPanel) to avoid performance issues
       },
 
       removeComponentLink: (sourceId, targetId) => {
@@ -704,8 +732,7 @@ export const useLayoutStore = create<LayoutState>()(
           ),
         }), false, "removeComponentLink")
 
-        // 연결 제거 후 재병합 (그룹이 분리될 수 있음)
-        get().mergeLinkedComponents()
+        // Note: mergeLinkedComponents() should be called manually
       },
 
       clearAllLinks: () => {
@@ -714,8 +741,7 @@ export const useLayoutStore = create<LayoutState>()(
           false,
           "clearAllLinks"
         )
-        // 링크 제거 후 재병합
-        get().mergeLinkedComponents()
+        // Note: mergeLinkedComponents() should be called manually
       },
 
       getLinkedComponentGroup: (componentId) => {
@@ -856,8 +882,7 @@ export const useLayoutStore = create<LayoutState>()(
           }
         }, false, "autoLinkSimilarComponents")
 
-        // 연결 후 자동 병합
-        get().mergeLinkedComponents()
+        // Note: mergeLinkedComponents() should be called manually
       },
 
       // History actions (간단 구현)
