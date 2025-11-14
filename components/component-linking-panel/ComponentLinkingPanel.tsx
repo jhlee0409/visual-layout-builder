@@ -1,6 +1,6 @@
 "use client"
 
-import { useCallback, useMemo } from "react"
+import { useCallback, useMemo, useEffect } from "react"
 import {
   ReactFlow,
   Node,
@@ -76,12 +76,13 @@ export function ComponentLinkingPanel({ onClose }: { onClose: () => void }) {
     const cardHeight = 90
     const cardGap = 20
 
-    // 브레이크포인트 순서 정의 (mobile → tablet → desktop)
-    const breakpointOrder = ["mobile", "tablet", "desktop"]
+    // Schema의 실제 breakpoint 사용 (하드코딩 제거)
+    const breakpointOrder = schema.breakpoints.map((bp) => bp.name)
     const breakpointIcons: Record<string, string> = {
       mobile: "📱",
       tablet: "📱",
       desktop: "🖥️",
+      default: "📐", // fallback for unknown breakpoints
     }
 
     breakpointOrder.forEach((bp, colIndex) => {
@@ -96,7 +97,7 @@ export function ComponentLinkingPanel({ onClose }: { onClose: () => void }) {
         data: {
           label: (
             <div className="text-center">
-              <div className="text-2xl">{breakpointIcons[bp]}</div>
+              <div className="text-2xl">{breakpointIcons[bp] || breakpointIcons.default}</div>
               <div className="font-semibold capitalize">{bp}</div>
               <div className="text-xs text-gray-500">({components.length} components)</div>
             </div>
@@ -156,7 +157,7 @@ export function ComponentLinkingPanel({ onClose }: { onClose: () => void }) {
     })
 
     return nodes
-  }, [componentsByBreakpoint])
+  }, [componentsByBreakpoint, schema.breakpoints])
 
   // React Flow 엣지 생성 (componentLinks 기반)
   const initialEdges: Edge[] = useMemo(() => {
@@ -183,22 +184,60 @@ export function ComponentLinkingPanel({ onClose }: { onClose: () => void }) {
     return edges
   }, [componentLinks, componentsByBreakpoint])
 
+  // Node ID → Component ID 매핑 (type-safe, Map 기반)
+  const nodeIdToComponentId = useMemo(() => {
+    const map = new Map<string, string>()
+
+    Object.entries(componentsByBreakpoint).forEach(([bp, components]) => {
+      components.forEach((item) => {
+        const nodeId = `${bp}-${item.component.id}`
+        map.set(nodeId, item.component.id)
+      })
+    })
+
+    return map
+  }, [componentsByBreakpoint])
+
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes)
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges)
+
+  // State synchronization: componentLinks 변경 시 React Flow edges 자동 업데이트
+  useEffect(() => {
+    const newEdges: Edge[] = []
+
+    componentLinks.forEach((link, index) => {
+      const sourceBreakpoint = findBreakpointForComponent(link.source, componentsByBreakpoint)
+      const targetBreakpoint = findBreakpointForComponent(link.target, componentsByBreakpoint)
+
+      if (!sourceBreakpoint || !targetBreakpoint) return
+
+      newEdges.push({
+        id: `e-${index}`,
+        source: `${sourceBreakpoint}-${link.source}`,
+        target: `${targetBreakpoint}-${link.target}`,
+        animated: true,
+        style: { stroke: "#3b82f6", strokeWidth: 2 },
+        label: "🔗",
+        type: "smoothstep",
+      })
+    })
+
+    setEdges(newEdges)
+  }, [componentLinks, componentsByBreakpoint, setEdges])
 
   // 연결 생성 핸들러
   const onConnect = useCallback(
     (connection: Connection) => {
       if (!connection.source || !connection.target) return
 
-      const sourceNode = nodes.find((n) => n.id === connection.source)
-      const targetNode = nodes.find((n) => n.id === connection.target)
+      // Map을 사용하여 type-safe하게 component ID 추출
+      const sourceComponentId = nodeIdToComponentId.get(connection.source)
+      const targetComponentId = nodeIdToComponentId.get(connection.target)
 
-      if (!sourceNode || !targetNode) return
-      if (!sourceNode.data || !targetNode.data) return
-
-      const sourceComponentId = (sourceNode.data as { componentId: string }).componentId
-      const targetComponentId = (targetNode.data as { componentId: string }).componentId
+      if (!sourceComponentId || !targetComponentId) {
+        console.warn("Cannot find component IDs for connection")
+        return
+      }
 
       // 같은 컴포넌트면 연결 불가
       if (sourceComponentId === targetComponentId) {
@@ -209,20 +248,24 @@ export function ComponentLinkingPanel({ onClose }: { onClose: () => void }) {
       // Store에 link 추가 (자동으로 Union-Find 그룹화 및 병합)
       addComponentLink(sourceComponentId, targetComponentId)
     },
-    [nodes, addComponentLink]
+    [nodeIdToComponentId, addComponentLink]
   )
 
-  // 엣지 삭제 핸들러
+  // 엣지 삭제 핸들러 (Map 기반, type-safe)
   const onEdgesDelete = useCallback(
     (edgesToDelete: Edge[]) => {
       edgesToDelete.forEach((edge) => {
-        // "desktop-c-1" → "c-1" 추출
-        const sourceId = edge.source.split("-").slice(1).join("-")
-        const targetId = edge.target.split("-").slice(1).join("-")
-        removeComponentLink(sourceId, targetId)
+        const sourceId = nodeIdToComponentId.get(edge.source)
+        const targetId = nodeIdToComponentId.get(edge.target)
+
+        if (sourceId && targetId) {
+          removeComponentLink(sourceId, targetId)
+        } else {
+          console.warn(`Cannot find component IDs for edge: ${edge.id}`)
+        }
       })
     },
-    [removeComponentLink]
+    [nodeIdToComponentId, removeComponentLink]
   )
 
   return (
