@@ -71,8 +71,8 @@ export function BreakpointSwitcher() {
     const newBreakpoint: Breakpoint = {
       name: newBreakpointName,
       minWidth,
-      gridCols: DEFAULT_GRID_CONFIG[newBreakpointName as keyof typeof DEFAULT_GRID_CONFIG]?.gridCols ?? 12,
-      gridRows: DEFAULT_GRID_CONFIG[newBreakpointName as keyof typeof DEFAULT_GRID_CONFIG]?.gridRows ?? 8,
+      gridCols: DEFAULT_GRID_CONFIG[newBreakpointName]?.gridCols ?? 12,
+      gridRows: DEFAULT_GRID_CONFIG[newBreakpointName]?.gridRows ?? 8,
     }
 
     addBreakpoint(newBreakpoint)

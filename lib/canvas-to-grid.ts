@@ -58,7 +58,7 @@ export function canvasToGridPositions(
   components.forEach((comp) => {
     // Get canvas layout for this breakpoint
     const layout =
-      comp.responsiveCanvasLayout?.[breakpoint as keyof typeof comp.responsiveCanvasLayout] ||
+      comp.responsiveCanvasLayout?.[breakpoint] ||
       comp.canvasLayout
 
     if (!layout) return
@@ -224,7 +224,7 @@ export function analyzeGridComplexity(
 } {
   const componentsWithLayout = components.filter(
     (c) =>
-      c.responsiveCanvasLayout?.[breakpoint as keyof typeof c.responsiveCanvasLayout] ||
+      c.responsiveCanvasLayout?.[breakpoint] ||
       c.canvasLayout
   )
 
@@ -242,7 +242,7 @@ export function analyzeGridComplexity(
   const rowMap = new Map<number, Component[]>()
   componentsWithLayout.forEach((comp) => {
     const layout =
-      comp.responsiveCanvasLayout?.[breakpoint as keyof typeof comp.responsiveCanvasLayout] ||
+      comp.responsiveCanvasLayout?.[breakpoint] ||
       comp.canvasLayout!
 
     for (let y = layout.y; y < layout.y + layout.height; y++) {
@@ -269,10 +269,10 @@ export function analyzeGridComplexity(
         const comp1ResponsiveLayout = comps[i].responsiveCanvasLayout
         const comp2ResponsiveLayout = comps[j].responsiveCanvasLayout
         const layout1 =
-          (comp1ResponsiveLayout?.[breakpoint as keyof typeof comp1ResponsiveLayout]) ||
+          (comp1ResponsiveLayout?.[breakpoint]) ||
           comps[i].canvasLayout!
         const layout2 =
-          (comp2ResponsiveLayout?.[breakpoint as keyof typeof comp2ResponsiveLayout]) ||
+          (comp2ResponsiveLayout?.[breakpoint]) ||
           comps[j].canvasLayout!
 
         const overlap = !(

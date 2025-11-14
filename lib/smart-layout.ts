@@ -249,7 +249,7 @@ function getComponentCanvasLayout(
 ): CanvasLayout | null {
   // Responsive layout 우선, 없으면 fallback
   const layout =
-    component.responsiveCanvasLayout?.[breakpoint as keyof typeof component.responsiveCanvasLayout] ||
+    component.responsiveCanvasLayout?.[breakpoint] ||
     component.canvasLayout
 
   return layout || null

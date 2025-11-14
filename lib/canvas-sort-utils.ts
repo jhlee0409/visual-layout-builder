@@ -46,13 +46,9 @@ export function sortComponentsByCanvasCoordinates(
     if (!compA || !compB) return 0
 
     const layoutA =
-      compA.responsiveCanvasLayout?.[
-        breakpoint as keyof typeof compA.responsiveCanvasLayout
-      ] || compA.canvasLayout
+      compA.responsiveCanvasLayout?.[breakpoint] || compA.canvasLayout
     const layoutB =
-      compB.responsiveCanvasLayout?.[
-        breakpoint as keyof typeof compB.responsiveCanvasLayout
-      ] || compB.canvasLayout
+      compB.responsiveCanvasLayout?.[breakpoint] || compB.canvasLayout
 
     // If both have Canvas layout, sort by Y (top to bottom) then X (left to right)
     if (layoutA && layoutB) {
@@ -86,8 +82,6 @@ export function getComponentCanvasLayout(
   breakpoint: string
 ) {
   return (
-    component.responsiveCanvasLayout?.[
-      breakpoint as keyof typeof component.responsiveCanvasLayout
-    ] || component.canvasLayout
+    component.responsiveCanvasLayout?.[breakpoint] || component.canvasLayout
   )
 }

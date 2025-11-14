@@ -29,9 +29,7 @@ export function getCanvasLayoutForBreakpoint(
   // Try responsiveCanvasLayout first
   if (component.responsiveCanvasLayout) {
     const responsiveLayout =
-      component.responsiveCanvasLayout[
-        breakpoint as keyof typeof component.responsiveCanvasLayout
-      ]
+      component.responsiveCanvasLayout[breakpoint]
     if (responsiveLayout) {
       return responsiveLayout
     }

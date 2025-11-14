@@ -52,9 +52,7 @@ export function calculateMinimumGridSize(
   components.forEach((component) => {
     // 현재 breakpoint의 캔버스 레이아웃 가져오기
     const layout =
-      component.responsiveCanvasLayout?.[
-        currentBreakpoint as keyof typeof component.responsiveCanvasLayout
-      ] || component.canvasLayout
+      component.responsiveCanvasLayout?.[currentBreakpoint] || component.canvasLayout
 
     if (layout) {
       // 컴포넌트가 차지하는 마지막 행/열 계산
@@ -104,9 +102,7 @@ export function isGridResizeSafe(
     const affected = components
       .map((c) => {
         const layout =
-          c.responsiveCanvasLayout?.[
-            currentBreakpoint as keyof typeof c.responsiveCanvasLayout
-          ] || c.canvasLayout
+          c.responsiveCanvasLayout?.[currentBreakpoint] || c.canvasLayout
 
         if (layout && layout.y + layout.height > newGridRows) {
           return {
@@ -137,9 +133,7 @@ export function isGridResizeSafe(
     const affected = components
       .map((c) => {
         const layout =
-          c.responsiveCanvasLayout?.[
-            currentBreakpoint as keyof typeof c.responsiveCanvasLayout
-          ] || c.canvasLayout
+          c.responsiveCanvasLayout?.[currentBreakpoint] || c.canvasLayout
 
         if (layout && layout.x + layout.width > newGridCols) {
           return {

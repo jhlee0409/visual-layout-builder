@@ -539,9 +539,7 @@ function validateCanvasLayoutConsistency(
       .map((c) => {
         // Responsive Canvas Layout 또는 기본 Canvas Layout 사용
         const canvasLayout =
-          c.responsiveCanvasLayout?.[
-            breakpointName as keyof typeof c.responsiveCanvasLayout
-          ] || c.canvasLayout
+          c.responsiveCanvasLayout?.[breakpointName] || c.canvasLayout
 
         return {
           id: c.id,

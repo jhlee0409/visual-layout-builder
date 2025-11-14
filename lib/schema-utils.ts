@@ -14,14 +14,17 @@ import type {
 import { sortComponentsByCanvasCoordinates } from "./canvas-sort-utils"
 
 /**
- * Default Grid Configuration for each breakpoint type
+ * Default Grid Configuration for common breakpoint types
+ *
+ * Supports dynamic breakpoint names - these are just defaults.
+ * Any custom breakpoint name will fall back to 12x8 grid.
  */
-export const DEFAULT_GRID_CONFIG = {
+export const DEFAULT_GRID_CONFIG: Record<string, { gridCols: number; gridRows: number }> = {
   mobile: { gridCols: 4, gridRows: 8 },
   tablet: { gridCols: 8, gridRows: 8 },
   desktop: { gridCols: 12, gridRows: 8 },
   custom: { gridCols: 6, gridRows: 8 },
-} as const
+}
 
 /**
  * Grid size constraints

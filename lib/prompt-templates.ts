@@ -139,7 +139,7 @@ Let's build a high-quality, production-ready layout.`,
     section += `Implement the following page structures for each breakpoint:\n\n`
 
     breakpoints.forEach((breakpoint, index) => {
-      const layoutKey = breakpoint.name as "mobile" | "tablet" | "desktop"
+      const layoutKey = breakpoint.name  // Dynamic breakpoint support
       const layout = layouts[layoutKey]
       if (!layout) return
 
