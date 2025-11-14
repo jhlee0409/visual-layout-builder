@@ -217,8 +217,9 @@ Let's build a high-quality, production-ready layout.`,
       section += `4. **DO NOT** stack components vertically if they share the same row in the Canvas Grid\n\n`
 
       // Component order (DOM 순서) - Canvas 좌표 기준으로 정렬
-      section += `**DOM Order (Reference Only - DO NOT use for visual positioning):**\n\n`
+      section += `**Component Order (DOM):**\n\n`
       section += `For screen readers and SEO crawlers, the HTML source order is:\n\n`
+      section += `⚠️ **Note:** Visual positioning may differ from DOM order. Use Canvas Grid coordinates for layout.\n\n`
 
       // Performance: Use shared utility function with Map-based O(n log n) sorting
       // Previous implementation: O(n²) due to Array.find() in sort comparator
@@ -379,44 +380,39 @@ function formatStyling(styling: ComponentStyling): string {
 
 /**
  * Helper function to format responsive behavior specification
+ *
+ * Supports dynamic breakpoint names (not just mobile/tablet/desktop)
+ * Iterates over all properties in ResponsiveBehavior object
  */
 function formatResponsive(responsive: ResponsiveBehavior): string {
   let text = `**Responsive Behavior:**\n`
 
-  if (responsive.mobile) {
-    const behaviors: string[] = []
-    if (responsive.mobile.hidden) behaviors.push("hidden")
-    if (responsive.mobile.width) behaviors.push(`width: ${responsive.mobile.width}`)
-    if (responsive.mobile.order !== undefined)
-      behaviors.push(`order: ${responsive.mobile.order}`)
-    if (behaviors.length > 0) {
-      text += `- Mobile: ${behaviors.join(", ")}\n`
-    }
-  }
+  // Dynamically iterate over all breakpoints in responsive object
+  // Supports any number of breakpoints (mobile, tablet, laptop, desktop, ultrawide, etc.)
+  Object.entries(responsive).forEach(([breakpointName, config]) => {
+    if (!config) return  // Skip undefined entries
 
-  if (responsive.tablet) {
     const behaviors: string[] = []
-    if (responsive.tablet.hidden !== undefined)
-      behaviors.push(responsive.tablet.hidden ? "hidden" : "visible")
-    if (responsive.tablet.width) behaviors.push(`width: ${responsive.tablet.width}`)
-    if (responsive.tablet.order !== undefined)
-      behaviors.push(`order: ${responsive.tablet.order}`)
-    if (behaviors.length > 0) {
-      text += `- Tablet (md:): ${behaviors.join(", ")}\n`
-    }
-  }
 
-  if (responsive.desktop) {
-    const behaviors: string[] = []
-    if (responsive.desktop.hidden !== undefined)
-      behaviors.push(responsive.desktop.hidden ? "hidden" : "visible")
-    if (responsive.desktop.width) behaviors.push(`width: ${responsive.desktop.width}`)
-    if (responsive.desktop.order !== undefined)
-      behaviors.push(`order: ${responsive.desktop.order}`)
-    if (behaviors.length > 0) {
-      text += `- Desktop (lg:): ${behaviors.join(", ")}\n`
+    if (config.hidden !== undefined) {
+      behaviors.push(config.hidden ? "hidden" : "visible")
     }
-  }
+    if (config.width) {
+      behaviors.push(`width: ${config.width}`)
+    }
+    if (config.order !== undefined) {
+      behaviors.push(`order: ${config.order}`)
+    }
+    if (config.positioning) {
+      behaviors.push(`positioning: ${config.positioning.type}`)
+    }
+
+    if (behaviors.length > 0) {
+      // Capitalize first letter for display
+      const displayName = breakpointName.charAt(0).toUpperCase() + breakpointName.slice(1)
+      text += `- ${displayName}: ${behaviors.join(", ")}\n`
+    }
+  })
 
   text += "\n"
   return text

@@ -125,32 +125,31 @@ export interface ComponentStyling {
 }
 
 /**
+ * Breakpoint-specific behavior override
+ */
+export interface ResponsiveBehaviorConfig {
+  /** 이 breakpoint에서 숨김 */
+  hidden?: boolean
+  /** Flexbox order 속성 */
+  order?: number
+  /** 너비 override */
+  width?: string
+  /** 포지셔닝 override */
+  positioning?: ComponentPositioning
+}
+
+/**
  * 반응형 동작 설정
  * 각 breakpoint에서의 컴포넌트 동작 override
+ *
+ * Supports dynamic breakpoint names (not just mobile/tablet/desktop)
+ * Example: { Mobile: {...}, Tablet: {...}, Laptop: {...}, Desktop: {...}, UltraWide: {...} }
  */
 export interface ResponsiveBehavior {
-  mobile?: {
-    /** 모바일에서 숨김 */
-    hidden?: boolean
-    /** Flexbox order 속성 */
-    order?: number
-    /** 너비 override */
-    width?: string
-    /** 포지셔닝 override */
-    positioning?: ComponentPositioning
-  }
-  tablet?: {
-    hidden?: boolean
-    order?: number
-    width?: string
-    positioning?: ComponentPositioning
-  }
-  desktop?: {
-    hidden?: boolean
-    order?: number
-    width?: string
-    positioning?: ComponentPositioning
-  }
+  mobile?: ResponsiveBehaviorConfig
+  tablet?: ResponsiveBehaviorConfig
+  desktop?: ResponsiveBehaviorConfig
+  [breakpoint: string]: ResponsiveBehaviorConfig | undefined  // Support custom breakpoint names
 }
 
 /**

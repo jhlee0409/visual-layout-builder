@@ -128,7 +128,8 @@ export function generatePrompt(
 
     sections.push("## Component Links (Cross-Breakpoint Relationships)\n\n")
     sections.push(
-      "The following components are **linked** and represent the **SAME UI element** across different breakpoints:\n\n"
+      "The following components are **linked** and represent the **SAME UI element** across different breakpoints.\n\n" +
+      "🚨 **CRITICAL:** Components in the same group MUST be treated as the SAME component across breakpoints.\n\n"
     )
 
     // Calculate groups using DFS algorithm
