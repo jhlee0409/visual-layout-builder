@@ -280,9 +280,9 @@ describe('Canvas Integration Tests', () => {
       expect(prompt).toContain('Header')
       expect(prompt).toContain('Navigation')
 
-      // 중요 안내 메시지 포함 확인
-      expect(prompt).toContain('same UI element across different breakpoints')
-      expect(prompt).toContain('consistent code')
+      // 중요 안내 메시지 포함 확인 (강화된 CRITICAL RULE)
+      expect(prompt).toContain('MUST be treated as the SAME component')
+      expect(prompt).toContain('CRITICAL IMPLEMENTATION RULE')
     })
 
     it('should handle transitive component links (A → B → C)', () => {

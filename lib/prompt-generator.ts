@@ -124,7 +124,7 @@ export function generatePrompt(
 
     sections.push("## Component Links (Cross-Breakpoint Relationships)\n\n")
     sections.push(
-      "The following components are linked and should be treated as the same component across different breakpoints:\n\n"
+      "The following components are linked and MUST be treated as the SAME component:\n\n"
     )
 
     // Calculate groups using DFS algorithm
@@ -139,7 +139,27 @@ export function generatePrompt(
       sections.push(`**Group ${index + 1}:** ${componentNames}\n`)
     })
     sections.push(
-      "\n**Important:** Components in the same group represent the same UI element across different breakpoints. Generate consistent code for them with appropriate responsive behavior.\n\n"
+      "\n🚨 **CRITICAL IMPLEMENTATION RULE - Component Links:**\n\n" +
+      "Components in the same link group MUST be rendered as a **SINGLE component** in your code.\n" +
+      "DO NOT create separate React components for each component ID in a group.\n\n" +
+      "**Validation Rule:**\n" +
+      "- Each link group = 1 React component\n" +
+      `- Total components in your code: ${groups.length} (NOT ${componentLinks.length * 2})\n\n` +
+      "**Example (CORRECT):**\n" +
+      "```tsx\n" +
+      "// Group 1: Header (c1), Header (c2) → SINGLE component\n" +
+      "const Header = () => (\n" +
+      "  <header className=\"sticky top-0 z-50\">\n" +
+      "    {/* Responsive via Tailwind: grid-cols-4 lg:grid-cols-12 */}\n" +
+      "  </header>\n" +
+      ")\n" +
+      "```\n\n" +
+      "**Example (WRONG - DO NOT DO THIS):**\n" +
+      "```tsx\n" +
+      "// ❌ WRONG: Separate components for c1 and c2\n" +
+      "const HeaderMobile = () => <header>...</header>  // c1\n" +
+      "const HeaderDesktop = () => <header>...</header> // c2\n" +
+      "```\n\n"
     )
     sections.push("---\n")
   }
