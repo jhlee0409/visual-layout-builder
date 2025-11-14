@@ -419,9 +419,6 @@ describe("Component Linking Store Actions", () => {
     })
   })
 
-  // Tests for removed autoLinkSimilarComponents function removed
-  // Feature no longer exists - linking is now manual only
-
   describe("getLinkedComponentGroup", () => {
     it("should return group of linked components", () => {
       const store = useLayoutStore.getState()

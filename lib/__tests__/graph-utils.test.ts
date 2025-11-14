@@ -241,9 +241,17 @@ describe("Graph Utils", () => {
   })
 
   describe("getComponentGroup", () => {
-    it("should return undefined for component not in any group", () => {
+    it("should return single-member group for component not in any link (default)", () => {
       const links: ComponentLink[] = [{ source: "c1", target: "c2" }]
       const result = getComponentGroup("c3", links)
+
+      expect(result).toBeDefined()
+      expect(result).toEqual(["c3"])
+    })
+
+    it("should return undefined for component not in any link when validateId=true", () => {
+      const links: ComponentLink[] = [{ source: "c1", target: "c2" }]
+      const result = getComponentGroup("c3", links, true)
 
       expect(result).toBeUndefined()
     })

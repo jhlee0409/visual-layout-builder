@@ -94,26 +94,31 @@ export function generatePrompt(
   sections.push("---\n")
 
   // Component Links section - cross-breakpoint relationships (2025 개선)
+  const linkWarnings: string[] = []
   if (componentLinks && componentLinks.length > 0) {
     // Validate component links before including in prompt
     const validComponentIds = new Set(normalizedSchema.components.map((c) => c.id))
     const linkValidation = validateComponentLinks(componentLinks, validComponentIds)
 
     if (!linkValidation.valid) {
-      // Log validation errors but continue (for debugging)
+      // Surface validation errors to user via warnings
+      linkWarnings.push(...linkValidation.errors.map(err => `Component Link: ${err}`))
       console.warn("Component link validation errors:", linkValidation.errors)
+
       // Filter out invalid links
       const validLinks = componentLinks.filter((link) => {
         return validComponentIds.has(link.source) && validComponentIds.has(link.target)
       })
       if (validLinks.length === 0) {
-        // Skip links section if no valid links
+        // All links are invalid - return error with warnings
         return {
           success: false,
-          errors: ["All component links are invalid: " + linkValidation.errors.join(", ")],
+          errors: ["All component links are invalid"],
+          warnings: linkWarnings,
         }
       }
-      // Use only valid links
+      // Use only valid links and warn user
+      linkWarnings.push(`${componentLinks.length - validLinks.length} invalid link(s) filtered out`)
       componentLinks = validLinks
     }
 
@@ -158,12 +163,15 @@ export function generatePrompt(
     success: true,
     prompt,
     schema: normalizedSchema,
-    warnings: validationResult.warnings.map((w) => {
-      const location = w.componentId
-        ? `${w.componentId}${w.field ? `.${w.field}` : ""}`
-        : w.field || "schema"
-      return `${location}: ${w.message}`
-    }),
+    warnings: [
+      ...validationResult.warnings.map((w) => {
+        const location = w.componentId
+          ? `${w.componentId}${w.field ? `.${w.field}` : ""}`
+          : w.field || "schema"
+        return `${location}: ${w.message}`
+      }),
+      ...linkWarnings, // Include component link validation warnings
+    ],
   }
 }
 

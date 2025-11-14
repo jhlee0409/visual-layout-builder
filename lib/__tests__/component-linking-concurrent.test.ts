@@ -258,12 +258,6 @@ describe("Component Linking Concurrent Operations", () => {
       store = useLayoutStore.getState()
       expect(store.componentLinks.length).toBe(0)
     })
-
-    // Test removed - mergeLinkedComponents no longer exists
-    // Components are now kept separate and only linked
-
-    // Test removed - autoLinkSimilarComponents no longer exists
-    // Linking is now manual only
   })
 
   describe("Performance and consistency", () => {

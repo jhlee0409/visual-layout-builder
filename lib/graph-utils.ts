@@ -19,6 +19,13 @@ export interface ComponentLink {
  * Time Complexity: O(V + E) where V = vertices, E = edges
  * Space Complexity: O(V + E) for adjacency list
  *
+ * Performance Note:
+ * - For typical use cases (< 100 components), this function is fast (< 50ms)
+ * - If called repeatedly with same links (e.g., in render loop), consider memoizing
+ *   results using useMemo() or a caching layer
+ * - Recalculating on every call is acceptable for one-time operations like
+ *   prompt generation, but avoid in hot paths
+ *
  * @param links - Array of component links
  * @returns Array of component ID groups (each group is fully connected)
  *
@@ -30,6 +37,9 @@ export interface ComponentLink {
  * ]
  * const groups = calculateLinkGroups(links)
  * // Result: [['c1', 'c2', 'c3'], ['c4', 'c5']]
+ *
+ * // For React components (if called repeatedly):
+ * const groups = useMemo(() => calculateLinkGroups(links), [links])
  */
 export function calculateLinkGroups(links: ComponentLink[]): string[][] {
   if (links.length === 0) return []
@@ -122,9 +132,29 @@ export function validateComponentLinks(
  *
  * @param componentId - Component ID to search for
  * @param links - Array of component links
- * @returns Array of component IDs in the same group (including self)
+ * @param validateId - If true, returns undefined for IDs not in any link (default: false)
+ * @returns Array of component IDs in the same group, or undefined if not found (when validateId=true)
+ *
+ * Behavior:
+ * - If component is in a link group: returns all component IDs in that group
+ * - If validateId=false (default): returns [componentId] for components not in any link
+ * - If validateId=true: returns undefined for components not in any link
+ *
+ * @example
+ * // Component in a group
+ * getComponentGroup("c1", [{source: "c1", target: "c2"}]) // ["c1", "c2"]
+ *
+ * // Component not in any link (default behavior)
+ * getComponentGroup("c3", [{source: "c1", target: "c2"}]) // ["c3"]
+ *
+ * // Component not in any link (with validation)
+ * getComponentGroup("c3", [{source: "c1", target: "c2"}], true) // undefined
  */
-export function getComponentGroup(componentId: string, links: ComponentLink[]): string[] {
+export function getComponentGroup(
+  componentId: string,
+  links: ComponentLink[],
+  validateId = false
+): string[] | undefined {
   const groups = calculateLinkGroups(links)
 
   for (const group of groups) {
@@ -133,7 +163,12 @@ export function getComponentGroup(componentId: string, links: ComponentLink[]): 
     }
   }
 
-  // If not in any group, return only self
+  // Component not in any group
+  if (validateId) {
+    return undefined // Return undefined to indicate component is not in any link
+  }
+
+  // Default behavior: return self as a single-member group
   return [componentId]
 }
 

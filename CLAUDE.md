@@ -94,6 +94,51 @@ interface LayoutConfig {
 
 **Breakpoint Inheritance**: `normalizeSchemaV2()`를 통해 Mobile → Tablet → Desktop 순서로 상속 처리
 
+### Component Linking - Cross-Breakpoint Relationships
+
+**2025년 11월 아키텍처 결정**: Component Links는 순수한 메타데이터로, 컴포넌트 병합(merge) 없이 관계만 저장합니다.
+
+**핵심 원칙**:
+1. **Links Are Metadata, Not Merge Operations**: 컴포넌트를 물리적으로 병합하지 않고, 관계만 저장
+2. **Component Independence Preservation**: 각 컴포넌트는 독립적으로 유지되며, 링크는 AI 프롬프트 생성 시에만 사용
+3. **Manual Linking Only**: 자동 링크 기능 제거 - 사용자가 명시적으로 연결
+
+**데이터 구조**:
+```typescript
+interface ComponentLink {
+  source: string  // Source component ID
+  target: string  // Target component ID
+}
+
+// Store state
+componentLinks: Array<{ source: string; target: string }>
+```
+
+**Graph Algorithm (lib/graph-utils.ts)**:
+- `calculateLinkGroups()`: DFS 기반 연결 컴포넌트 탐지 (O(V + E))
+- `validateComponentLinks()`: Orphaned refs, self-loops, duplicates 검증
+- `getComponentGroup()`: 특정 컴포넌트의 그룹 조회
+- `areComponentsLinked()`: 두 컴포넌트의 연결 여부 확인
+
+**AI Prompt Integration**:
+- 링크는 `generatePrompt()`에 전달되어 "Component Links" 섹션 생성
+- AI에게 "같은 그룹의 컴포넌트는 동일한 UI 요소의 반응형 버전"임을 알림
+- 검증 실패 시 warnings로 사용자에게 피드백 제공
+
+**UI Components**:
+- `ComponentLinkingPanel`: React Flow 기반 시각적 링킹 인터페이스
+- `ExportModal`: 링크가 없을 때 프롬프트 표시
+- Zustand store actions: `addComponentLink`, `removeComponentLink`, `clearAllLinks`
+
+**Removed Features (2025-11-14)**:
+- ❌ `mergeLinkedComponents()`: 컴포넌트 병합 제거 (Component Independence 위반)
+- ❌ `autoLinkSimilarComponents()`: 자동 링크 제거 (명시적 사용자 의도 우선)
+
+**Performance Considerations**:
+- `calculateLinkGroups()`는 < 50ms (100개 컴포넌트 기준)
+- React 컴포넌트에서 반복 호출 시 `useMemo()` 사용 권장
+- 일회성 작업 (프롬프트 생성)에서는 메모이제이션 불필요
+
 ### Canvas System - Konva
 
 **components/canvas-v2/** 디렉토리가 Canvas 렌더링을 담당합니다.

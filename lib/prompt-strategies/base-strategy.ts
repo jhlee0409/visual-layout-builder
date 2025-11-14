@@ -338,25 +338,15 @@ export abstract class BasePromptStrategy implements IPromptStrategy {
    * Component Links 섹션 생성 (공통 로직)
    *
    * Cross-breakpoint relationships를 설명
-   * Validates links and uses shared DFS algorithm from graph-utils
+   * Uses shared DFS algorithm from graph-utils
+   *
+   * Note: Assumes componentLinks are already validated by caller (generatePrompt)
    */
   generateComponentLinksSection(
     components: Component[],
     componentLinks: ComponentLink[],
     options?: PromptGenerationOptions
   ): string {
-    // Validate component links
-    const validComponentIds = new Set(components.map((c) => c.id))
-    const linkValidation = validateComponentLinks(componentLinks, validComponentIds)
-
-    if (!linkValidation.valid) {
-      console.warn("Component link validation errors:", linkValidation.errors)
-      // Filter out invalid links
-      componentLinks = componentLinks.filter((link) => {
-        return validComponentIds.has(link.source) && validComponentIds.has(link.target)
-      })
-    }
-
     let section = `## Component Links (Cross-Breakpoint Relationships)\n\n`
     section += `The following components are linked and should be treated as the same component across different breakpoints:\n\n`
 
@@ -410,6 +400,7 @@ export abstract class BasePromptStrategy implements IPromptStrategy {
 
       // 3. Generate sections
       const sections: PromptSection[] = []
+      const linkWarnings: string[] = []
 
       // System prompt
       sections.push({
@@ -442,16 +433,49 @@ export abstract class BasePromptStrategy implements IPromptStrategy {
 
       // Component Links section (if provided)
       if (options?.componentLinks && options.componentLinks.length > 0) {
-        sections.push({
-          title: "Component Links",
-          content: this.generateComponentLinksSection(
-            normalizedSchema.components,
-            options.componentLinks,
-            options
-          ),
-          priority: 75,
-          required: false,
-        })
+        // Validate component links before generating section
+        const validComponentIds = new Set(normalizedSchema.components.map((c) => c.id))
+        const linkValidation = validateComponentLinks(options.componentLinks, validComponentIds)
+
+        if (!linkValidation.valid) {
+          // Surface validation errors to user via warnings
+          linkWarnings.push(...linkValidation.errors.map(err => `Component Link: ${err}`))
+
+          // Filter out invalid links
+          const validLinks = options.componentLinks.filter((link) => {
+            return validComponentIds.has(link.source) && validComponentIds.has(link.target)
+          })
+
+          if (validLinks.length > 0) {
+            // Warn user about filtered links
+            linkWarnings.push(`${options.componentLinks.length - validLinks.length} invalid link(s) filtered out`)
+
+            // Generate section with only valid links
+            sections.push({
+              title: "Component Links",
+              content: this.generateComponentLinksSection(
+                normalizedSchema.components,
+                validLinks,
+                options
+              ),
+              priority: 75,
+              required: false,
+            })
+          }
+          // If no valid links, skip section entirely
+        } else {
+          // All links are valid
+          sections.push({
+            title: "Component Links",
+            content: this.generateComponentLinksSection(
+              normalizedSchema.components,
+              options.componentLinks,
+              options
+            ),
+            priority: 75,
+            required: false,
+          })
+        }
       }
 
       // Instructions section
@@ -496,12 +520,15 @@ export abstract class BasePromptStrategy implements IPromptStrategy {
         estimatedTokens,
         modelId: this.modelId,
         optimizationUsed: options,
-        warnings: validationResult.warnings.map((w) => {
-          const location = w.componentId
-            ? `${w.componentId}${w.field ? `.${w.field}` : ""}`
-            : w.field || "schema"
-          return `${location}: ${w.message}`
-        }),
+        warnings: [
+          ...validationResult.warnings.map((w) => {
+            const location = w.componentId
+              ? `${w.componentId}${w.field ? `.${w.field}` : ""}`
+              : w.field || "schema"
+            return `${location}: ${w.message}`
+          }),
+          ...linkWarnings, // Include component link validation warnings
+        ],
       }
     } catch (error) {
       return {
