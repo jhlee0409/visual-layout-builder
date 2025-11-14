@@ -22,6 +22,8 @@ import type { LaydlerSchema, Component, Breakpoint } from "@/types/schema"
 import { getModelMetadata } from "@/lib/ai-model-registry"
 import { validateSchema } from "@/lib/schema-validation"
 import { normalizeSchema } from "@/lib/schema-utils"
+import { describeVisualLayout } from "@/lib/visual-layout-descriptor"
+import { generateGridCSS, generateTailwindClasses } from "@/lib/canvas-to-grid"
 
 /**
  * Base Prompt Strategy
@@ -174,9 +176,16 @@ export abstract class BasePromptStrategy implements IPromptStrategy {
   /**
    * 레이아웃 섹션 생성 (기본 구현)
    *
+   * 🆕 2025 Canvas→Code Architecture:
+   * - Visual Layout (Canvas Grid) 정보 포함
+   * - CSS Grid Positioning 명시
+   * - Spatial Relationships 설명
+   * - Implementation Strategy 제공
+   *
    * 모델별 최적화 필요 시 override
    */
   generateLayoutSection(
+    components: Component[],
     breakpoints: Breakpoint[],
     layouts: LaydlerSchema["layouts"],
     options?: PromptGenerationOptions
@@ -195,12 +204,88 @@ export abstract class BasePromptStrategy implements IPromptStrategy {
         if (!layout) return
 
         section += `### ${index + 1}. ${breakpoint.name.charAt(0).toUpperCase() + breakpoint.name.slice(1)} (≥${breakpoint.minWidth}px)\n\n`
-        section += `**Layout Structure:** \`${layout.structure}\`\n\n`
-        section += `**Component Order:**\n`
+
+        // 🆕 VISUAL LAYOUT DESCRIPTION (Canvas Grid 정보)
+        try {
+          const layoutDesc = describeVisualLayout(
+            components,
+            layoutKey,
+            breakpoint.gridCols,
+            breakpoint.gridRows
+          )
+
+          section += `**Visual Layout (Canvas Grid):**\n\n`
+          section += `${layoutDesc.summary}\n\n`
+
+          // Row-by-row description
+          layoutDesc.rowByRow.forEach((row) => {
+            section += `- ${row}\n`
+          })
+          section += "\n"
+
+          // Spatial relationships
+          if (layoutDesc.spatialRelationships.length > 0) {
+            section += `**Spatial Relationships:**\n\n`
+            layoutDesc.spatialRelationships.forEach((rel) => {
+              section += `- ${rel}\n`
+            })
+            section += "\n"
+          }
+
+          // 🆕 CSS GRID POSITIONING (2025 pattern)
+          const gridCSS = generateGridCSS(layoutDesc.visualLayout)
+          const tailwindClasses = generateTailwindClasses(layoutDesc.visualLayout)
+
+          section += `**CSS Grid Positioning:**\n\n`
+          section += `For precise 2D positioning, use CSS Grid:\n\n`
+          section += `\`\`\`css\n`
+          section += gridCSS
+          section += `\`\`\`\n\n`
+
+          section += `Or with Tailwind CSS:\n\n`
+          section += `Container: \`${tailwindClasses.container}\`\n\n`
+          section += `Components:\n`
+          Object.entries(tailwindClasses.components).forEach(([id, classes]) => {
+            const comp = components.find((c) => c.id === id)
+            section += `- **${comp?.name} (${id})**: \`${classes}\`\n`
+          })
+          section += "\n"
+
+          // 🆕 IMPLEMENTATION STRATEGY (강화)
+          section += `**Implementation Strategy:**\n\n`
+          layoutDesc.implementationHints.forEach((hint) => {
+            section += `- ${hint}\n`
+          })
+          section += "\n"
+        } catch (error) {
+          // Fallback: Canvas 좌표 정보가 없는 경우 (backward compatibility)
+          console.warn(`Visual layout description failed for ${layoutKey}:`, error)
+        }
+
+        // Structure type (기존)
+        section += `**Page Flow:** \`${layout.structure}\` (vertical scrolling with horizontal content areas)\n\n`
+
+        // ⚠️ CRITICAL: Visual Layout 우선순위 명시
+        section += `**🚨 IMPORTANT - Layout Priority:**\n\n`
+        section += `1. **PRIMARY**: Use the **Visual Layout (Canvas Grid)** positioning above as your main guide\n`
+        section += `2. **SECONDARY**: The DOM order below is for reference only (accessibility/SEO)\n`
+        section += `3. **RULE**: Components with the same Y-coordinate range MUST be placed side-by-side horizontally\n`
+        section += `4. **DO NOT** stack components vertically if they share the same row in the Canvas Grid\n\n`
+
+        // Component order (DOM 순서) - 경고 강화
+        section += `**DOM Order (Reference Only - DO NOT use for visual positioning):**\n\n`
+        section += `For screen readers and SEO crawlers, the HTML source order is:\n\n`
         layout.components.forEach((componentId: string, idx: number) => {
-          section += `${idx + 1}. ${componentId}\n`
+          const comp = components.find((c) => c.id === componentId)
+          const canvasLayout = comp?.responsiveCanvasLayout?.[layoutKey] || comp?.canvasLayout
+          section += `${idx + 1}. ${componentId}`
+          if (canvasLayout) {
+            section += ` (Canvas row ${canvasLayout.y})`
+          }
+          section += `\n`
         })
         section += "\n"
+        section += `**⚠️ WARNING:** This DOM order differs from visual positioning. Always follow Canvas Grid coordinates for layout!\n\n`
 
         // Roles (if structure is sidebar-main)
         if (layout.roles && Object.keys(layout.roles).length > 0) {
@@ -301,6 +386,7 @@ export abstract class BasePromptStrategy implements IPromptStrategy {
       sections.push({
         title: "Layouts",
         content: this.generateLayoutSection(
+          normalizedSchema.components,
           normalizedSchema.breakpoints,
           normalizedSchema.layouts,
           options
