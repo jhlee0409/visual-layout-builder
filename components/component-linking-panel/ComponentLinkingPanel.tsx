@@ -39,15 +39,11 @@ export function ComponentLinkingPanel({ onClose }: { onClose: () => void }) {
   const addComponentLink = useLayoutStore((state) => state.addComponentLink)
   const removeComponentLink = useLayoutStore((state) => state.removeComponentLink)
   const clearAllLinks = useLayoutStore((state) => state.clearAllLinks)
-  const autoLinkSimilar = useLayoutStore((state) => state.autoLinkSimilarComponents)
-  const mergeLinkedComponents = useLayoutStore((state) => state.mergeLinkedComponents)
 
-  // Apply changes when closing
+  // Simply close without merging
   const handleClose = useCallback(() => {
-    // Merge all linked components before closing
-    mergeLinkedComponents()
     onClose()
-  }, [mergeLinkedComponents, onClose])
+  }, [onClose])
 
   // 브레이크포인트별로 이미 추가된 컴포넌트만 그룹화
   const componentsByBreakpoint = useMemo(() => {
@@ -68,7 +64,7 @@ export function ComponentLinkingPanel({ onClose }: { onClose: () => void }) {
     return result
   }, [schema])
 
-  // React Flow 노드 생성 (3열 레이아웃, 이미 추가된 컴포넌트만)
+  // React Flow 노드 생성 (이미 추가된 컴포넌트만)
   const initialNodes: Node[] = useMemo(() => {
     const nodes: Node[] = []
     const columnWidth = 280
@@ -76,20 +72,14 @@ export function ComponentLinkingPanel({ onClose }: { onClose: () => void }) {
     const cardHeight = 90
     const cardGap = 20
 
-    // Schema의 실제 breakpoint 사용 (하드코딩 제거)
+    // Schema의 실제 breakpoint 사용
     const breakpointOrder = schema.breakpoints.map((bp) => bp.name)
-    const breakpointIcons: Record<string, string> = {
-      mobile: "📱",
-      tablet: "📱",
-      desktop: "🖥️",
-      default: "📐", // fallback for unknown breakpoints
-    }
 
     breakpointOrder.forEach((bp, colIndex) => {
       const x = colIndex * (columnWidth + columnGap) + 50
       const components = componentsByBreakpoint[bp] || []
 
-      // Column header
+      // Column header (no handles)
       nodes.push({
         id: `header-${bp}`,
         type: "default",
@@ -97,18 +87,20 @@ export function ComponentLinkingPanel({ onClose }: { onClose: () => void }) {
         data: {
           label: (
             <div className="text-center">
-              <div className="text-2xl">{breakpointIcons[bp] || breakpointIcons.default}</div>
-              <div className="font-semibold capitalize">{bp}</div>
+              <div className="font-semibold capitalize text-lg">{bp}</div>
               <div className="text-xs text-gray-500">({components.length} components)</div>
             </div>
           ),
         },
         draggable: false,
         selectable: false,
+        sourcePosition: undefined, // No handles
+        targetPosition: undefined, // No handles
         style: {
           background: "transparent",
           border: "none",
           width: columnWidth,
+          pointerEvents: "none", // Prevent interaction with header
         },
       })
 
@@ -278,11 +270,6 @@ export function ComponentLinkingPanel({ onClose }: { onClose: () => void }) {
         </div>
 
         <div className="flex gap-2">
-          <Button variant="outline" size="sm" onClick={() => autoLinkSimilar()}>
-            <Link className="w-4 h-4 mr-2" />
-            Auto-Link Similar
-          </Button>
-
           <Button
             variant="outline"
             size="sm"
@@ -322,11 +309,11 @@ export function ComponentLinkingPanel({ onClose }: { onClose: () => void }) {
       <div className="absolute bottom-4 left-4 bg-blue-50 border border-blue-200 rounded-lg px-4 py-3 shadow-lg max-w-md">
         <div className="font-semibold text-sm text-blue-900 mb-2">💡 How to link components:</div>
         <div className="text-xs text-blue-700 space-y-1">
-          <div>• Drag from one component&apos;s handle (●) to another</div>
-          <div>• Click &quot;Auto-Link Similar&quot; to connect same-name components</div>
+          <div>• Drag from one component&apos;s handle (●) to another component</div>
+          <div>• Linked components will be marked as shared across breakpoints</div>
           <div>• Select edge and press Delete/Backspace to unlink</div>
           <div className="text-blue-600 mt-2 pt-2 border-t border-blue-200">
-            ℹ️ To add new components, use the Library Panel (left sidebar)
+            ℹ️ Links are reflected in the AI prompt for consistent component generation
           </div>
         </div>
       </div>

@@ -1,6 +1,6 @@
 "use client"
 
-import { useRef, useState } from "react"
+import { useRef } from "react"
 import { BreakpointSwitcher} from "@/components/breakpoint-panel"
 import { LibraryPanel} from "@/components/library-panel"
 import { LayersTree} from "@/components/layers-tree"
@@ -33,7 +33,6 @@ import { RotateCcw, Link } from "lucide-react"
  */
 export default function Home() {
   const panelGroupRef = useRef<ImperativePanelGroupHandle>(null)
-  const [showLinkingPanel, setShowLinkingPanel] = useState(false)
 
   const breakpoints = useLayoutStore((state) => state.schema.breakpoints)
   const componentCount = useLayoutStore(
@@ -41,6 +40,9 @@ export default function Home() {
   )
   const initializeSchema = useLayoutStore((state) => state.initializeSchema)
   const resetSchema = useLayoutStore((state) => state.resetSchema)
+  const showLinkingPanel = useLayoutStore((state) => state.showLinkingPanel)
+  const openLinkingPanel = useLayoutStore((state) => state.openLinkingPanel)
+  const closeLinkingPanel = useLayoutStore((state) => state.closeLinkingPanel)
 
   // 브레이크포인트가 없으면 모달 표시
   const showInitialModal = breakpoints.length === 0
@@ -75,7 +77,7 @@ export default function Home() {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => setShowLinkingPanel(true)}
+              onClick={openLinkingPanel}
               title="Link components across breakpoints"
             >
               <Link className="w-4 h-4 mr-1" />
@@ -182,7 +184,7 @@ export default function Home() {
 
       {/* Component Linking Panel */}
       {showLinkingPanel && (
-        <ComponentLinkingPanel onClose={() => setShowLinkingPanel(false)} />
+        <ComponentLinkingPanel onClose={closeLinkingPanel} />
       )}
     </main>
   )

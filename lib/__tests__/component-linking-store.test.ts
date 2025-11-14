@@ -298,8 +298,8 @@ describe("Component Linking Store Actions", () => {
     })
   })
 
-  describe("mergeLinkedComponents", () => {
-    it("should merge two linked components", () => {
+  describe("Component Linking (Simplified - No Merge)", () => {
+    it("should link two components without merging them", () => {
       const store = useLayoutStore.getState()
 
       store.addComponent({
@@ -331,18 +331,14 @@ describe("Component Linking Store Actions", () => {
       // Link them
       store.addComponentLink(c1.id, c2.id)
 
-      // Merge
-      store.mergeLinkedComponents()
+      // Verify link exists
+      const links = useLayoutStore.getState().componentLinks
+      expect(links).toHaveLength(1)
+      expect(links[0]).toEqual({ source: c1.id, target: c2.id })
 
-      // Should have 1 component
-      const mergedComponents = useLayoutStore.getState().schema.components
-      expect(mergedComponents).toHaveLength(1)
-
-      // Should have both responsiveCanvasLayout
-      const merged = mergedComponents[0]
-      expect(merged.responsiveCanvasLayout).toBeDefined()
-      expect(merged.responsiveCanvasLayout?.desktop).toBeDefined()
-      expect(merged.responsiveCanvasLayout?.mobile).toBeDefined()
+      // Components should remain separate (no merge)
+      const afterLinkComponents = useLayoutStore.getState().schema.components
+      expect(afterLinkComponents).toHaveLength(2)
     })
 
     it("should handle transitive connections (c-1 → c-2 → c-3)", () => {
@@ -367,15 +363,27 @@ describe("Component Linking Store Actions", () => {
       store.addComponentLink(c1.id, c2.id)
       store.addComponentLink(c2.id, c3.id)
 
-      // Merge
-      store.mergeLinkedComponents()
+      // Verify links exist
+      const links = useLayoutStore.getState().componentLinks
+      expect(links).toHaveLength(2)
 
-      // Should have 1 component (all merged)
-      const mergedComponents = useLayoutStore.getState().schema.components
-      expect(mergedComponents).toHaveLength(1)
+      // Components should remain separate (no merge)
+      const afterLinkComponents = useLayoutStore.getState().schema.components
+      expect(afterLinkComponents).toHaveLength(3)
+    })
+  })
+
+  describe("Component Linking - Removed Features", () => {
+    it("mergeLinkedComponents and autoLinkSimilarComponents have been removed", () => {
+      const store = useLayoutStore.getState()
+
+      // Verify that these methods no longer exist
+      // Use 'in' operator to avoid TypeScript errors
+      expect("mergeLinkedComponents" in store).toBe(false)
+      expect("autoLinkSimilarComponents" in store).toBe(false)
     })
 
-    it("should update layouts with merged component ID", () => {
+    it("Component links are now only stored, not merged", () => {
       const store = useLayoutStore.getState()
 
       store.addComponent({
@@ -396,80 +404,19 @@ describe("Component Linking Store Actions", () => {
       const components = useLayoutStore.getState().schema.components
       const [c1, c2] = components
 
-      // Link and merge
+      // Link them
       store.addComponentLink(c1.id, c2.id)
-      store.mergeLinkedComponents()
 
-      // Check layouts
-      const { layouts } = useLayoutStore.getState().schema
+      // Verify both components still exist (no merge)
+      const afterLinkComponents = useLayoutStore.getState().schema.components
+      expect(afterLinkComponents).toHaveLength(2)
+      expect(afterLinkComponents).toContainEqual(expect.objectContaining({ id: c1.id }))
+      expect(afterLinkComponents).toContainEqual(expect.objectContaining({ id: c2.id }))
 
-      // Desktop layout should have c1 (root)
-      expect(layouts.desktop.components).toContain(c1.id)
-      expect(layouts.desktop.components).not.toContain(c2.id)
-
-      // Mobile layout should also have c1 (merged)
-      expect(layouts.mobile.components).toContain(c1.id)
-      expect(layouts.mobile.components).not.toContain(c2.id)
-    })
-  })
-
-  describe("autoLinkSimilarComponents", () => {
-    it("should link components with same name and semanticTag", () => {
-      const store = useLayoutStore.getState()
-
-      // Add 2 Footer components
-      store.addComponent({
-        name: "Footer",
-        semanticTag: "footer",
-        positioning: { type: "static" },
-        layout: { type: "flex" },
-      })
-
-      store.setCurrentBreakpoint("mobile")
-      store.addComponent({
-        name: "Footer",
-        semanticTag: "footer",
-        positioning: { type: "static" },
-        layout: { type: "flex" },
-      })
-
-      // Add 1 Header component (should not be linked)
-      store.addComponent({
-        name: "Header",
-        semanticTag: "header",
-        positioning: { type: "fixed" },
-        layout: { type: "flex" },
-      })
-
-      expect(useLayoutStore.getState().componentLinks).toHaveLength(0)
-
-      // Auto-link
-      store.autoLinkSimilarComponents()
-
-      // Should have 1 link (Footer - Footer)
+      // Link is stored
       const links = useLayoutStore.getState().componentLinks
       expect(links).toHaveLength(1)
-    })
-
-    it("should link multiple similar components sequentially", () => {
-      const store = useLayoutStore.getState()
-
-      // Add 3 Footer components
-      for (let i = 0; i < 3; i++) {
-        store.addComponent({
-          name: "Footer",
-          semanticTag: "footer",
-          positioning: { type: "static" },
-          layout: { type: "flex" },
-        })
-      }
-
-      // Auto-link
-      store.autoLinkSimilarComponents()
-
-      // Should have 2 links (c1-c2, c2-c3)
-      const links = useLayoutStore.getState().componentLinks
-      expect(links).toHaveLength(2)
+      expect(links[0]).toEqual({ source: c1.id, target: c2.id })
     })
   })
 

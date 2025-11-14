@@ -148,6 +148,8 @@ export interface PromptGenerationOptions {
   includeExamples?: boolean
   /** 단계별 추론 요청 (CoT) */
   chainOfThought?: boolean
+  /** 컴포넌트 링크 (cross-breakpoint relationships) */
+  componentLinks?: Array<{ source: string; target: string }>
   /** 비용 민감도 */
   costSensitive?: boolean
   /** 커스텀 시스템 프롬프트 */

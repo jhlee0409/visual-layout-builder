@@ -24,6 +24,7 @@ import { validateSchema } from "@/lib/schema-validation"
 import { normalizeSchema } from "@/lib/schema-utils"
 import { describeVisualLayout } from "@/lib/visual-layout-descriptor"
 import { generateGridCSS, generateTailwindClasses } from "@/lib/canvas-to-grid"
+import { calculateLinkGroups, validateComponentLinks, type ComponentLink } from "@/lib/graph-utils"
 
 /**
  * Base Prompt Strategy
@@ -334,6 +335,40 @@ export abstract class BasePromptStrategy implements IPromptStrategy {
   }
 
   /**
+   * Component Links 섹션 생성 (공통 로직)
+   *
+   * Cross-breakpoint relationships를 설명
+   * Uses shared DFS algorithm from graph-utils
+   *
+   * Note: Assumes componentLinks are already validated by caller (generatePrompt)
+   */
+  generateComponentLinksSection(
+    components: Component[],
+    componentLinks: ComponentLink[],
+    options?: PromptGenerationOptions
+  ): string {
+    let section = `## Component Links (Cross-Breakpoint Relationships)\n\n`
+    section += `The following components are linked and should be treated as the same component across different breakpoints:\n\n`
+
+    // Calculate groups using shared DFS algorithm
+    const groups = calculateLinkGroups(componentLinks)
+
+    groups.forEach((group, index) => {
+      const componentNames = group
+        .map((id) => {
+          const comp = components.find((c) => c.id === id)
+          return comp ? `${comp.name} (${id})` : id
+        })
+        .join(", ")
+      section += `**Group ${index + 1}:** ${componentNames}\n`
+    })
+
+    section += `\n**Important:** Components in the same group represent the same UI element across different breakpoints. Generate consistent code for them with appropriate responsive behavior.\n\n`
+
+    return section
+  }
+
+  /**
    * 최종 프롬프트 생성 (Template Method Pattern)
    *
    * 공통 흐름 정의, 세부 구현은 하위 메서드에서
@@ -365,6 +400,7 @@ export abstract class BasePromptStrategy implements IPromptStrategy {
 
       // 3. Generate sections
       const sections: PromptSection[] = []
+      const linkWarnings: string[] = []
 
       // System prompt
       sections.push({
@@ -394,6 +430,53 @@ export abstract class BasePromptStrategy implements IPromptStrategy {
         priority: 80,
         required: true,
       })
+
+      // Component Links section (if provided)
+      if (options?.componentLinks && options.componentLinks.length > 0) {
+        // Validate component links before generating section
+        const validComponentIds = new Set(normalizedSchema.components.map((c) => c.id))
+        const linkValidation = validateComponentLinks(options.componentLinks, validComponentIds)
+
+        if (!linkValidation.valid) {
+          // Surface validation errors to user via warnings
+          linkWarnings.push(...linkValidation.errors.map(err => `Component Link: ${err}`))
+
+          // Filter out invalid links
+          const validLinks = options.componentLinks.filter((link) => {
+            return validComponentIds.has(link.source) && validComponentIds.has(link.target)
+          })
+
+          if (validLinks.length > 0) {
+            // Warn user about filtered links
+            linkWarnings.push(`${options.componentLinks.length - validLinks.length} invalid link(s) filtered out`)
+
+            // Generate section with only valid links
+            sections.push({
+              title: "Component Links",
+              content: this.generateComponentLinksSection(
+                normalizedSchema.components,
+                validLinks,
+                options
+              ),
+              priority: 75,
+              required: false,
+            })
+          }
+          // If no valid links, skip section entirely
+        } else {
+          // All links are valid
+          sections.push({
+            title: "Component Links",
+            content: this.generateComponentLinksSection(
+              normalizedSchema.components,
+              options.componentLinks,
+              options
+            ),
+            priority: 75,
+            required: false,
+          })
+        }
+      }
 
       // Instructions section
       sections.push({
@@ -437,12 +520,15 @@ export abstract class BasePromptStrategy implements IPromptStrategy {
         estimatedTokens,
         modelId: this.modelId,
         optimizationUsed: options,
-        warnings: validationResult.warnings.map((w) => {
-          const location = w.componentId
-            ? `${w.componentId}${w.field ? `.${w.field}` : ""}`
-            : w.field || "schema"
-          return `${location}: ${w.message}`
-        }),
+        warnings: [
+          ...validationResult.warnings.map((w) => {
+            const location = w.componentId
+              ? `${w.componentId}${w.field ? `.${w.field}` : ""}`
+              : w.field || "schema"
+            return `${location}: ${w.message}`
+          }),
+          ...linkWarnings, // Include component link validation warnings
+        ],
       }
     } catch (error) {
       return {

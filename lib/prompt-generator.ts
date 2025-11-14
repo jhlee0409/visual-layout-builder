@@ -9,6 +9,7 @@ import type { LaydlerSchema } from "@/types/schema"
 import { getTemplate } from "./prompt-templates"
 import { validateSchema } from "./schema-validation"
 import { normalizeSchema } from "./schema-utils"
+import { calculateLinkGroups, validateComponentLinks } from "./graph-utils"
 
 /**
  * Prompt Generation Result for Schema
@@ -32,10 +33,11 @@ export interface GenerationResult {
  * @param schema - Schema (Component Independence)
  * @param framework - Target framework (e.g., "react")
  * @param cssSolution - Target CSS solution (e.g., "tailwind")
+ * @param componentLinks - Optional component links for cross-breakpoint relationships
  * @returns Generation result with prompt and schema
  *
  * @example
- * const result = generatePrompt(schemaV2, "react", "tailwind")
+ * const result = generatePrompt(schemaV2, "react", "tailwind", componentLinks)
  * if (result.success) {
  *   // 사용자가 Claude/GPT에 복붙
  *   navigator.clipboard.writeText(result.prompt!)
@@ -44,7 +46,8 @@ export interface GenerationResult {
 export function generatePrompt(
   schema: LaydlerSchema,
   framework: string,
-  cssSolution: string
+  cssSolution: string,
+  componentLinks?: Array<{ source: string; target: string }>
 ): GenerationResult {
   // 0. Normalize schema with breakpoint inheritance (Mobile → Tablet → Desktop)
   const normalizedSchema = normalizeSchema(schema)
@@ -90,6 +93,57 @@ export function generatePrompt(
   sections.push(template.layoutSection(normalizedSchema.components, normalizedSchema.breakpoints, normalizedSchema.layouts))
   sections.push("---\n")
 
+  // Component Links section - cross-breakpoint relationships (2025 개선)
+  const linkWarnings: string[] = []
+  if (componentLinks && componentLinks.length > 0) {
+    // Validate component links before including in prompt
+    const validComponentIds = new Set(normalizedSchema.components.map((c) => c.id))
+    const linkValidation = validateComponentLinks(componentLinks, validComponentIds)
+
+    if (!linkValidation.valid) {
+      // Surface validation errors to user via warnings
+      linkWarnings.push(...linkValidation.errors.map(err => `Component Link: ${err}`))
+      console.warn("Component link validation errors:", linkValidation.errors)
+
+      // Filter out invalid links
+      const validLinks = componentLinks.filter((link) => {
+        return validComponentIds.has(link.source) && validComponentIds.has(link.target)
+      })
+      if (validLinks.length === 0) {
+        // All links are invalid - return error with warnings
+        return {
+          success: false,
+          errors: ["All component links are invalid"],
+          warnings: linkWarnings,
+        }
+      }
+      // Use only valid links and warn user
+      linkWarnings.push(`${componentLinks.length - validLinks.length} invalid link(s) filtered out`)
+      componentLinks = validLinks
+    }
+
+    sections.push("## Component Links (Cross-Breakpoint Relationships)\n\n")
+    sections.push(
+      "The following components are linked and should be treated as the same component across different breakpoints:\n\n"
+    )
+
+    // Calculate groups using DFS algorithm
+    const groups = calculateLinkGroups(componentLinks)
+    groups.forEach((group, index) => {
+      const componentNames = group
+        .map((id) => {
+          const comp = normalizedSchema.components.find((c) => c.id === id)
+          return comp ? `${comp.name} (${id})` : id
+        })
+        .join(", ")
+      sections.push(`**Group ${index + 1}:** ${componentNames}\n`)
+    })
+    sections.push(
+      "\n**Important:** Components in the same group represent the same UI element across different breakpoints. Generate consistent code for them with appropriate responsive behavior.\n\n"
+    )
+    sections.push("---\n")
+  }
+
   // Instructions section - 특화 구현 지침
   sections.push(template.instructionsSection())
   sections.push("---\n")
@@ -109,12 +163,15 @@ export function generatePrompt(
     success: true,
     prompt,
     schema: normalizedSchema,
-    warnings: validationResult.warnings.map((w) => {
-      const location = w.componentId
-        ? `${w.componentId}${w.field ? `.${w.field}` : ""}`
-        : w.field || "schema"
-      return `${location}: ${w.message}`
-    }),
+    warnings: [
+      ...validationResult.warnings.map((w) => {
+        const location = w.componentId
+          ? `${w.componentId}${w.field ? `.${w.field}` : ""}`
+          : w.field || "schema"
+        return `${location}: ${w.message}`
+      }),
+      ...linkWarnings, // Include component link validation warnings
+    ],
   }
 }
 
