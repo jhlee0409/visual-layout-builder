@@ -55,6 +55,7 @@ export function ExportModal() {
 
   const schema = useLayoutStore((state) => state.schema)
   const componentLinks = useLayoutStore((state) => state.componentLinks)
+  const openLinkingPanel = useLayoutStore((state) => state.openLinkingPanel)
   const { error: showError } = useToast()
 
   // Get available models and recommendations (memoized for performance)
@@ -222,8 +223,8 @@ export function ExportModal() {
                       onClick={() => {
                         setOpen(false)
                         setShowLinkingPrompt(false)
-                        // Open linking panel (parent component handles this)
-                        window.dispatchEvent(new CustomEvent("openLinkingPanel"))
+                        // Open linking panel using Zustand store action
+                        openLinkingPanel()
                       }}
                     >
                       <Link className="w-4 h-4 mr-2" />

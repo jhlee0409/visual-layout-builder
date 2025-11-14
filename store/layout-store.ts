@@ -47,6 +47,7 @@ interface LayoutState extends HistoryActions {
   // UI state
   currentBreakpoint: string // "mobile" | "tablet" | "desktop"
   selectedComponentId: string | null
+  showLinkingPanel: boolean // Whether to show the Component Linking panel
 
   // Component Links (for responsive component linking across breakpoints)
   componentLinks: Array<{ source: string; target: string }>
@@ -94,6 +95,11 @@ interface LayoutState extends HistoryActions {
   removeComponentLink: (sourceId: string, targetId: string) => void
   clearAllLinks: () => void
   getLinkedComponentGroup: (componentId: string) => string[]
+
+  // Actions: UI state management
+  setShowLinkingPanel: (show: boolean) => void
+  openLinkingPanel: () => void
+  closeLinkingPanel: () => void
 }
 
 
@@ -124,6 +130,7 @@ export const useLayoutStore = create<LayoutState>()(
       },
       currentBreakpoint: "mobile",
       selectedComponentId: null,
+      showLinkingPanel: false,
       componentLinks: [],
 
       // Component management
@@ -751,6 +758,19 @@ export const useLayoutStore = create<LayoutState>()(
         }
 
         return [componentId] // 연결 없으면 자기 자신만
+      },
+
+      // UI state management
+      setShowLinkingPanel: (show) => {
+        set({ showLinkingPanel: show }, false, "setShowLinkingPanel")
+      },
+
+      openLinkingPanel: () => {
+        set({ showLinkingPanel: true }, false, "openLinkingPanel")
+      },
+
+      closeLinkingPanel: () => {
+        set({ showLinkingPanel: false }, false, "closeLinkingPanel")
       },
 
       // History actions (간단 구현)

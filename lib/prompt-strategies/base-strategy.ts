@@ -24,6 +24,7 @@ import { validateSchema } from "@/lib/schema-validation"
 import { normalizeSchema } from "@/lib/schema-utils"
 import { describeVisualLayout } from "@/lib/visual-layout-descriptor"
 import { generateGridCSS, generateTailwindClasses } from "@/lib/canvas-to-grid"
+import { calculateLinkGroups, validateComponentLinks, type ComponentLink } from "@/lib/graph-utils"
 
 /**
  * Base Prompt Strategy
@@ -337,67 +338,44 @@ export abstract class BasePromptStrategy implements IPromptStrategy {
    * Component Links 섹션 생성 (공통 로직)
    *
    * Cross-breakpoint relationships를 설명
+   * Validates links and uses shared DFS algorithm from graph-utils
    */
   generateComponentLinksSection(
     components: Component[],
-    componentLinks: Array<{ source: string; target: string }>,
+    componentLinks: ComponentLink[],
     options?: PromptGenerationOptions
   ): string {
+    // Validate component links
+    const validComponentIds = new Set(components.map((c) => c.id))
+    const linkValidation = validateComponentLinks(componentLinks, validComponentIds)
+
+    if (!linkValidation.valid) {
+      console.warn("Component link validation errors:", linkValidation.errors)
+      // Filter out invalid links
+      componentLinks = componentLinks.filter((link) => {
+        return validComponentIds.has(link.source) && validComponentIds.has(link.target)
+      })
+    }
+
     let section = `## Component Links (Cross-Breakpoint Relationships)\n\n`
     section += `The following components are linked and should be treated as the same component across different breakpoints:\n\n`
 
-    // Calculate groups using DFS
-    const groups = this.calculateLinkGroups(componentLinks)
+    // Calculate groups using shared DFS algorithm
+    const groups = calculateLinkGroups(componentLinks)
 
     groups.forEach((group, index) => {
-      const componentNames = group.map(id => {
-        const comp = components.find(c => c.id === id)
-        return comp ? `${comp.name} (${id})` : id
-      }).join(", ")
+      const componentNames = group
+        .map((id) => {
+          const comp = components.find((c) => c.id === id)
+          return comp ? `${comp.name} (${id})` : id
+        })
+        .join(", ")
       section += `**Group ${index + 1}:** ${componentNames}\n`
     })
 
     section += `\n**Important:** Components in the same group represent the same UI element across different breakpoints. Generate consistent code for them with appropriate responsive behavior.\n\n`
 
     return section
-  }
-
-  /**
-   * Calculate component link groups using DFS
-   */
-  private calculateLinkGroups(links: Array<{ source: string; target: string }>): string[][] {
-    const graph = new Map<string, Set<string>>()
-
-    links.forEach(({ source, target }) => {
-      if (!graph.has(source)) graph.set(source, new Set())
-      if (!graph.has(target)) graph.set(target, new Set())
-      graph.get(source)!.add(target)
-      graph.get(target)!.add(source)
-    })
-
-    const visited = new Set<string>()
-    const groups: string[][] = []
-
-    function dfs(node: string, group: string[]) {
-      visited.add(node)
-      group.push(node)
-      const neighbors = graph.get(node) || new Set()
-      neighbors.forEach(neighbor => {
-        if (!visited.has(neighbor)) {
-          dfs(neighbor, group)
-        }
-      })
-    }
-
-    graph.forEach((_, node) => {
-      if (!visited.has(node)) {
-        const group: string[] = []
-        dfs(node, group)
-        groups.push(group)
-      }
-    })
-
-    return groups
   }
 
   /**

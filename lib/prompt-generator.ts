@@ -9,46 +9,7 @@ import type { LaydlerSchema } from "@/types/schema"
 import { getTemplate } from "./prompt-templates"
 import { validateSchema } from "./schema-validation"
 import { normalizeSchema } from "./schema-utils"
-
-/**
- * Calculate component link groups using Union-Find algorithm
- */
-function calculateLinkGroups(links: Array<{ source: string; target: string }>): string[][] {
-  // Build adjacency list
-  const graph = new Map<string, Set<string>>()
-
-  links.forEach(({ source, target }) => {
-    if (!graph.has(source)) graph.set(source, new Set())
-    if (!graph.has(target)) graph.set(target, new Set())
-    graph.get(source)!.add(target)
-    graph.get(target)!.add(source)
-  })
-
-  // Find connected components using DFS
-  const visited = new Set<string>()
-  const groups: string[][] = []
-
-  function dfs(node: string, group: string[]) {
-    visited.add(node)
-    group.push(node)
-    const neighbors = graph.get(node) || new Set()
-    neighbors.forEach(neighbor => {
-      if (!visited.has(neighbor)) {
-        dfs(neighbor, group)
-      }
-    })
-  }
-
-  graph.forEach((_, node) => {
-    if (!visited.has(node)) {
-      const group: string[] = []
-      dfs(node, group)
-      groups.push(group)
-    }
-  })
-
-  return groups
-}
+import { calculateLinkGroups, validateComponentLinks } from "./graph-utils"
 
 /**
  * Prompt Generation Result for Schema
@@ -134,19 +95,47 @@ export function generatePrompt(
 
   // Component Links section - cross-breakpoint relationships (2025 개선)
   if (componentLinks && componentLinks.length > 0) {
-    sections.push("## Component Links (Cross-Breakpoint Relationships)\n\n")
-    sections.push("The following components are linked and should be treated as the same component across different breakpoints:\n\n")
+    // Validate component links before including in prompt
+    const validComponentIds = new Set(normalizedSchema.components.map((c) => c.id))
+    const linkValidation = validateComponentLinks(componentLinks, validComponentIds)
 
-    // Calculate groups using simple grouping logic
+    if (!linkValidation.valid) {
+      // Log validation errors but continue (for debugging)
+      console.warn("Component link validation errors:", linkValidation.errors)
+      // Filter out invalid links
+      const validLinks = componentLinks.filter((link) => {
+        return validComponentIds.has(link.source) && validComponentIds.has(link.target)
+      })
+      if (validLinks.length === 0) {
+        // Skip links section if no valid links
+        return {
+          success: false,
+          errors: ["All component links are invalid: " + linkValidation.errors.join(", ")],
+        }
+      }
+      // Use only valid links
+      componentLinks = validLinks
+    }
+
+    sections.push("## Component Links (Cross-Breakpoint Relationships)\n\n")
+    sections.push(
+      "The following components are linked and should be treated as the same component across different breakpoints:\n\n"
+    )
+
+    // Calculate groups using DFS algorithm
     const groups = calculateLinkGroups(componentLinks)
     groups.forEach((group, index) => {
-      const componentNames = group.map(id => {
-        const comp = normalizedSchema.components.find(c => c.id === id)
-        return comp ? `${comp.name} (${id})` : id
-      }).join(", ")
+      const componentNames = group
+        .map((id) => {
+          const comp = normalizedSchema.components.find((c) => c.id === id)
+          return comp ? `${comp.name} (${id})` : id
+        })
+        .join(", ")
       sections.push(`**Group ${index + 1}:** ${componentNames}\n`)
     })
-    sections.push("\n**Important:** Components in the same group represent the same UI element across different breakpoints. Generate consistent code for them with appropriate responsive behavior.\n\n")
+    sections.push(
+      "\n**Important:** Components in the same group represent the same UI element across different breakpoints. Generate consistent code for them with appropriate responsive behavior.\n\n"
+    )
     sections.push("---\n")
   }
 
