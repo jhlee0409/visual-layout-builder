@@ -334,6 +334,73 @@ export abstract class BasePromptStrategy implements IPromptStrategy {
   }
 
   /**
+   * Component Links 섹션 생성 (공통 로직)
+   *
+   * Cross-breakpoint relationships를 설명
+   */
+  generateComponentLinksSection(
+    components: Component[],
+    componentLinks: Array<{ source: string; target: string }>,
+    options?: PromptGenerationOptions
+  ): string {
+    let section = `## Component Links (Cross-Breakpoint Relationships)\n\n`
+    section += `The following components are linked and should be treated as the same component across different breakpoints:\n\n`
+
+    // Calculate groups using DFS
+    const groups = this.calculateLinkGroups(componentLinks)
+
+    groups.forEach((group, index) => {
+      const componentNames = group.map(id => {
+        const comp = components.find(c => c.id === id)
+        return comp ? `${comp.name} (${id})` : id
+      }).join(", ")
+      section += `**Group ${index + 1}:** ${componentNames}\n`
+    })
+
+    section += `\n**Important:** Components in the same group represent the same UI element across different breakpoints. Generate consistent code for them with appropriate responsive behavior.\n\n`
+
+    return section
+  }
+
+  /**
+   * Calculate component link groups using DFS
+   */
+  private calculateLinkGroups(links: Array<{ source: string; target: string }>): string[][] {
+    const graph = new Map<string, Set<string>>()
+
+    links.forEach(({ source, target }) => {
+      if (!graph.has(source)) graph.set(source, new Set())
+      if (!graph.has(target)) graph.set(target, new Set())
+      graph.get(source)!.add(target)
+      graph.get(target)!.add(source)
+    })
+
+    const visited = new Set<string>()
+    const groups: string[][] = []
+
+    function dfs(node: string, group: string[]) {
+      visited.add(node)
+      group.push(node)
+      const neighbors = graph.get(node) || new Set()
+      neighbors.forEach(neighbor => {
+        if (!visited.has(neighbor)) {
+          dfs(neighbor, group)
+        }
+      })
+    }
+
+    graph.forEach((_, node) => {
+      if (!visited.has(node)) {
+        const group: string[] = []
+        dfs(node, group)
+        groups.push(group)
+      }
+    })
+
+    return groups
+  }
+
+  /**
    * 최종 프롬프트 생성 (Template Method Pattern)
    *
    * 공통 흐름 정의, 세부 구현은 하위 메서드에서
@@ -394,6 +461,20 @@ export abstract class BasePromptStrategy implements IPromptStrategy {
         priority: 80,
         required: true,
       })
+
+      // Component Links section (if provided)
+      if (options?.componentLinks && options.componentLinks.length > 0) {
+        sections.push({
+          title: "Component Links",
+          content: this.generateComponentLinksSection(
+            normalizedSchema.components,
+            options.componentLinks,
+            options
+          ),
+          priority: 75,
+          required: false,
+        })
+      }
 
       // Instructions section
       sections.push({

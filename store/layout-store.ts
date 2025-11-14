@@ -94,8 +94,6 @@ interface LayoutState extends HistoryActions {
   removeComponentLink: (sourceId: string, targetId: string) => void
   clearAllLinks: () => void
   getLinkedComponentGroup: (componentId: string) => string[]
-  mergeLinkedComponents: () => void
-  autoLinkSimilarComponents: () => void
 }
 
 
@@ -716,9 +714,6 @@ export const useLayoutStore = create<LayoutState>()(
             ],
           }
         }, false, "addComponentLink")
-
-        // Note: mergeLinkedComponents() should be called manually
-        // (e.g., when closing ComponentLinkingPanel) to avoid performance issues
       },
 
       removeComponentLink: (sourceId, targetId) => {
@@ -731,8 +726,6 @@ export const useLayoutStore = create<LayoutState>()(
               )
           ),
         }), false, "removeComponentLink")
-
-        // Note: mergeLinkedComponents() should be called manually
       },
 
       clearAllLinks: () => {
@@ -741,7 +734,6 @@ export const useLayoutStore = create<LayoutState>()(
           false,
           "clearAllLinks"
         )
-        // Note: mergeLinkedComponents() should be called manually
       },
 
       getLinkedComponentGroup: (componentId) => {
@@ -759,130 +751,6 @@ export const useLayoutStore = create<LayoutState>()(
         }
 
         return [componentId] // 연결 없으면 자기 자신만
-      },
-
-      mergeLinkedComponents: () => {
-        set((state) => {
-          const componentIds = state.schema.components.map((c) => c.id)
-
-          // 1. Union-Find로 연결 그룹 계산
-          const groups = calculateConnectedGroups(componentIds, state.componentLinks)
-
-          // 2. 각 그룹을 하나의 Component로 병합
-          const mergedComponents: Component[] = []
-          const processedIds = new Set<string>()
-
-          groups.forEach((members, root) => {
-            if (members.size === 1) {
-              // 그룹 크기가 1이면 연결 없음 → 그대로 유지
-              const component = state.schema.components.find((c) => c.id === root)
-              if (component) {
-                mergedComponents.push(component)
-                processedIds.add(root)
-              }
-              return
-            }
-
-            // 그룹 크기 >= 2 → 병합 필요
-            const groupComponents = Array.from(members)
-              .map((id) => state.schema.components.find((c) => c.id === id))
-              .filter((c): c is Component => c !== undefined)
-
-            if (groupComponents.length === 0) return
-
-            // 첫 번째 컴포넌트를 base로 사용
-            const baseComponent = groupComponents[0]
-
-            // responsiveCanvasLayout 병합
-            const mergedCanvasLayout: ResponsiveCanvasLayout = {}
-            groupComponents.forEach((component) => {
-              if (component.responsiveCanvasLayout) {
-                Object.assign(mergedCanvasLayout, component.responsiveCanvasLayout)
-              }
-            })
-
-            // 병합된 컴포넌트
-            const mergedComponent: Component = {
-              ...baseComponent,
-              responsiveCanvasLayout: mergedCanvasLayout,
-            }
-
-            mergedComponents.push(mergedComponent)
-            groupComponents.forEach((c) => processedIds.add(c.id))
-          })
-
-          // 3. Layouts 업데이트 (병합된 ID로 교체)
-          const newLayouts = { ...state.schema.layouts }
-
-          groups.forEach((members, root) => {
-            if (members.size <= 1) return
-
-            const memberIds = Array.from(members)
-
-            Object.keys(newLayouts).forEach((bp) => {
-              newLayouts[bp as keyof typeof newLayouts].components = newLayouts[bp as keyof typeof newLayouts].components.map((id: string) =>
-                memberIds.includes(id) ? root : id
-              )
-
-              // 중복 제거
-              newLayouts[bp as keyof typeof newLayouts].components = Array.from(
-                new Set(newLayouts[bp as keyof typeof newLayouts].components)
-              )
-            })
-          })
-
-          return {
-            schema: {
-              ...state.schema,
-              components: mergedComponents,
-              layouts: newLayouts,
-            },
-          }
-        }, false, "mergeLinkedComponents")
-      },
-
-      autoLinkSimilarComponents: () => {
-        set((state) => {
-          // 1. name + semanticTag로 그룹화
-          const groups = new Map<string, string[]>()
-
-          state.schema.components.forEach((component) => {
-            const key = `${component.name}-${component.semanticTag}`
-            if (!groups.has(key)) {
-              groups.set(key, [])
-            }
-            groups.get(key)!.push(component.id)
-          })
-
-          // 2. 2개 이상의 컴포넌트가 있는 그룹만 연결
-          const newLinks = [...state.componentLinks]
-
-          groups.forEach((ids) => {
-            if (ids.length > 1) {
-              // 순차적으로 연결: c-1 → c-2, c-2 → c-3
-              for (let i = 0; i < ids.length - 1; i++) {
-                const link = { source: ids[i], target: ids[i + 1] }
-
-                // 중복 체크
-                const exists = newLinks.some(
-                  (l) =>
-                    (l.source === link.source && l.target === link.target) ||
-                    (l.source === link.target && l.target === link.source)
-                )
-
-                if (!exists) {
-                  newLinks.push(link)
-                }
-              }
-            }
-          })
-
-          return {
-            componentLinks: newLinks,
-          }
-        }, false, "autoLinkSimilarComponents")
-
-        // Note: mergeLinkedComponents() should be called manually
       },
 
       // History actions (간단 구현)

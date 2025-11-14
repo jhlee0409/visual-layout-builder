@@ -1,6 +1,6 @@
 "use client"
 
-import { useRef, useState } from "react"
+import { useRef, useState, useEffect } from "react"
 import { BreakpointSwitcher} from "@/components/breakpoint-panel"
 import { LibraryPanel} from "@/components/library-panel"
 import { LayersTree} from "@/components/layers-tree"
@@ -44,6 +44,18 @@ export default function Home() {
 
   // 브레이크포인트가 없으면 모달 표시
   const showInitialModal = breakpoints.length === 0
+
+  // Listen for openLinkingPanel event from ExportModal
+  useEffect(() => {
+    const handleOpenLinkingPanel = () => {
+      setShowLinkingPanel(true)
+    }
+
+    window.addEventListener("openLinkingPanel", handleOpenLinkingPanel)
+    return () => {
+      window.removeEventListener("openLinkingPanel", handleOpenLinkingPanel)
+    }
+  }, [])
 
   const handleBreakpointSelect = (breakpoint: "mobile" | "tablet" | "desktop") => {
     initializeSchema(breakpoint)

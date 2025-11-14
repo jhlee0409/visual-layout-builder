@@ -11,6 +11,46 @@ import { validateSchema } from "./schema-validation"
 import { normalizeSchema } from "./schema-utils"
 
 /**
+ * Calculate component link groups using Union-Find algorithm
+ */
+function calculateLinkGroups(links: Array<{ source: string; target: string }>): string[][] {
+  // Build adjacency list
+  const graph = new Map<string, Set<string>>()
+
+  links.forEach(({ source, target }) => {
+    if (!graph.has(source)) graph.set(source, new Set())
+    if (!graph.has(target)) graph.set(target, new Set())
+    graph.get(source)!.add(target)
+    graph.get(target)!.add(source)
+  })
+
+  // Find connected components using DFS
+  const visited = new Set<string>()
+  const groups: string[][] = []
+
+  function dfs(node: string, group: string[]) {
+    visited.add(node)
+    group.push(node)
+    const neighbors = graph.get(node) || new Set()
+    neighbors.forEach(neighbor => {
+      if (!visited.has(neighbor)) {
+        dfs(neighbor, group)
+      }
+    })
+  }
+
+  graph.forEach((_, node) => {
+    if (!visited.has(node)) {
+      const group: string[] = []
+      dfs(node, group)
+      groups.push(group)
+    }
+  })
+
+  return groups
+}
+
+/**
  * Prompt Generation Result for Schema
  *
  * V1과 동일한 구조이지만 검증 결과 포함
@@ -32,10 +72,11 @@ export interface GenerationResult {
  * @param schema - Schema (Component Independence)
  * @param framework - Target framework (e.g., "react")
  * @param cssSolution - Target CSS solution (e.g., "tailwind")
+ * @param componentLinks - Optional component links for cross-breakpoint relationships
  * @returns Generation result with prompt and schema
  *
  * @example
- * const result = generatePrompt(schemaV2, "react", "tailwind")
+ * const result = generatePrompt(schemaV2, "react", "tailwind", componentLinks)
  * if (result.success) {
  *   // 사용자가 Claude/GPT에 복붙
  *   navigator.clipboard.writeText(result.prompt!)
@@ -44,7 +85,8 @@ export interface GenerationResult {
 export function generatePrompt(
   schema: LaydlerSchema,
   framework: string,
-  cssSolution: string
+  cssSolution: string,
+  componentLinks?: Array<{ source: string; target: string }>
 ): GenerationResult {
   // 0. Normalize schema with breakpoint inheritance (Mobile → Tablet → Desktop)
   const normalizedSchema = normalizeSchema(schema)
@@ -89,6 +131,24 @@ export function generatePrompt(
   // Layouts section - structure 기반 + Canvas Grid 정보 (2025 개선)
   sections.push(template.layoutSection(normalizedSchema.components, normalizedSchema.breakpoints, normalizedSchema.layouts))
   sections.push("---\n")
+
+  // Component Links section - cross-breakpoint relationships (2025 개선)
+  if (componentLinks && componentLinks.length > 0) {
+    sections.push("## Component Links (Cross-Breakpoint Relationships)\n\n")
+    sections.push("The following components are linked and should be treated as the same component across different breakpoints:\n\n")
+
+    // Calculate groups using simple grouping logic
+    const groups = calculateLinkGroups(componentLinks)
+    groups.forEach((group, index) => {
+      const componentNames = group.map(id => {
+        const comp = normalizedSchema.components.find(c => c.id === id)
+        return comp ? `${comp.name} (${id})` : id
+      }).join(", ")
+      sections.push(`**Group ${index + 1}:** ${componentNames}\n`)
+    })
+    sections.push("\n**Important:** Components in the same group represent the same UI element across different breakpoints. Generate consistent code for them with appropriate responsive behavior.\n\n")
+    sections.push("---\n")
+  }
 
   // Instructions section - 특화 구현 지침
   sections.push(template.instructionsSection())

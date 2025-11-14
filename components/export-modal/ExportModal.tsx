@@ -8,8 +8,9 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
-import { FileCode, Sparkles, Check, Copy, Zap, DollarSign, Award } from "lucide-react"
+import { FileCode, Sparkles, Check, Copy, Zap, DollarSign, Award, Link, AlertCircle } from "lucide-react"
 import { useToast } from "@/store/toast-store"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 
 // New AI Model System
 import type { AIModelId, OptimizationLevel } from "@/types/ai-models"
@@ -34,6 +35,7 @@ import {
 export function ExportModal() {
   const [open, setOpen] = useState(false)
   const [step, setStep] = useState<"config" | "result">("config")
+  const [showLinkingPrompt, setShowLinkingPrompt] = useState(false)
 
   // Basic Config
   const [framework, setFramework] = useState<"react">("react")
@@ -52,6 +54,7 @@ export function ExportModal() {
   const [copiedJson, setCopiedJson] = useState(false)
 
   const schema = useLayoutStore((state) => state.schema)
+  const componentLinks = useLayoutStore((state) => state.componentLinks)
   const { error: showError } = useToast()
 
   // Get available models and recommendations (memoized for performance)
@@ -99,6 +102,15 @@ export function ExportModal() {
   )
 
   const handleGenerate = () => {
+    // Check if linking is needed but not done
+    const hasMultipleBreakpoints = schema.breakpoints.length >= 2
+    const hasNoLinks = componentLinks.length === 0
+
+    if (hasMultipleBreakpoints && hasNoLinks && !showLinkingPrompt) {
+      setShowLinkingPrompt(true)
+      return
+    }
+
     try {
       // Create strategy for selected model
       const strategy = createPromptStrategy(selectedModelId)
@@ -108,6 +120,7 @@ export function ExportModal() {
         targetModel: selectedModelId,
         optimizationLevel,
         verbosity,
+        componentLinks, // Pass component links to prompt generation
       })
 
       if (!result.success) {
@@ -121,6 +134,7 @@ export function ExportModal() {
 
       // Move to result step
       setStep("result")
+      setShowLinkingPrompt(false) // Reset prompt
     } catch (err) {
       showError(String(err), "Generation Failed")
     }
@@ -184,7 +198,51 @@ export function ExportModal() {
                   Complexity: <span className="font-semibold capitalize">{schemaComplexity}</span>
                 </div>
               </div>
+              {componentLinks.length > 0 && (
+                <div className="text-sm text-blue-800 pt-2 border-t border-blue-200">
+                  Component Links: <span className="font-semibold">{componentLinks.length}</span>
+                </div>
+              )}
             </div>
+
+            {/* Component Linking Prompt */}
+            {showLinkingPrompt && schema.breakpoints.length >= 2 && (
+              <Alert>
+                <AlertCircle className="h-4 w-4" />
+                <AlertTitle>Component Linking Recommended</AlertTitle>
+                <AlertDescription className="space-y-3">
+                  <p className="text-sm">
+                    You have {schema.breakpoints.length} breakpoints but no component links defined.
+                    Linking components helps the AI generate consistent code across breakpoints.
+                  </p>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        setOpen(false)
+                        setShowLinkingPrompt(false)
+                        // Open linking panel (parent component handles this)
+                        window.dispatchEvent(new CustomEvent("openLinkingPanel"))
+                      }}
+                    >
+                      <Link className="w-4 h-4 mr-2" />
+                      Link Components
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        setShowLinkingPrompt(false)
+                        handleGenerate() // Continue without linking
+                      }}
+                    >
+                      Continue Without Linking
+                    </Button>
+                  </div>
+                </AlertDescription>
+              </Alert>
+            )}
 
             {/* Smart Recommendations */}
             {recommendations.length > 0 && (

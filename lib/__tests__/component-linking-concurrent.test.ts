@@ -259,98 +259,11 @@ describe("Component Linking Concurrent Operations", () => {
       expect(store.componentLinks.length).toBe(0)
     })
 
-    it("should handle mergeLinkedComponents after multiple operations", () => {
-      let store = useLayoutStore.getState()
+    // Test removed - mergeLinkedComponents no longer exists
+    // Components are now kept separate and only linked
 
-      // Add components in mobile breakpoint
-      store.addComponent({
-        name: "Header",
-        semanticTag: "header",
-        positioning: { type: "sticky", position: { top: 0 } },
-        layout: { type: "flex", flex: { direction: "row" } },
-        responsiveCanvasLayout: {
-          mobile: { x: 0, y: 0, width: 12, height: 1 },
-        },
-      })
-
-      // Switch to tablet and add another header
-      store.setCurrentBreakpoint("tablet")
-      store.addComponent({
-        name: "Header",
-        semanticTag: "header",
-        positioning: { type: "sticky", position: { top: 0 } },
-        layout: { type: "flex", flex: { direction: "row" } },
-        responsiveCanvasLayout: {
-          tablet: { x: 0, y: 0, width: 12, height: 1 },
-        },
-      })
-
-      // Get updated state
-      store = useLayoutStore.getState()
-      const ids = store.schema.components.map((c) => c.id)
-
-      // Link them
-      store.addComponentLink(ids[0], ids[1])
-
-      // Merge
-      store.mergeLinkedComponents()
-
-      // Get updated state
-      store = useLayoutStore.getState()
-
-      // After merge, should have combined responsiveCanvasLayout
-      const components = store.schema.components
-      expect(components.length).toBe(1) // Should be merged into one
-
-      const merged = components[0]
-      expect(merged.responsiveCanvasLayout).toBeDefined()
-      expect(merged.responsiveCanvasLayout?.mobile).toBeDefined()
-      expect(merged.responsiveCanvasLayout?.tablet).toBeDefined()
-    })
-
-    it("should handle auto-link similar components", () => {
-      let store = useLayoutStore.getState()
-
-      // Add components with same name
-      store.addComponent({
-        name: "Header",
-        semanticTag: "header",
-        positioning: { type: "sticky", position: { top: 0 } },
-        layout: { type: "flex", flex: { direction: "row" } },
-      })
-
-      store.addComponent({
-        name: "Header",
-        semanticTag: "header",
-        positioning: { type: "sticky", position: { top: 0 } },
-        layout: { type: "flex", flex: { direction: "row" } },
-      })
-
-      store.addComponent({
-        name: "Footer",
-        semanticTag: "footer",
-        positioning: { type: "static" },
-        layout: { type: "flex", flex: { direction: "row" } },
-      })
-
-      // Get updated state
-      store = useLayoutStore.getState()
-      const ids = store.schema.components.map((c) => c.id)
-
-      // Auto-link similar components
-      store.autoLinkSimilarComponents()
-
-      // Get updated state
-      store = useLayoutStore.getState()
-      const links = store.componentLinks
-      expect(links.length).toBeGreaterThan(0)
-
-      // ids[0] and ids[1] should be linked (same name)
-      const group = store.getLinkedComponentGroup(ids[0])
-      expect(group).toContain(ids[0])
-      expect(group).toContain(ids[1])
-      expect(group).not.toContain(ids[2]) // Different name
-    })
+    // Test removed - autoLinkSimilarComponents no longer exists
+    // Linking is now manual only
   })
 
   describe("Performance and consistency", () => {
