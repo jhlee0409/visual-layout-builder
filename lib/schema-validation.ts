@@ -109,8 +109,9 @@ export function validateSchema(
   })
 
   // 5. Canvas-Layout consistency 검증
-  const canvasLayoutWarnings = validateCanvasLayoutConsistency(schema)
-  warnings.push(...canvasLayoutWarnings)
+  const canvasLayoutResult = validateCanvasLayoutConsistency(schema)
+  errors.push(...canvasLayoutResult.errors)
+  warnings.push(...canvasLayoutResult.warnings)
 
   return {
     valid: errors.length === 0,
@@ -518,11 +519,12 @@ function validateLayoutConfig(
  * AI가 잘못된 순서로 코드를 생성할 수 있으므로 사용자에게 알림
  *
  * @param schema - LaydlerSchema
- * @returns ValidationWarning[] - Canvas-Layout 불일치 경고
+ * @returns ValidationResult - Canvas-Layout 불일치 검증 결과 (에러 + 경고)
  */
 function validateCanvasLayoutConsistency(
   schema: LaydlerSchema
-): ValidationWarning[] {
+): ValidationResult {
+  const errors: ValidationError[] = []
   const warnings: ValidationWarning[] = []
 
   schema.breakpoints.forEach((breakpoint) => {
@@ -622,6 +624,170 @@ function validateCanvasLayoutConsistency(
         message: `Complex 2D Grid layout detected in "${breakpointName}" with components side-by-side: ${complexRowDescriptions.join("; ")}. Make sure your prompt includes Canvas Grid positioning information (Visual Layout Description) for accurate AI code generation.`,
         field: `layouts.${breakpointName}`,
       })
+    }
+
+    // 4. Overlap detection (components in same row with overlapping x ranges)
+    complexRows.forEach(([row, componentIds]) => {
+      for (let i = 0; i < componentIds.length; i++) {
+        for (let j = i + 1; j < componentIds.length; j++) {
+          const comp1 = componentsWithCanvas.find((c) => c.id === componentIds[i])
+          const comp2 = componentsWithCanvas.find((c) => c.id === componentIds[j])
+
+          if (!comp1 || !comp2) continue
+
+          const layout1 = comp1.canvasLayout!
+          const layout2 = comp2.canvasLayout!
+
+          // Check if x ranges overlap
+          const overlap = !(
+            layout1.x + layout1.width <= layout2.x ||
+            layout2.x + layout2.width <= layout1.x
+          )
+
+          if (overlap) {
+            warnings.push({
+              code: "CANVAS_COMPONENTS_OVERLAP",
+              message: `Components ${comp1.name} (${comp1.id}) and ${comp2.name} (${comp2.id}) have overlapping Canvas Grid positions in "${breakpointName}" breakpoint. This may cause rendering issues or unexpected AI code generation.`,
+              field: `layouts.${breakpointName}`,
+            })
+          }
+        }
+      }
+    })
+  })
+
+  // 5. Additional Canvas Layout validations for ALL components
+  const additionalWarnings = validateCanvasLayoutBounds(
+    schema,
+    errors
+  )
+  warnings.push(...additionalWarnings)
+
+  return {
+    valid: errors.length === 0,
+    errors,
+    warnings,
+  }
+}
+
+/**
+ * Canvas Layout Bounds 검증
+ *
+ * Canvas Layout의 좌표, 크기, 범위 등을 검증
+ * - 음수 좌표 (에러)
+ * - 크기 0 (경고)
+ * - 그리드 범위 초과 (경고)
+ * - 소수점 좌표 (경고)
+ * - Canvas에만 있고 Layout에 없는 컴포넌트 (경고)
+ */
+function validateCanvasLayoutBounds(
+  schema: LaydlerSchema,
+  errors: ValidationError[]
+): ValidationWarning[] {
+  const warnings: ValidationWarning[] = []
+
+  schema.components.forEach((component) => {
+    // Check both canvasLayout and responsiveCanvasLayout
+    const layoutsToCheck: Array<{
+      layout: { x: number; y: number; width: number; height: number }
+      breakpoint?: string
+    }> = []
+
+    if (component.canvasLayout) {
+      layoutsToCheck.push({ layout: component.canvasLayout })
+    }
+
+    if (component.responsiveCanvasLayout) {
+      Object.entries(component.responsiveCanvasLayout).forEach(
+        ([breakpointName, layout]) => {
+          if (layout) {
+            layoutsToCheck.push({ layout, breakpoint: breakpointName })
+          }
+        }
+      )
+    }
+
+    layoutsToCheck.forEach(({ layout, breakpoint }) => {
+      const contextMsg = breakpoint
+        ? ` in "${breakpoint}" breakpoint`
+        : ""
+
+      // 1. Negative coordinates (ERROR)
+      if (layout.x < 0 || layout.y < 0) {
+        errors.push({
+          code: "CANVAS_NEGATIVE_COORDINATE",
+          message: `Component "${component.name}" (${component.id}) has negative Canvas coordinates (x: ${layout.x}, y: ${layout.y})${contextMsg}. Coordinates must be non-negative.`,
+          componentId: component.id,
+          field: breakpoint ? `responsiveCanvasLayout.${breakpoint}` : "canvasLayout",
+        })
+      }
+
+      // 2. Zero size (WARNING)
+      if (layout.width === 0 || layout.height === 0) {
+        warnings.push({
+          code: "CANVAS_ZERO_SIZE",
+          message: `Component "${component.name}" (${component.id}) has zero width or height (width: ${layout.width}, height: ${layout.height})${contextMsg}. This component will not be visible.`,
+          componentId: component.id,
+          field: breakpoint ? `responsiveCanvasLayout.${breakpoint}` : "canvasLayout",
+        })
+      }
+
+      // 3. Fractional coordinates (WARNING)
+      if (
+        !Number.isInteger(layout.x) ||
+        !Number.isInteger(layout.y) ||
+        !Number.isInteger(layout.width) ||
+        !Number.isInteger(layout.height)
+      ) {
+        warnings.push({
+          code: "CANVAS_FRACTIONAL_COORDINATE",
+          message: `Component "${component.name}" (${component.id}) has fractional Canvas coordinates (x: ${layout.x}, y: ${layout.y}, width: ${layout.width}, height: ${layout.height})${contextMsg}. Grid positions should be integers for consistent rendering.`,
+          componentId: component.id,
+          field: breakpoint ? `responsiveCanvasLayout.${breakpoint}` : "canvasLayout",
+        })
+      }
+
+      // 4. Out of bounds (WARNING)
+      // Find appropriate breakpoint for checking bounds
+      let bp: Breakpoint | undefined
+      if (breakpoint) {
+        bp = schema.breakpoints.find((b) => b.name === breakpoint)
+      } else if (schema.breakpoints.length > 0) {
+        // For canvasLayout without breakpoint, use first/default breakpoint
+        bp = schema.breakpoints[0]
+      }
+
+      if (bp) {
+        const exceedsWidth = layout.x + layout.width > bp.gridCols
+        const exceedsHeight = layout.y + layout.height > bp.gridRows
+
+        if (exceedsWidth || exceedsHeight) {
+          warnings.push({
+            code: "CANVAS_OUT_OF_BOUNDS",
+            message: `Component "${component.name}" (${component.id}) exceeds grid boundaries${contextMsg}. Position: (${layout.x}, ${layout.y}), Size: ${layout.width}×${layout.height}, Grid: ${bp.gridCols}×${bp.gridRows}. ${exceedsWidth ? `Exceeds width (${layout.x + layout.width} > ${bp.gridCols}). ` : ""}${exceedsHeight ? `Exceeds height (${layout.y + layout.height} > ${bp.gridRows}).` : ""}`,
+            componentId: component.id,
+            field: breakpoint ? `responsiveCanvasLayout.${breakpoint}` : "canvasLayout",
+          })
+        }
+      }
+    })
+
+    // 5. Component has Canvas layout but not in any layout.components (WARNING)
+    const hasCanvasLayout = component.canvasLayout || component.responsiveCanvasLayout
+
+    if (hasCanvasLayout) {
+      const inAnyLayout = Object.values(schema.layouts).some((layout) =>
+        (layout as LayoutConfig).components.includes(component.id)
+      )
+
+      if (!inAnyLayout) {
+        warnings.push({
+          code: "CANVAS_COMPONENT_NOT_IN_LAYOUT",
+          message: `Component "${component.name}" (${component.id}) has Canvas layout information but is not included in any breakpoint's layout.components array. This component will not be rendered.`,
+          componentId: component.id,
+          field: "canvasLayout",
+        })
+      }
     }
   })
 

@@ -25,7 +25,7 @@ describe('Canvas to Prompt E2E', () => {
         name: 'Header',
         semanticTag: 'header',
         positioning: { type: 'sticky', position: { top: 0, zIndex: 50 } },
-        layout: { type: 'flex', flex: { direction: 'row', justify: 'space-between' } },
+        layout: { type: 'flex', flex: { direction: 'row', justify: 'between' } },
         canvasLayout: { x: 0, y: 0, width: 12, height: 1 },
       },
       {
@@ -41,7 +41,7 @@ describe('Canvas to Prompt E2E', () => {
         name: 'MainContent',
         semanticTag: 'main',
         positioning: { type: 'static' },
-        layout: { type: 'container', container: { maxWidth: '1200px', centered: true } },
+        layout: { type: 'container', container: { maxWidth: 'xl', centered: true } },
         canvasLayout: { x: 3, y: 1, width: 9, height: 7 }, // RIGHT side, next to c2
       },
     ],
