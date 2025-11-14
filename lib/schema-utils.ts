@@ -324,37 +324,40 @@ export function isValidSchema(schema: unknown): schema is LaydlerSchema {
 export function normalizeSchema(schema: LaydlerSchema): LaydlerSchema {
   const normalized = cloneSchema(schema)
 
-  // 1. Layout Inheritance: Mobile → Tablet → Desktop
-  // Tablet이 명시되지 않으면 Mobile 복사 (Mobile이 있는 경우에만)
-  if ((!normalized.layouts.tablet ||
-      normalized.layouts.tablet.components.length === 0) &&
-      normalized.layouts.mobile) {
-    normalized.layouts.tablet = JSON.parse(JSON.stringify(normalized.layouts.mobile))
-  }
+  // 1. Layout Inheritance: Dynamic breakpoint cascade (Mobile → Tablet → Desktop, etc.)
+  // Support any breakpoint names (not just hardcoded mobile/tablet/desktop)
+  // FIX: Previously hardcoded .mobile, .tablet, .desktop failed for custom names like "Desktop" (capital D)
+  const sortedBreakpoints = [...normalized.breakpoints].sort((a, b) => a.minWidth - b.minWidth)
 
-  // Desktop이 명시되지 않으면 Tablet 복사 (Tablet이 있는 경우에만)
-  if ((!normalized.layouts.desktop ||
-      normalized.layouts.desktop.components.length === 0) &&
-      normalized.layouts.tablet) {
-    normalized.layouts.desktop = JSON.parse(JSON.stringify(normalized.layouts.tablet))
+  for (let i = 1; i < sortedBreakpoints.length; i++) {
+    const currentBP = sortedBreakpoints[i].name
+    const previousBP = sortedBreakpoints[i - 1].name
+
+    // If current breakpoint's layout is empty or missing, inherit from previous breakpoint
+    if ((!normalized.layouts[currentBP] ||
+         normalized.layouts[currentBP].components.length === 0) &&
+        normalized.layouts[previousBP]) {
+      normalized.layouts[currentBP] = JSON.parse(JSON.stringify(normalized.layouts[previousBP]))
+    }
   }
 
   // 2. Canvas Layout Inheritance per Component
+  // FIX: Support dynamic breakpoint names (not just mobile/tablet/desktop)
   normalized.components = normalized.components.map(comp => {
     if (comp.responsiveCanvasLayout) {
       const rcl = { ...comp.responsiveCanvasLayout }
 
-      // Mobile → Tablet
-      if (!rcl.tablet && rcl.mobile) {
-        rcl.tablet = { ...rcl.mobile }
-      }
+      // Cascade from previous breakpoint to next (based on minWidth sorting)
+      for (let i = 1; i < sortedBreakpoints.length; i++) {
+        const currentBP = sortedBreakpoints[i].name
+        const previousBP = sortedBreakpoints[i - 1].name
 
-      // Tablet → Desktop (Tablet이 있으면 Tablet에서, 없으면 Mobile에서)
-      if (!rcl.desktop) {
-        if (rcl.tablet) {
-          rcl.desktop = { ...rcl.tablet }
-        } else if (rcl.mobile) {
-          rcl.desktop = { ...rcl.mobile }
+        // If current breakpoint has no Canvas layout, inherit from previous
+        if (!rcl[currentBP as keyof typeof rcl]) {
+          const previousLayout = rcl[previousBP as keyof typeof rcl]
+          if (previousLayout) {
+            rcl[currentBP as keyof typeof rcl] = { ...previousLayout }
+          }
         }
       }
 
