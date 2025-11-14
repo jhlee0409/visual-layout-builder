@@ -63,11 +63,11 @@ describe('Canvas JSON Export Validation', () => {
       expect(component.responsiveCanvasLayout!.desktop).toBeDefined()
 
       // 검증: 각 breakpoint별 좌표 정확성
-      expect(component.responsiveCanvasLayout!.mobile.x).toBe(0)
-      expect(component.responsiveCanvasLayout!.mobile.width).toBe(6)
+      expect(component.responsiveCanvasLayout!.mobile!.x).toBe(0)
+      expect(component.responsiveCanvasLayout!.mobile!.width).toBe(6)
 
-      expect(component.responsiveCanvasLayout!.tablet.width).toBe(3)
-      expect(component.responsiveCanvasLayout!.desktop.width).toBe(2)
+      expect(component.responsiveCanvasLayout!.tablet!.width).toBe(3)
+      expect(component.responsiveCanvasLayout!.desktop!.width).toBe(2)
     })
 
     it('should handle grid boundaries correctly', () => {

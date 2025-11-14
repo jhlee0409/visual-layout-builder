@@ -7,6 +7,8 @@ import type {
   ComponentStyling,
   ResponsiveBehavior,
 } from "@/types/schema"
+import { describeVisualLayout } from "./visual-layout-descriptor"
+import { generateGridCSS, generateTailwindClasses } from "./canvas-to-grid"
 
 /**
  * Prompt Template Types for Schema
@@ -23,6 +25,7 @@ export interface PromptTemplate {
   systemPrompt: string
   componentSection: (components: Component[]) => string
   layoutSection: (
+    components: Component[],
     breakpoints: Breakpoint[],
     layouts: LaydlerSchema["layouts"]
   ) => string
@@ -95,7 +98,7 @@ export const reactTailwindTemplate: PromptTemplate = {
     return section
   },
 
-  layoutSection: (breakpoints: Breakpoint[], layouts: LaydlerSchema["layouts"]) => {
+  layoutSection: (components: Component[], breakpoints: Breakpoint[], layouts: LaydlerSchema["layouts"]) => {
     let section = `## Responsive Page Structure\n\n`
     section += `Implement the following page structures for each breakpoint:\n\n`
 
@@ -106,15 +109,75 @@ export const reactTailwindTemplate: PromptTemplate = {
 
       section += `### ${index + 1}. ${breakpoint.name.charAt(0).toUpperCase() + breakpoint.name.slice(1)} (≥${breakpoint.minWidth}px)\n\n`
 
-      // Structure type
+      // 🆕 VISUAL LAYOUT DESCRIPTION (Canvas Grid 정보)
+      try {
+        const layoutDesc = describeVisualLayout(
+          components,
+          layoutKey,
+          breakpoint.gridCols,
+          breakpoint.gridRows
+        )
+
+        section += `**Visual Layout (Canvas Grid):**\n\n`
+        section += `${layoutDesc.summary}\n\n`
+
+        // Row-by-row description
+        layoutDesc.rowByRow.forEach((row) => {
+          section += `- ${row}\n`
+        })
+        section += "\n"
+
+        // Spatial relationships
+        if (layoutDesc.spatialRelationships.length > 0) {
+          section += `**Spatial Relationships:**\n\n`
+          layoutDesc.spatialRelationships.forEach((rel) => {
+            section += `- ${rel}\n`
+          })
+          section += "\n"
+        }
+
+        // 🆕 CSS GRID POSITIONING (2025 pattern)
+        const gridCSS = generateGridCSS(layoutDesc.visualLayout)
+        const tailwindClasses = generateTailwindClasses(layoutDesc.visualLayout)
+
+        section += `**CSS Grid Positioning:**\n\n`
+        section += `For precise 2D positioning, use CSS Grid:\n\n`
+        section += `\`\`\`css\n`
+        section += gridCSS
+        section += `\`\`\`\n\n`
+
+        section += `Or with Tailwind CSS:\n\n`
+        section += `Container: \`${tailwindClasses.container}\`\n\n`
+        section += `Components:\n`
+        Object.entries(tailwindClasses.components).forEach(([id, classes]) => {
+          const comp = components.find(c => c.id === id)
+          section += `- **${comp?.name} (${id})**: \`${classes}\`\n`
+        })
+        section += "\n"
+
+        // 🆕 IMPLEMENTATION STRATEGY (강화)
+        section += `**Implementation Strategy:**\n\n`
+        layoutDesc.implementationHints.forEach((hint) => {
+          section += `- ${hint}\n`
+        })
+        section += "\n"
+
+      } catch (error) {
+        // Fallback: Canvas 좌표 정보가 없는 경우 (backward compatibility)
+        console.warn(`Visual layout description failed for ${layoutKey}:`, error)
+      }
+
+      // Structure type (기존)
       section += `**Layout Structure:** \`${layout.structure}\`\n\n`
 
-      // Component order
-      section += `**Component Order:**\n`
+      // Component order (DOM 순서)
+      section += `**Component Order (DOM):**\n\n`
+      section += `For accessibility and SEO, the DOM order is:\n\n`
       layout.components.forEach((componentId: string, idx: number) => {
         section += `${idx + 1}. ${componentId}\n`
       })
       section += "\n"
+      section += `**Note:** Visual positioning (above) may differ from DOM order.\n\n`
 
       // Roles (if structure is sidebar-main)
       if (layout.roles && Object.keys(layout.roles).length > 0) {
@@ -125,28 +188,6 @@ export const reactTailwindTemplate: PromptTemplate = {
         if (layout.roles.footer) section += `- **Footer:** ${layout.roles.footer}\n`
         section += "\n"
       }
-
-      // Implementation guidance for this structure
-      section += `**Implementation Guidance:**\n`
-      switch (layout.structure) {
-        case "vertical":
-          section += `- Use a flex column container (\`flex flex-col\`)\n`
-          section += `- Stack components vertically in the order specified\n`
-          section += `- Each component will use its individual positioning/layout settings\n`
-          break
-        case "horizontal":
-          section += `- Use a flex row container (\`flex flex-row\`)\n`
-          section += `- Place components side by side in the order specified\n`
-          section += `- Each component will use its individual positioning/layout settings\n`
-          break
-        case "sidebar-main":
-          section += `- Implement classic sidebar-main layout structure\n`
-          section += `- Header at top (if specified), Sidebar on left, Main content area\n`
-          section += `- Use Flexbox for the main layout structure\n`
-          section += `- Each component will use its individual positioning/layout settings\n`
-          break
-      }
-      section += "\n"
     })
 
     return section

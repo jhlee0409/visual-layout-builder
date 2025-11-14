@@ -108,6 +108,10 @@ export function validateSchema(
     }
   })
 
+  // 5. Canvas-Layout consistency 검증
+  const canvasLayoutWarnings = validateCanvasLayoutConsistency(schema)
+  warnings.push(...canvasLayoutWarnings)
+
   return {
     valid: errors.length === 0,
     errors,
@@ -505,6 +509,123 @@ function validateLayoutConfig(
   }
 
   return { valid: errors.length === 0, errors, warnings }
+}
+
+/**
+ * Canvas-Layout Consistency 검증
+ *
+ * Canvas Grid 상의 시각적 배치와 Layout의 component 순서가 다를 경우 경고
+ * AI가 잘못된 순서로 코드를 생성할 수 있으므로 사용자에게 알림
+ *
+ * @param schema - LaydlerSchema
+ * @returns ValidationWarning[] - Canvas-Layout 불일치 경고
+ */
+function validateCanvasLayoutConsistency(
+  schema: LaydlerSchema
+): ValidationWarning[] {
+  const warnings: ValidationWarning[] = []
+
+  schema.breakpoints.forEach((breakpoint) => {
+    const breakpointName = breakpoint.name
+    const layout = schema.layouts[breakpointName] as LayoutConfig | undefined
+
+    if (!layout) return
+
+    // 1. Canvas Grid 기준으로 컴포넌트 정렬 (y축 우선, 같은 row면 x축)
+    const componentsWithCanvas = schema.components
+      .filter((c) => layout.components.includes(c.id))
+      .map((c) => {
+        // Responsive Canvas Layout 또는 기본 Canvas Layout 사용
+        const canvasLayout =
+          c.responsiveCanvasLayout?.[
+            breakpointName as keyof typeof c.responsiveCanvasLayout
+          ] || c.canvasLayout
+
+        return {
+          id: c.id,
+          name: c.name,
+          canvasLayout,
+        }
+      })
+      .filter((c) => c.canvasLayout !== undefined)
+
+    // Canvas layout이 없는 컴포넌트가 있으면 검증 불가
+    if (componentsWithCanvas.length === 0) return
+    if (componentsWithCanvas.length !== layout.components.length) {
+      warnings.push({
+        code: "MISSING_CANVAS_LAYOUT",
+        message: `Some components in "${breakpointName}" layout are missing Canvas layout information. Canvas-based visual layout may not be accurate.`,
+        field: `layouts.${breakpointName}`,
+      })
+      return
+    }
+
+    // Canvas Grid 기준으로 정렬 (y축 우선, x축 보조)
+    const sortedByCanvas = [...componentsWithCanvas].sort((a, b) => {
+      const aY = a.canvasLayout!.y
+      const bY = b.canvasLayout!.y
+      const aX = a.canvasLayout!.x
+      const bX = b.canvasLayout!.x
+
+      if (aY !== bY) return aY - bY
+      return aX - bX
+    })
+
+    const canvasOrder = sortedByCanvas.map((c) => c.id)
+    const layoutOrder = layout.components
+
+    // 2. 순서 비교
+    const orderMismatch = canvasOrder.some(
+      (id, index) => id !== layoutOrder[index]
+    )
+
+    if (orderMismatch) {
+      // 불일치 컴포넌트 찾기
+      const mismatchedComponents = canvasOrder.filter(
+        (id, index) => id !== layoutOrder[index]
+      )
+
+      warnings.push({
+        code: "CANVAS_LAYOUT_ORDER_MISMATCH",
+        message: `Visual layout (Canvas Grid) differs from DOM order (layout.components) in "${breakpointName}" breakpoint. Components affected: ${mismatchedComponents.join(", ")}. This may cause AI to generate code with incorrect positioning. Canvas order: [${canvasOrder.join(", ")}], Layout order: [${layoutOrder.join(", ")}]`,
+        field: `layouts.${breakpointName}.components`,
+      })
+    }
+
+    // 3. 복잡한 Grid 패턴 감지 (같은 row에 여러 컴포넌트)
+    const rowGroups = new Map<number, string[]>()
+    componentsWithCanvas.forEach((c) => {
+      const row = c.canvasLayout!.y
+      if (!rowGroups.has(row)) {
+        rowGroups.set(row, [])
+      }
+      rowGroups.get(row)!.push(c.id)
+    })
+
+    const complexRows = Array.from(rowGroups.entries()).filter(
+      ([_, components]) => components.length > 1
+    )
+
+    if (complexRows.length > 0) {
+      const complexRowDescriptions = complexRows.map(([row, components]) => {
+        const componentNames = components
+          .map((id) => {
+            const comp = schema.components.find((c) => c.id === id)
+            return comp ? `${comp.name} (${id})` : id
+          })
+          .join(", ")
+        return `Row ${row}: ${componentNames}`
+      })
+
+      warnings.push({
+        code: "COMPLEX_GRID_LAYOUT_DETECTED",
+        message: `Complex 2D Grid layout detected in "${breakpointName}" with components side-by-side: ${complexRowDescriptions.join("; ")}. Make sure your prompt includes Canvas Grid positioning information (Visual Layout Description) for accurate AI code generation.`,
+        field: `layouts.${breakpointName}`,
+      })
+    }
+  })
+
+  return warnings
 }
 
 /**

@@ -86,8 +86,8 @@ export function generatePrompt(
   sections.push(template.componentSection(normalizedSchema.components))
   sections.push("---\n")
 
-  // Layouts section - structure 기반 (vertical/horizontal/sidebar-main)
-  sections.push(template.layoutSection(normalizedSchema.breakpoints, normalizedSchema.layouts))
+  // Layouts section - structure 기반 + Canvas Grid 정보 (2025 개선)
+  sections.push(template.layoutSection(normalizedSchema.components, normalizedSchema.breakpoints, normalizedSchema.layouts))
   sections.push("---\n")
 
   // Instructions section - 특화 구현 지침
