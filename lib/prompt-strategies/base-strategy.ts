@@ -263,16 +263,29 @@ export abstract class BasePromptStrategy implements IPromptStrategy {
         }
 
         // Structure type (기존)
-        section += `**Layout Structure:** \`${layout.structure}\`\n\n`
+        section += `**Page Flow:** \`${layout.structure}\` (vertical scrolling with horizontal content areas)\n\n`
 
-        // Component order (DOM 순서)
-        section += `**Component Order (DOM):**\n\n`
-        section += `For accessibility and SEO, the DOM order is:\n\n`
+        // ⚠️ CRITICAL: Visual Layout 우선순위 명시
+        section += `**🚨 IMPORTANT - Layout Priority:**\n\n`
+        section += `1. **PRIMARY**: Use the **Visual Layout (Canvas Grid)** positioning above as your main guide\n`
+        section += `2. **SECONDARY**: The DOM order below is for reference only (accessibility/SEO)\n`
+        section += `3. **RULE**: Components with the same Y-coordinate range MUST be placed side-by-side horizontally\n`
+        section += `4. **DO NOT** stack components vertically if they share the same row in the Canvas Grid\n\n`
+
+        // Component order (DOM 순서) - 경고 강화
+        section += `**DOM Order (Reference Only - DO NOT use for visual positioning):**\n\n`
+        section += `For screen readers and SEO crawlers, the HTML source order is:\n\n`
         layout.components.forEach((componentId: string, idx: number) => {
-          section += `${idx + 1}. ${componentId}\n`
+          const comp = components.find((c) => c.id === componentId)
+          const canvasLayout = comp?.responsiveCanvasLayout?.[layoutKey] || comp?.canvasLayout
+          section += `${idx + 1}. ${componentId}`
+          if (canvasLayout) {
+            section += ` (Canvas row ${canvasLayout.y})`
+          }
+          section += `\n`
         })
         section += "\n"
-        section += `**Note:** Visual positioning (above) may differ from DOM order.\n\n`
+        section += `**⚠️ WARNING:** This DOM order differs from visual positioning. Always follow Canvas Grid coordinates for layout!\n\n`
 
         // Roles (if structure is sidebar-main)
         if (layout.roles && Object.keys(layout.roles).length > 0) {

@@ -265,37 +265,41 @@ function generateImplementationHints(
 ): string[] {
   const hints: string[] = []
 
+  // 🚨 0. CRITICAL: Side-by-side warning (최우선)
+  if (complexity.hasSideBySide) {
+    hints.push(
+      `🚨 **CRITICAL**: This layout has components positioned **side-by-side** in the same row. You MUST use CSS Grid (not flexbox column) to achieve horizontal positioning. DO NOT stack these components vertically!`
+    )
+  }
+
   // 1. Layout strategy
   if (complexity.recommendedImplementation === "grid") {
     hints.push(
-      `**Use CSS Grid** for the main layout container (not simple flexbox) due to complex 2D positioning`
-    )
-    hints.push(
-      `Set up a \`display: grid\` container with \`grid-template-columns: repeat(${gridCols}, 1fr)\``
+      `**Use CSS Grid** for the main layout container due to complex 2D positioning. Create a grid container with \`display: grid; grid-template-columns: repeat(${gridCols}, 1fr);\``
     )
   } else {
     hints.push(
-      `Simple vertical layout can use Flexbox (\`flex flex-col\`), but CSS Grid is recommended for precise positioning`
+      `While this layout could use Flexbox, CSS Grid is **strongly recommended** for precise positioning and future flexibility`
     )
   }
 
   // 2. Grid positioning
   hints.push(
-    `Each component should use \`grid-area\` or \`grid-column\`/\`grid-row\` to specify its exact position`
+    `Each component MUST use \`grid-area\` (or \`grid-column\`/\`grid-row\`) to specify its exact position based on Canvas Grid coordinates`
   )
 
   // 3. Sidebar handling
   const sidebar = detectSidebar(components, breakpoint, gridCols, gridRows)
   if (sidebar) {
     hints.push(
-      `**${sidebar.name}** should be implemented as a sticky or fixed sidebar on the left`
+      `**${sidebar.name}** should be implemented as a sticky sidebar (use \`position: sticky\` with appropriate \`top\` value) positioned on the left side`
     )
   }
 
-  // 4. Side-by-side handling
+  // 4. Side-by-side implementation details
   if (complexity.hasSideBySide) {
     hints.push(
-      `Components in the **same row** should be placed **side-by-side** using grid columns, NOT stacked vertically`
+      `For side-by-side components: Use grid-column spans to place components horizontally. Example: Component A uses \`grid-column: 1 / 4\`, Component B uses \`grid-column: 4 / 9\`, both with the same \`grid-row\` value`
     )
   }
 

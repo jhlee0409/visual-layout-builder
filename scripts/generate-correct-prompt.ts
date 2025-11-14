@@ -6,17 +6,22 @@
  */
 
 import { readFileSync } from "fs"
-import { generatePrompt } from "../lib/prompt-generator"
+import { createPromptStrategy } from "../lib/prompt-strategies/strategy-factory"
 import type { LaydlerSchema } from "../types/schema"
 
-// Read schema from temp file
-const schemaJSON = readFileSync("./temp-schema.json", "utf-8")
+// Read schema from test file
+const schemaJSON = readFileSync("./test-schema.json", "utf-8")
 const schema: LaydlerSchema = JSON.parse(schemaJSON)
 
-// Generate prompt using the official prompt generator
-console.log("🚀 Generating prompt with Canvas Grid information...\n")
+// Generate prompt using AI Model System (same as ExportModal)
+console.log("🚀 Generating prompt with AI Model System (Canvas Grid information)...\n")
 
-const result = generatePrompt(schema, "react", "tailwind")
+const strategy = createPromptStrategy("claude-sonnet-4.5")
+const result = strategy.generatePrompt(schema, "react", "tailwind", {
+  targetModel: "claude-sonnet-4.5",
+  optimizationLevel: "balanced",
+  verbosity: "normal"
+})
 
 if (result.success) {
   console.log("✅ Prompt generated successfully!")
