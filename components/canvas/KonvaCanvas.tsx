@@ -145,7 +145,7 @@ export function KonvaCanvas({
     .map((c) => {
       // Use responsive layout (responsiveCanvasLayout) or fallback to canvasLayout
       const layout =
-        c.responsiveCanvasLayout?.[currentBreakpoint as keyof typeof c.responsiveCanvasLayout] ||
+        c.responsiveCanvasLayout?.[currentBreakpoint] ||
         c.canvasLayout
 
       if (!layout) return null
@@ -177,7 +177,7 @@ export function KonvaCanvas({
 
     // Get current layout
     const currentLayout =
-      component.responsiveCanvasLayout?.[currentBreakpoint as keyof typeof component.responsiveCanvasLayout] ||
+      component.responsiveCanvasLayout?.[currentBreakpoint] ||
       component.canvasLayout
 
     if (!currentLayout) return false
@@ -199,14 +199,14 @@ export function KonvaCanvas({
     }
 
     // Get fresh components in current layout (동기화: currentLayout.components 기준)
-    const freshCurrentLayout = freshState.schema.layouts[currentBreakpoint as keyof typeof freshState.schema.layouts]
+    const freshCurrentLayout = freshState.schema.layouts[currentBreakpoint]
     const freshComponentIds = new Set(freshCurrentLayout.components)
     const freshComponentsInLayout = freshState.schema.components.filter((c) => freshComponentIds.has(c.id))
 
     const freshComponentsWithCanvas = freshComponentsInLayout
       .map((c) => {
         const layout =
-          c.responsiveCanvasLayout?.[currentBreakpoint as keyof typeof c.responsiveCanvasLayout] ||
+          c.responsiveCanvasLayout?.[currentBreakpoint] ||
           c.canvasLayout
         if (!layout) return null
         return { ...c, currentCanvasLayout: layout }
@@ -276,7 +276,7 @@ export function KonvaCanvas({
 
     // Get current layout
     const currentLayout =
-      component.responsiveCanvasLayout?.[currentBreakpoint as keyof typeof component.responsiveCanvasLayout] ||
+      component.responsiveCanvasLayout?.[currentBreakpoint] ||
       component.canvasLayout
 
     if (!currentLayout) return false
@@ -295,14 +295,14 @@ export function KonvaCanvas({
     }
 
     // Get fresh components in current layout (동기화: currentLayout.components 기준)
-    const freshCurrentLayout = freshState.schema.layouts[currentBreakpoint as keyof typeof freshState.schema.layouts]
+    const freshCurrentLayout = freshState.schema.layouts[currentBreakpoint]
     const freshComponentIds = new Set(freshCurrentLayout.components)
     const freshComponentsInLayout = freshState.schema.components.filter((c) => freshComponentIds.has(c.id))
 
     const freshComponentsWithCanvas = freshComponentsInLayout
       .map((c) => {
         const layout =
-          c.responsiveCanvasLayout?.[currentBreakpoint as keyof typeof c.responsiveCanvasLayout] ||
+          c.responsiveCanvasLayout?.[currentBreakpoint] ||
           c.canvasLayout
         if (!layout) return null
         return { ...c, currentCanvasLayout: layout }
@@ -379,7 +379,7 @@ export function KonvaCanvas({
 
       // Get fresh components in current layout for smart positioning (동기화)
       const freshState = useLayoutStore.getState()
-      const freshCurrentLayout = freshState.schema.layouts[currentBreakpoint as keyof typeof freshState.schema.layouts]
+      const freshCurrentLayout = freshState.schema.layouts[currentBreakpoint]
       const freshComponentIds = new Set(freshCurrentLayout.components)
       const freshComponentsInLayout = freshState.schema.components.filter((c) => freshComponentIds.has(c.id))
 
@@ -400,7 +400,7 @@ export function KonvaCanvas({
       const freshComponentsWithCanvas = freshComponentsInLayout
         .map((c) => {
           const layout =
-            c.responsiveCanvasLayout?.[currentBreakpoint as keyof typeof c.responsiveCanvasLayout] ||
+            c.responsiveCanvasLayout?.[currentBreakpoint] ||
             c.canvasLayout
           if (!layout) return null
           return { ...c, currentCanvasLayout: layout }

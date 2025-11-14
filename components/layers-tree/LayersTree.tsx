@@ -26,7 +26,7 @@ export function LayersTree() {
   const confirm = useConfirm()
 
   const currentLayout =
-    schema.layouts[currentBreakpoint as keyof typeof schema.layouts]
+    schema.layouts[currentBreakpoint]
 
   // 기본값: 모든 컴포넌트를 접힌 상태로 시작
   const [collapsedComponents, setCollapsedComponents] = useState<Set<string>>(

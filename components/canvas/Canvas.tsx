@@ -20,7 +20,7 @@ export function Canvas() {
   const selectedComponentId = useLayoutStore((state) => state.selectedComponentId)
   const setSelectedComponentId = useLayoutStore((state) => state.setSelectedComponentId)
 
-  const currentLayout = schema.layouts[currentBreakpoint as keyof typeof schema.layouts]
+  const currentLayout = schema.layouts[currentBreakpoint]
 
   // Get components in current layout
   const componentsInLayout = schema.components.filter((c) =>

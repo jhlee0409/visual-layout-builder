@@ -243,7 +243,7 @@ export function isComponentOutOfBounds(
 ): boolean {
   const layout =
     component.responsiveCanvasLayout?.[
-      currentBreakpoint as keyof typeof component.responsiveCanvasLayout
+      currentBreakpoint
     ] || component.canvasLayout
 
   if (!layout) return false
