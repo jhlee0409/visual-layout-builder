@@ -22,6 +22,8 @@ import type { LaydlerSchema, Component, Breakpoint } from "@/types/schema"
 import { getModelMetadata } from "@/lib/ai-model-registry"
 import { validateSchema } from "@/lib/schema-validation"
 import { normalizeSchema } from "@/lib/schema-utils"
+import { describeVisualLayout } from "@/lib/visual-layout-descriptor"
+import { generateGridCSS, generateTailwindClasses } from "@/lib/canvas-to-grid"
 
 /**
  * Base Prompt Strategy
@@ -174,9 +176,16 @@ export abstract class BasePromptStrategy implements IPromptStrategy {
   /**
    * 레이아웃 섹션 생성 (기본 구현)
    *
+   * 🆕 2025 Canvas→Code Architecture:
+   * - Visual Layout (Canvas Grid) 정보 포함
+   * - CSS Grid Positioning 명시
+   * - Spatial Relationships 설명
+   * - Implementation Strategy 제공
+   *
    * 모델별 최적화 필요 시 override
    */
   generateLayoutSection(
+    components: Component[],
     breakpoints: Breakpoint[],
     layouts: LaydlerSchema["layouts"],
     options?: PromptGenerationOptions
@@ -195,12 +204,75 @@ export abstract class BasePromptStrategy implements IPromptStrategy {
         if (!layout) return
 
         section += `### ${index + 1}. ${breakpoint.name.charAt(0).toUpperCase() + breakpoint.name.slice(1)} (≥${breakpoint.minWidth}px)\n\n`
+
+        // 🆕 VISUAL LAYOUT DESCRIPTION (Canvas Grid 정보)
+        try {
+          const layoutDesc = describeVisualLayout(
+            components,
+            layoutKey,
+            breakpoint.gridCols,
+            breakpoint.gridRows
+          )
+
+          section += `**Visual Layout (Canvas Grid):**\n\n`
+          section += `${layoutDesc.summary}\n\n`
+
+          // Row-by-row description
+          layoutDesc.rowByRow.forEach((row) => {
+            section += `- ${row}\n`
+          })
+          section += "\n"
+
+          // Spatial relationships
+          if (layoutDesc.spatialRelationships.length > 0) {
+            section += `**Spatial Relationships:**\n\n`
+            layoutDesc.spatialRelationships.forEach((rel) => {
+              section += `- ${rel}\n`
+            })
+            section += "\n"
+          }
+
+          // 🆕 CSS GRID POSITIONING (2025 pattern)
+          const gridCSS = generateGridCSS(layoutDesc.visualLayout)
+          const tailwindClasses = generateTailwindClasses(layoutDesc.visualLayout)
+
+          section += `**CSS Grid Positioning:**\n\n`
+          section += `For precise 2D positioning, use CSS Grid:\n\n`
+          section += `\`\`\`css\n`
+          section += gridCSS
+          section += `\`\`\`\n\n`
+
+          section += `Or with Tailwind CSS:\n\n`
+          section += `Container: \`${tailwindClasses.container}\`\n\n`
+          section += `Components:\n`
+          Object.entries(tailwindClasses.components).forEach(([id, classes]) => {
+            const comp = components.find((c) => c.id === id)
+            section += `- **${comp?.name} (${id})**: \`${classes}\`\n`
+          })
+          section += "\n"
+
+          // 🆕 IMPLEMENTATION STRATEGY (강화)
+          section += `**Implementation Strategy:**\n\n`
+          layoutDesc.implementationHints.forEach((hint) => {
+            section += `- ${hint}\n`
+          })
+          section += "\n"
+        } catch (error) {
+          // Fallback: Canvas 좌표 정보가 없는 경우 (backward compatibility)
+          console.warn(`Visual layout description failed for ${layoutKey}:`, error)
+        }
+
+        // Structure type (기존)
         section += `**Layout Structure:** \`${layout.structure}\`\n\n`
-        section += `**Component Order:**\n`
+
+        // Component order (DOM 순서)
+        section += `**Component Order (DOM):**\n\n`
+        section += `For accessibility and SEO, the DOM order is:\n\n`
         layout.components.forEach((componentId: string, idx: number) => {
           section += `${idx + 1}. ${componentId}\n`
         })
         section += "\n"
+        section += `**Note:** Visual positioning (above) may differ from DOM order.\n\n`
 
         // Roles (if structure is sidebar-main)
         if (layout.roles && Object.keys(layout.roles).length > 0) {
@@ -301,6 +373,7 @@ export abstract class BasePromptStrategy implements IPromptStrategy {
       sections.push({
         title: "Layouts",
         content: this.generateLayoutSection(
+          normalizedSchema.components,
           normalizedSchema.breakpoints,
           normalizedSchema.layouts,
           options

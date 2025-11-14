@@ -147,14 +147,22 @@ Clean, type-safe code with specified components and layouts.`
    * 특징:
    * - 간결한 형식
    * - 핵심 정보만
+   * - Canvas Grid 정보는 "detailed" verbosity에서만 포함
    */
   generateLayoutSection(
+    components: any[],
     breakpoints: any[],
     layouts: any,
     options?: PromptGenerationOptions
   ): string {
     const verbosity = options?.verbosity || "minimal"
 
+    // verbosity가 "detailed"인 경우 부모 클래스 메서드 사용 (Canvas Grid 포함)
+    if (verbosity === "detailed") {
+      return super.generateLayoutSection(components, breakpoints, layouts, options)
+    }
+
+    // 그 외에는 간결한 형식 유지
     let section = `## Layouts\n\n`
 
     if (verbosity === "minimal") {

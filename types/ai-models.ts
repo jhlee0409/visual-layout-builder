@@ -254,12 +254,14 @@ export interface IPromptStrategy {
 
   /**
    * 레이아웃 섹션 생성
+   * @param components - 컴포넌트 배열 (Canvas Grid 정보 포함)
    * @param breakpoints - 브레이크포인트 배열
    * @param layouts - 레이아웃 설정
    * @param options - 생성 옵션
    * @returns 레이아웃 섹션
    */
   generateLayoutSection(
+    components: unknown[],
     breakpoints: unknown[],
     layouts: unknown,
     options?: PromptGenerationOptions
