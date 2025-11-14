@@ -1,6 +1,6 @@
 "use client"
 
-import { useRef } from "react"
+import { useRef, useState } from "react"
 import { BreakpointSwitcher} from "@/components/breakpoint-panel"
 import { LibraryPanel} from "@/components/library-panel"
 import { LayersTree} from "@/components/layers-tree"
@@ -9,6 +9,7 @@ import { PropertiesPanel} from "@/components/properties-panel"
 import { ExportModal} from "@/components/export-modal"
 import { ThemeSelector} from "@/components/theme-selector"
 import { InitialBreakpointModal } from "@/components/initial-breakpoint-modal"
+import { ComponentLinkingPanel } from "@/components/component-linking-panel/ComponentLinkingPanel"
 import { Button } from "@/components/ui/button"
 import { useLayoutStore } from "@/store/layout-store"
 import {
@@ -17,7 +18,7 @@ import {
   PanelResizeHandle,
   ImperativePanelGroupHandle,
 } from "react-resizable-panels"
-import { RotateCcw } from "lucide-react"
+import { RotateCcw, Link } from "lucide-react"
 
 /**
  * Laylder - Visual Layout Builder
@@ -32,6 +33,7 @@ import { RotateCcw } from "lucide-react"
  */
 export default function Home() {
   const panelGroupRef = useRef<ImperativePanelGroupHandle>(null)
+  const [showLinkingPanel, setShowLinkingPanel] = useState(false)
 
   const breakpoints = useLayoutStore((state) => state.schema.breakpoints)
   const componentCount = useLayoutStore(
@@ -70,6 +72,15 @@ export default function Home() {
               {componentCount} components
             </span>
             <ThemeSelector />
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowLinkingPanel(true)}
+              title="Link components across breakpoints"
+            >
+              <Link className="w-4 h-4 mr-1" />
+              Link Components
+            </Button>
             <Button variant="outline" size="sm" onClick={resetSchema}>
               Reset
             </Button>
@@ -168,6 +179,11 @@ export default function Home() {
         open={showInitialModal}
         onSelect={handleBreakpointSelect}
       />
+
+      {/* Component Linking Panel */}
+      {showLinkingPanel && (
+        <ComponentLinkingPanel onClose={() => setShowLinkingPanel(false)} />
+      )}
     </main>
   )
 }
