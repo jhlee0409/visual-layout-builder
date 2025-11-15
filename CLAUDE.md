@@ -194,6 +194,99 @@ const schema: LaydlerSchema = {
 }
 ```
 
+#### Common Errors
+
+마이그레이션 시 자주 발생하는 TypeScript 에러와 해결 방법입니다.
+
+**Error 1: Type '{ mobile: LayoutConfig }' is not assignable to type 'Record<string, LayoutConfig>'**
+
+```typescript
+// ❌ Before (TypeScript 에러 발생)
+const layouts: { mobile: LayoutConfig; tablet?: LayoutConfig } = schema.layouts
+
+// ✅ Solution 1: Record 타입 사용
+const layouts: Record<string, LayoutConfig> = schema.layouts
+
+// ✅ Solution 2: 타입 추론 활용 (권장)
+const layouts = schema.layouts  // TypeScript가 자동으로 Record<string, LayoutConfig> 추론
+```
+
+**Error 2: Property 'laptop' does not exist on type 'ResponsiveBehavior'**
+
+```typescript
+// ❌ Before (TypeScript 에러 발생)
+if (component.responsive.laptop) { ... }
+
+// ✅ Solution: Optional chaining + bracket notation 사용
+if (component.responsive?.['laptop']) { ... }
+
+// ✅ Alternative: Type-safe breakpoint access
+const breakpointName: string = 'laptop'
+if (component.responsive?.[breakpointName]) { ... }
+```
+
+**Error 3: Element implicitly has an 'any' type because expression of type 'string' can't be used to index type**
+
+```typescript
+// ❌ Before (TypeScript 에러 발생)
+const layout = schema.layouts[breakpointName]  // breakpointName이 string 타입일 때
+
+// ✅ Solution: 타입이 이미 Record<string, LayoutConfig>이므로 그대로 사용
+const layout = schema.layouts[breakpointName]  // schema.layouts는 Record 타입이므로 OK
+
+// ✅ If error persists: Check schema type is LaydlerSchema
+const schema: LaydlerSchema = { ... }  // 명시적 타입 지정
+```
+
+**Error 4: Breakpoint validation failures**
+
+Breakpoint 이름 검증 규칙 (2025-11-15 추가):
+
+```typescript
+// ❌ Invalid breakpoint names (ValidationError 발생)
+{ name: '' }                  // Empty name → EMPTY_BREAKPOINT_NAME
+{ name: '   ' }               // Whitespace only → EMPTY_BREAKPOINT_NAME
+{ name: 'mobile@tablet' }     // Special characters → INVALID_BREAKPOINT_NAME
+{ name: 'mobile tablet' }     // Spaces → INVALID_BREAKPOINT_NAME
+{ name: '모바일' }             // Unicode → INVALID_BREAKPOINT_NAME
+{ name: 'mobile📱' }           // Emoji → INVALID_BREAKPOINT_NAME
+{ name: 'a'.repeat(101) }     // >100 chars → BREAKPOINT_NAME_TOO_LONG
+{ name: 'constructor' }       // Reserved word → RESERVED_BREAKPOINT_NAME
+{ name: '__proto__' }         // Reserved word → RESERVED_BREAKPOINT_NAME
+
+// ✅ Valid breakpoint names
+{ name: 'mobile' }            // Alphanumeric
+{ name: '4k' }                // Starting with number (allowed)
+{ name: 'mobile-sm' }         // Hyphen
+{ name: 'tablet_md' }         // Underscore
+{ name: 'desktop-2xl' }       // Mixed
+{ name: 'a'.repeat(100) }     // Exactly 100 chars (max)
+```
+
+**Error 5: Too many breakpoints**
+
+```typescript
+// ❌ Invalid: 11개 breakpoint (최대 10개)
+const schema: LaydlerSchema = {
+  breakpoints: [
+    { name: 'bp1', ... },
+    { name: 'bp2', ... },
+    // ... (11개)
+  ]
+}
+// → TOO_MANY_BREAKPOINTS error
+
+// ✅ Valid: 10개 이하
+const schema: LaydlerSchema = {
+  breakpoints: [
+    { name: 'mobile', ... },
+    { name: 'tablet', ... },
+    { name: 'desktop', ... },
+    // ... (최대 10개)
+  ]
+}
+```
+
 ### State Management - Zustand
 
 **store/layout-store-v2.ts**가 핵심 상태 관리를 담당합니다.

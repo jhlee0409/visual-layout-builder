@@ -14,6 +14,35 @@ import type {
 } from "@/types/schema"
 
 /**
+ * Validation Constants
+ *
+ * 검증 규칙에 사용되는 상수들
+ */
+export const VALIDATION_LIMITS = {
+  /** 최대 breakpoint 개수 (DoS 방지) */
+  MAX_BREAKPOINTS: 10,
+  /** Breakpoint 이름 최대 길이 */
+  MAX_BREAKPOINT_NAME_LENGTH: 100,
+  /** Breakpoint minWidth 최소값 */
+  MIN_BREAKPOINT_WIDTH: 0,
+  /** Breakpoint minWidth 최대값 */
+  MAX_BREAKPOINT_WIDTH: 10000,
+} as const
+
+/** Breakpoint 이름 형식 (alphanumeric + hyphen/underscore, 숫자로 시작 가능) */
+export const VALID_BREAKPOINT_NAME_PATTERN = /^[a-z0-9][a-z0-9_-]*$/i
+
+/** 예약된 breakpoint 이름 (prototype pollution 방지) */
+export const RESERVED_BREAKPOINT_NAMES = [
+  'constructor',
+  'toString',
+  'valueOf',
+  'hasOwnProperty',
+  '__proto__',
+  'prototype',
+] as const
+
+/**
  * 검증 결과 타입
  */
 export interface ValidationResult {
@@ -379,22 +408,37 @@ function validateBreakpoints(breakpoints: Breakpoint[]): ValidationResult {
     return { valid: false, errors, warnings }
   }
 
-  // 최대 10개 제한 (DoS 방지)
-  if (breakpoints.length > 10) {
+  // 최대 개수 제한 (DoS 방지)
+  if (breakpoints.length > VALIDATION_LIMITS.MAX_BREAKPOINTS) {
     errors.push({
       code: "TOO_MANY_BREAKPOINTS",
-      message: `Too many breakpoints: ${breakpoints.length}. Maximum allowed is 10.`,
+      message: `Too many breakpoints: ${breakpoints.length}. Maximum allowed is ${VALIDATION_LIMITS.MAX_BREAKPOINTS}.`,
       field: "breakpoints",
     })
   }
 
-  // 브레이크포인트 이름 형식 검증
-  const VALID_NAME_PATTERN = /^[a-z0-9][a-z0-9_-]*$/i
-  const RESERVED_NAMES = ['constructor', 'toString', 'valueOf', 'hasOwnProperty', '__proto__', 'prototype']
-
   breakpoints.forEach((bp) => {
+    // Empty name 검증
+    if (!bp.name || bp.name.trim() === '') {
+      errors.push({
+        code: "EMPTY_BREAKPOINT_NAME",
+        message: "Breakpoint name cannot be empty.",
+        field: `breakpoints[${breakpoints.indexOf(bp)}].name`,
+      })
+      return // Skip other validations for empty name
+    }
+
+    // 이름 길이 검증
+    if (bp.name.length > VALIDATION_LIMITS.MAX_BREAKPOINT_NAME_LENGTH) {
+      errors.push({
+        code: "BREAKPOINT_NAME_TOO_LONG",
+        message: `Breakpoint name "${bp.name.substring(0, 50)}..." is too long. Maximum length is ${VALIDATION_LIMITS.MAX_BREAKPOINT_NAME_LENGTH} characters.`,
+        field: `breakpoints.${bp.name}.name`,
+      })
+    }
+
     // 형식 검증 (alphanumeric + hyphen/underscore만 허용)
-    if (!VALID_NAME_PATTERN.test(bp.name)) {
+    if (!VALID_BREAKPOINT_NAME_PATTERN.test(bp.name)) {
       errors.push({
         code: "INVALID_BREAKPOINT_NAME",
         message: `Invalid breakpoint name "${bp.name}". Name must start with a letter or number and contain only letters, numbers, hyphens, and underscores.`,
@@ -403,7 +447,7 @@ function validateBreakpoints(breakpoints: Breakpoint[]): ValidationResult {
     }
 
     // 예약어 검증 (prototype pollution 방지)
-    if (RESERVED_NAMES.includes(bp.name.toLowerCase())) {
+    if (RESERVED_BREAKPOINT_NAMES.includes(bp.name.toLowerCase() as any)) {
       errors.push({
         code: "RESERVED_BREAKPOINT_NAME",
         message: `Breakpoint name "${bp.name}" is reserved and cannot be used.`,

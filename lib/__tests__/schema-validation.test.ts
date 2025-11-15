@@ -645,6 +645,190 @@ describe('Schema Validation', () => {
       expect(result.valid).toBe(true)
       expect(result.errors).toHaveLength(0)
     })
+
+    it('should reject empty breakpoint name', () => {
+      const emptyNameSchema: LaydlerSchema = {
+        schemaVersion: '2.0',
+        components: [
+          {
+            id: 'c1',
+            name: 'Header',
+            semanticTag: 'header',
+            positioning: { type: 'sticky', position: { top: 0 } },
+            layout: { type: 'flex', flex: { direction: 'row' } },
+            canvasLayout: { x: 0, y: 0, width: 12, height: 1 },
+          },
+        ],
+        breakpoints: [
+          { name: '', minWidth: 0, gridCols: 4, gridRows: 8 }, // Empty name
+        ],
+        layouts: {
+          '': { structure: 'vertical', components: ['c1'] },
+        } as any,
+      }
+
+      const result = validateSchema(emptyNameSchema)
+
+      expect(result.valid).toBe(false)
+      expect(result.errors).toContainEqual(
+        expect.objectContaining({
+          code: 'EMPTY_BREAKPOINT_NAME',
+        })
+      )
+    })
+
+    it('should reject breakpoint name with only whitespace', () => {
+      const whitespaceNameSchema: LaydlerSchema = {
+        schemaVersion: '2.0',
+        components: [
+          {
+            id: 'c1',
+            name: 'Header',
+            semanticTag: 'header',
+            positioning: { type: 'sticky', position: { top: 0 } },
+            layout: { type: 'flex', flex: { direction: 'row' } },
+            canvasLayout: { x: 0, y: 0, width: 12, height: 1 },
+          },
+        ],
+        breakpoints: [
+          { name: '   ', minWidth: 0, gridCols: 4, gridRows: 8 }, // Whitespace only
+        ],
+        layouts: {
+          '   ': { structure: 'vertical', components: ['c1'] },
+        } as any,
+      }
+
+      const result = validateSchema(whitespaceNameSchema)
+
+      expect(result.valid).toBe(false)
+      expect(result.errors).toContainEqual(
+        expect.objectContaining({
+          code: 'EMPTY_BREAKPOINT_NAME',
+        })
+      )
+    })
+
+    it('should reject very long breakpoint names (>100 chars)', () => {
+      const longName = 'a'.repeat(101) // 101 characters
+      const longNameSchema: LaydlerSchema = {
+        schemaVersion: '2.0',
+        components: [
+          {
+            id: 'c1',
+            name: 'Header',
+            semanticTag: 'header',
+            positioning: { type: 'sticky', position: { top: 0 } },
+            layout: { type: 'flex', flex: { direction: 'row' } },
+            canvasLayout: { x: 0, y: 0, width: 12, height: 1 },
+          },
+        ],
+        breakpoints: [
+          { name: longName, minWidth: 0, gridCols: 4, gridRows: 8 },
+        ],
+        layouts: {
+          [longName]: { structure: 'vertical', components: ['c1'] },
+        },
+      }
+
+      const result = validateSchema(longNameSchema)
+
+      expect(result.valid).toBe(false)
+      expect(result.errors).toContainEqual(
+        expect.objectContaining({
+          code: 'BREAKPOINT_NAME_TOO_LONG',
+        })
+      )
+    })
+
+    it('should accept 100-character breakpoint name (exactly at limit)', () => {
+      const exactLimitName = 'a'.repeat(100) // Exactly 100 characters
+      const limitNameSchema: LaydlerSchema = {
+        schemaVersion: '2.0',
+        components: [
+          {
+            id: 'c1',
+            name: 'Header',
+            semanticTag: 'header',
+            positioning: { type: 'sticky', position: { top: 0 } },
+            layout: { type: 'flex', flex: { direction: 'row' } },
+            canvasLayout: { x: 0, y: 0, width: 12, height: 1 },
+          },
+        ],
+        breakpoints: [
+          { name: exactLimitName, minWidth: 0, gridCols: 4, gridRows: 8 },
+        ],
+        layouts: {
+          [exactLimitName]: { structure: 'vertical', components: ['c1'] },
+        },
+      }
+
+      const result = validateSchema(limitNameSchema)
+
+      expect(result.valid).toBe(true)
+      expect(result.errors).toHaveLength(0)
+    })
+
+    it('should reject unicode breakpoint names', () => {
+      const unicodeNameSchema: LaydlerSchema = {
+        schemaVersion: '2.0',
+        components: [
+          {
+            id: 'c1',
+            name: 'Header',
+            semanticTag: 'header',
+            positioning: { type: 'sticky', position: { top: 0 } },
+            layout: { type: 'flex', flex: { direction: 'row' } },
+            canvasLayout: { x: 0, y: 0, width: 12, height: 1 },
+          },
+        ],
+        breakpoints: [
+          { name: '모바일', minWidth: 0, gridCols: 4, gridRows: 8 }, // Korean characters
+        ],
+        layouts: {
+          '모바일': { structure: 'vertical', components: ['c1'] },
+        },
+      }
+
+      const result = validateSchema(unicodeNameSchema)
+
+      expect(result.valid).toBe(false)
+      expect(result.errors).toContainEqual(
+        expect.objectContaining({
+          code: 'INVALID_BREAKPOINT_NAME',
+        })
+      )
+    })
+
+    it('should reject emoji in breakpoint names', () => {
+      const emojiNameSchema: LaydlerSchema = {
+        schemaVersion: '2.0',
+        components: [
+          {
+            id: 'c1',
+            name: 'Header',
+            semanticTag: 'header',
+            positioning: { type: 'sticky', position: { top: 0 } },
+            layout: { type: 'flex', flex: { direction: 'row' } },
+            canvasLayout: { x: 0, y: 0, width: 12, height: 1 },
+          },
+        ],
+        breakpoints: [
+          { name: 'mobile📱', minWidth: 0, gridCols: 4, gridRows: 8 }, // Emoji
+        ],
+        layouts: {
+          'mobile📱': { structure: 'vertical', components: ['c1'] },
+        },
+      }
+
+      const result = validateSchema(emojiNameSchema)
+
+      expect(result.valid).toBe(false)
+      expect(result.errors).toContainEqual(
+        expect.objectContaining({
+          code: 'INVALID_BREAKPOINT_NAME',
+        })
+      )
+    })
   })
 
   describe('formatValidationResult', () => {
