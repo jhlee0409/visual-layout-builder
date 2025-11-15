@@ -1,17 +1,19 @@
 /**
- * Test: Canvas Layout Inheritance when adding new breakpoint
+ * Test: Complete Breakpoint Independence (No Inheritance)
  *
- * Verifies that normalizeSchema() in addBreakpoint correctly inherits
- * responsiveCanvasLayout but NOT layout.components
+ * Verifies that normalizeSchema() does NOT inherit anything across breakpoints.
+ * - No layout inheritance
+ * - No Canvas layout inheritance
+ * - Each breakpoint is completely independent
  */
 
 import { describe, it, expect } from 'vitest'
 import type { LaydlerSchema } from '@/types/schema'
 import { normalizeSchema } from '../schema-utils'
 
-describe('Canvas Layout Inheritance via normalizeSchema', () => {
-  it('should inherit responsiveCanvasLayout for new breakpoint', () => {
-    // Initial: mobile and desktop, c1 has Canvas layout for mobile only
+describe('Complete Breakpoint Independence', () => {
+  it('should NOT inherit Canvas layout to other breakpoints', () => {
+    // c1 has Canvas layout ONLY for mobile
     const schema: LaydlerSchema = {
       schemaVersion: '2.0',
       components: [
@@ -23,7 +25,7 @@ describe('Canvas Layout Inheritance via normalizeSchema', () => {
           layout: { type: 'flex' },
           responsiveCanvasLayout: {
             mobile: { x: 0, y: 0, width: 4, height: 1 },
-            // desktop: not defined
+            // desktop: NOT defined
           },
         },
       ],
@@ -33,22 +35,24 @@ describe('Canvas Layout Inheritance via normalizeSchema', () => {
       ],
       layouts: {
         mobile: { structure: 'vertical', components: ['c1'] },
-        desktop: { structure: 'vertical', components: [] }, // Intentionally empty
+        desktop: { structure: 'vertical', components: [] },
       },
     }
 
     const normalized = normalizeSchema(schema)
-
     const c1 = normalized.components.find(c => c.id === 'c1')!
 
-    console.log('\n=== Canvas Layout Inheritance ===')
+    console.log('\n=== No Canvas Inheritance ===')
     console.log('mobile Canvas:', c1.responsiveCanvasLayout?.mobile)
     console.log('desktop Canvas:', c1.responsiveCanvasLayout?.desktop)
 
-    // ✅ EXPECTED: desktop inherits Canvas layout from mobile
-    expect(c1.responsiveCanvasLayout?.desktop).toEqual({ x: 0, y: 0, width: 4, height: 1 })
+    // ✅ EXPECTED: mobile has Canvas layout
+    expect(c1.responsiveCanvasLayout?.mobile).toEqual({ x: 0, y: 0, width: 4, height: 1 })
 
-    // ✅ EXPECTED: BUT layout.components does NOT inherit (desktop stays empty)
+    // ✅ EXPECTED: desktop does NOT inherit (stays undefined)
+    expect(c1.responsiveCanvasLayout?.desktop).toBeUndefined()
+
+    // ✅ EXPECTED: layout.components also stays empty
     expect(normalized.layouts.desktop.components).toEqual([])
   })
 
@@ -87,7 +91,7 @@ describe('Canvas Layout Inheritance via normalizeSchema', () => {
     expect(c1.responsiveCanvasLayout?.desktop?.width).toBe(12) // Not 4 (from mobile)
   })
 
-  it('should demonstrate correct behavior when adding new breakpoint', () => {
+  it('should keep each breakpoint completely independent when adding new breakpoint', () => {
     // Simulate addBreakpoint workflow
     let schema: LaydlerSchema = {
       schemaVersion: '2.0',
@@ -154,11 +158,15 @@ describe('Canvas Layout Inheritance via normalizeSchema', () => {
     console.log('c2 mobile Canvas:', c2.responsiveCanvasLayout?.mobile)
     console.log('c2 laptop Canvas:', c2.responsiveCanvasLayout?.laptop)
 
-    // ✅ CORRECT: layout.components NOT inherited (laptop is still empty)
+    // ✅ EXPECTED: layout.components NOT inherited (laptop is still empty)
     expect(normalized.layouts.laptop.components).toEqual([])
 
-    // ✅ CORRECT: Canvas layouts ARE inherited
-    expect(c1.responsiveCanvasLayout?.laptop).toEqual({ x: 0, y: 0, width: 4, height: 1 })
-    expect(c2.responsiveCanvasLayout?.laptop).toEqual({ x: 0, y: 1, width: 4, height: 6 })
+    // ✅ EXPECTED: Canvas layouts also NOT inherited (laptop has no Canvas data)
+    expect(c1.responsiveCanvasLayout?.laptop).toBeUndefined()
+    expect(c2.responsiveCanvasLayout?.laptop).toBeUndefined()
+
+    // ✅ EXPECTED: Mobile keeps its Canvas layouts
+    expect(c1.responsiveCanvasLayout?.mobile).toEqual({ x: 0, y: 0, width: 4, height: 1 })
+    expect(c2.responsiveCanvasLayout?.mobile).toEqual({ x: 0, y: 1, width: 4, height: 6 })
   })
 })

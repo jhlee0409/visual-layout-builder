@@ -382,10 +382,16 @@ export function isValidSchema(schema: unknown): schema is LaydlerSchema {
 export function normalizeSchema(schema: LaydlerSchema): LaydlerSchema {
   const normalized = cloneSchema(schema)
 
-  // 1. Layout Inheritance: Dynamic breakpoint cascade (Mobile → Tablet → Desktop, etc.)
-  // Support any breakpoint names (not just hardcoded mobile/tablet/desktop)
-  // FIX: Previously hardcoded .mobile, .tablet, .desktop failed for custom names like "Desktop" (capital D)
-  // EDGE CASE FIX: Deterministic sorting when multiple breakpoints have same minWidth
+  // REMOVED: Layout inheritance (Section 1)
+  // REMOVED: Canvas layout inheritance (Section 2)
+  //
+  // User requirement: Complete breakpoint independence
+  // - DnD to Mobile → Component appears ONLY in Mobile breakpoint
+  // - DnD to Tablet → Component appears ONLY in Tablet breakpoint
+  // - No automatic inheritance of layouts or Canvas positions across breakpoints
+  // - Each breakpoint is completely isolated
+
+  // Sort breakpoints by minWidth for deterministic ordering
   const sortedBreakpoints = [...normalized.breakpoints].sort((a, b) => {
     // Primary sort: by minWidth
     if (a.minWidth !== b.minWidth) {
@@ -395,54 +401,14 @@ export function normalizeSchema(schema: LaydlerSchema): LaydlerSchema {
     return a.name.localeCompare(b.name)
   })
 
-  for (let i = 1; i < sortedBreakpoints.length; i++) {
-    const currentBP = sortedBreakpoints[i].name
-    const previousBP = sortedBreakpoints[i - 1].name
+  // Apply sorted breakpoints
+  normalized.breakpoints = sortedBreakpoints
 
-    // Only inherit if layout is completely missing (not just empty)
-    // Edge case fix: Don't inherit if layout exists but is intentionally empty (components.length === 0)
-    // - Missing layout (!normalized.layouts[currentBP]) → INHERIT from previous
-    // - Empty layout (components.length === 0) → PRESERVE as intentionally empty
-    if (!normalized.layouts[currentBP] && normalized.layouts[previousBP]) {
-      normalized.layouts[currentBP] = safeDeepClone(normalized.layouts[previousBP])
-    }
-  }
+  // Auto-create missing layouts for breakpoints (if needed)
+  // IMPORTANT: Do NOT inherit or auto-sync
+  // User adds components manually via DnD to each breakpoint independently
 
-  // 2. Canvas Layout Inheritance per Component
-  // FIX: Support dynamic breakpoint names (not just mobile/tablet/desktop)
-  normalized.components = normalized.components.map(comp => {
-    if (comp.responsiveCanvasLayout) {
-      // Type-safe dynamic key access using Record type
-      const rcl: Record<string, CanvasLayout | undefined> = { ...comp.responsiveCanvasLayout }
-
-      // Cascade from previous breakpoint to next (based on minWidth sorting)
-      for (let i = 1; i < sortedBreakpoints.length; i++) {
-        const currentBP = sortedBreakpoints[i].name
-        const previousBP = sortedBreakpoints[i - 1].name
-
-        // If current breakpoint has no Canvas layout, inherit from previous
-        if (!rcl[currentBP]) {
-          const previousLayout = rcl[previousBP]
-          if (previousLayout) {
-            rcl[currentBP] = { ...previousLayout }
-          }
-        }
-      }
-
-      return {
-        ...comp,
-        responsiveCanvasLayout: rcl as ResponsiveCanvasLayout,
-      }
-    }
-
-    return comp
-  })
-
-  // 3. Auto-create missing layouts for breakpoints (if needed)
-  // IMPORTANT: Do NOT auto-sync Canvas data to layout.components
-  // User requirement: All component management is MANUAL via DnD or explicit actions
-
-  for (const breakpoint of normalized.breakpoints) {
+  for (const breakpoint of sortedBreakpoints) {
     const breakpointName = breakpoint.name
 
     // Only auto-create layout if it doesn't exist at all

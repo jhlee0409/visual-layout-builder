@@ -45,37 +45,7 @@ describe('Component Isolation Between Breakpoints', () => {
     expect(normalized.layouts.desktop.components).toEqual([])
   })
 
-  it('should inherit layout ONLY when layout is completely missing (not explicitly empty)', () => {
-    // Scenario: desktop layout is missing entirely (undefined)
-    const schema: LaydlerSchema = {
-      schemaVersion: '2.0',
-      components: [
-        {
-          id: 'c1',
-          name: 'Header',
-          semanticTag: 'header',
-          positioning: { type: 'sticky', position: { top: 0 } },
-          layout: { type: 'flex' },
-        },
-      ],
-      breakpoints: [
-        { name: 'mobile', minWidth: 0, gridCols: 4, gridRows: 8 },
-        { name: 'desktop', minWidth: 1024, gridCols: 12, gridRows: 8 },
-      ],
-      layouts: {
-        mobile: { structure: 'vertical', components: ['c1'] },
-        // desktop is MISSING (not explicitly empty)
-      },
-    }
-
-    const normalized = normalizeSchema(schema)
-
-    // ✅ EXPECTED: Desktop SHOULD inherit from mobile (layout was missing)
-    console.log('Desktop inherited:', normalized.layouts.desktop?.components)
-    expect(normalized.layouts.desktop?.components).toEqual(['c1'])
-  })
-
-  it('should demonstrate the bug in addComponentToLayout flow', () => {
+  it('should demonstrate complete breakpoint independence', () => {
     // Simulate addComponentToLayout workflow
 
     // Step 1: Initial state - 3 breakpoints, all empty

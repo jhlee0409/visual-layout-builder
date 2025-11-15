@@ -1,18 +1,18 @@
 /**
- * Unit Tests: Dynamic Breakpoint Support in normalizeSchema()
+ * Unit Tests: Complete Breakpoint Independence
  *
- * Tests for PR #14 improvements:
- * - Custom breakpoint names (not just mobile/tablet/desktop)
- * - Layout inheritance logic
- * - Edge case: intentionally empty layouts
- * - structuredClone() deep cloning
+ * Verifies that normalizeSchema() enforces complete isolation between breakpoints:
+ * - No layout inheritance
+ * - No Canvas layout inheritance
+ * - Supports any custom breakpoint names
+ * - Each breakpoint is independently managed
  */
 
 import { describe, it, expect } from 'vitest'
-import { normalizeSchema, createEmptySchema } from '../schema-utils'
+import { normalizeSchema } from '../schema-utils'
 import type { LaydlerSchema } from '@/types/schema'
 
-describe('normalizeSchema - Dynamic Breakpoint Support', () => {
+describe('Complete Breakpoint Independence', () => {
   describe('Custom breakpoint names', () => {
     it('should support capital letters in breakpoint names (e.g., Desktop)', () => {
       const schema: LaydlerSchema = {
@@ -32,16 +32,16 @@ describe('normalizeSchema - Dynamic Breakpoint Support', () => {
         ],
         layouts: {
           Mobile: { structure: 'vertical', components: ['c1'] },
-          // Desktop layout missing - should inherit from Mobile
+          // Desktop layout missing - will be auto-created as empty
         },
       }
 
       const normalized = normalizeSchema(schema)
 
-      // Desktop should inherit from Mobile
+      // Desktop should be auto-created but EMPTY (no inheritance)
       expect(normalized.layouts.Desktop).toBeDefined()
       expect(normalized.layouts.Desktop.structure).toBe('vertical')
-      expect(normalized.layouts.Desktop.components).toEqual(['c1'])
+      expect(normalized.layouts.Desktop.components).toEqual([])  // Empty!
     })
 
     it('should support arbitrary custom breakpoint names', () => {
@@ -63,16 +63,17 @@ describe('normalizeSchema - Dynamic Breakpoint Support', () => {
         ],
         layouts: {
           Phone: { structure: 'vertical', components: ['c1'] },
-          // Tablet and LaptopXL missing - should inherit
+          // Tablet and LaptopXL missing - will be auto-created as empty
         },
       }
 
       const normalized = normalizeSchema(schema)
 
+      // All missing layouts should be auto-created but EMPTY
       expect(normalized.layouts.Tablet).toBeDefined()
-      expect(normalized.layouts.Tablet.components).toEqual(['c1'])
+      expect(normalized.layouts.Tablet.components).toEqual([])  // Empty!
       expect(normalized.layouts.LaptopXL).toBeDefined()
-      expect(normalized.layouts.LaptopXL.components).toEqual(['c1'])
+      expect(normalized.layouts.LaptopXL.components).toEqual([])  // Empty!
     })
 
     it('should handle mixed case breakpoint names', () => {
@@ -99,13 +100,20 @@ describe('normalizeSchema - Dynamic Breakpoint Support', () => {
 
       const normalized = normalizeSchema(schema)
 
+      // All layouts exist
+      expect(normalized.layouts.smallScreen).toBeDefined()
       expect(normalized.layouts.MediumScreen).toBeDefined()
       expect(normalized.layouts.LARGE_SCREEN).toBeDefined()
+
+      // Only smallScreen has components
+      expect(normalized.layouts.smallScreen.components).toEqual(['c1'])
+      expect(normalized.layouts.MediumScreen.components).toEqual([])  // Empty!
+      expect(normalized.layouts.LARGE_SCREEN.components).toEqual([])  // Empty!
     })
   })
 
-  describe('Layout inheritance logic', () => {
-    it('should inherit layout from previous breakpoint when missing', () => {
+  describe('No layout inheritance', () => {
+    it('should NOT inherit layout when missing', () => {
       const schema: LaydlerSchema = {
         schemaVersion: '2.0',
         components: [
@@ -116,87 +124,6 @@ describe('normalizeSchema - Dynamic Breakpoint Support', () => {
             positioning: { type: 'static' },
             layout: { type: 'none' },
           },
-          {
-            id: 'c2',
-            name: 'Main',
-            semanticTag: 'main',
-            positioning: { type: 'static' },
-            layout: { type: 'none' },
-          },
-        ],
-        breakpoints: [
-          { name: 'mobile', minWidth: 0, gridCols: 4, gridRows: 8 },
-          { name: 'tablet', minWidth: 768, gridCols: 8, gridRows: 8 },
-          { name: 'desktop', minWidth: 1024, gridCols: 12, gridRows: 8 },
-        ],
-        layouts: {
-          mobile: { structure: 'vertical', components: ['c1', 'c2'] },
-          // tablet and desktop missing
-        },
-      }
-
-      const normalized = normalizeSchema(schema)
-
-      // Tablet inherits from mobile
-      expect(normalized.layouts.tablet).toBeDefined()
-      expect(normalized.layouts.tablet.structure).toBe('vertical')
-      expect(normalized.layouts.tablet.components).toEqual(['c1', 'c2'])
-
-      // Desktop inherits from tablet (which inherited from mobile)
-      expect(normalized.layouts.desktop).toBeDefined()
-      expect(normalized.layouts.desktop.structure).toBe('vertical')
-      expect(normalized.layouts.desktop.components).toEqual(['c1', 'c2'])
-    })
-
-    it('should NOT overwrite existing layout even if different structure', () => {
-      const schema: LaydlerSchema = {
-        schemaVersion: '2.0',
-        components: [
-          {
-            id: 'c1',
-            name: 'Sidebar',
-            semanticTag: 'aside',
-            positioning: { type: 'static' },
-            layout: { type: 'none' },
-          },
-          {
-            id: 'c2',
-            name: 'Main',
-            semanticTag: 'main',
-            positioning: { type: 'static' },
-            layout: { type: 'none' },
-          },
-        ],
-        breakpoints: [
-          { name: 'mobile', minWidth: 0, gridCols: 4, gridRows: 8 },
-          { name: 'desktop', minWidth: 1024, gridCols: 12, gridRows: 8 },
-        ],
-        layouts: {
-          mobile: { structure: 'vertical', components: ['c2'] },
-          desktop: { structure: 'sidebar-main', components: ['c1', 'c2'] },
-        },
-      }
-
-      const normalized = normalizeSchema(schema)
-
-      // Desktop should NOT be overwritten
-      expect(normalized.layouts.desktop.structure).toBe('sidebar-main')
-      expect(normalized.layouts.desktop.components).toEqual(['c1', 'c2'])
-    })
-  })
-
-  describe('Edge case: Intentionally empty layouts', () => {
-    it('should PRESERVE intentionally empty layout (not inherit)', () => {
-      const schema: LaydlerSchema = {
-        schemaVersion: '2.0',
-        components: [
-          {
-            id: 'c1',
-            name: 'MobileOnlyNav',
-            semanticTag: 'nav',
-            positioning: { type: 'static' },
-            layout: { type: 'none' },
-          },
         ],
         breakpoints: [
           { name: 'mobile', minWidth: 0, gridCols: 4, gridRows: 8 },
@@ -204,56 +131,20 @@ describe('normalizeSchema - Dynamic Breakpoint Support', () => {
         ],
         layouts: {
           mobile: { structure: 'vertical', components: ['c1'] },
-          desktop: { structure: 'vertical', components: [] }, // Intentionally empty
+          // desktop missing
         },
       }
 
       const normalized = normalizeSchema(schema)
 
-      // Desktop layout should remain empty (NOT inherit from mobile)
+      // Desktop should be auto-created but EMPTY (no inheritance)
       expect(normalized.layouts.desktop).toBeDefined()
       expect(normalized.layouts.desktop.components).toEqual([])
-      expect(normalized.layouts.desktop.components).not.toEqual(['c1'])
-    })
-
-    it('should distinguish between missing and empty layouts', () => {
-      const schema: LaydlerSchema = {
-        schemaVersion: '2.0',
-        components: [
-          {
-            id: 'c1',
-            name: 'Component',
-            semanticTag: 'div',
-            positioning: { type: 'static' },
-            layout: { type: 'none' },
-          },
-        ],
-        breakpoints: [
-          { name: 'bp1', minWidth: 0, gridCols: 4, gridRows: 8 },
-          { name: 'bp2', minWidth: 768, gridCols: 8, gridRows: 8 },
-          { name: 'bp3', minWidth: 1024, gridCols: 12, gridRows: 8 },
-        ],
-        layouts: {
-          bp1: { structure: 'vertical', components: ['c1'] },
-          bp2: { structure: 'vertical', components: [] }, // Intentionally empty
-          // bp3 missing entirely
-        },
-      }
-
-      const normalized = normalizeSchema(schema)
-
-      // bp2 should remain empty (intentional)
-      expect(normalized.layouts.bp2.components).toEqual([])
-
-      // bp3 should inherit from bp2 (which is empty)
-      // Note: This inherits the empty layout, which is correct behavior
-      expect(normalized.layouts.bp3).toBeDefined()
-      expect(normalized.layouts.bp3.components).toEqual([])
     })
   })
 
-  describe('Canvas Layout inheritance', () => {
-    it('should inherit Canvas Layout for custom breakpoint names', () => {
+  describe('No Canvas layout inheritance', () => {
+    it('should NOT inherit Canvas Layout for custom breakpoint names', () => {
       const schema: LaydlerSchema = {
         schemaVersion: '2.0',
         components: [
@@ -264,141 +155,34 @@ describe('normalizeSchema - Dynamic Breakpoint Support', () => {
             positioning: { type: 'static' },
             layout: { type: 'none' },
             responsiveCanvasLayout: {
-              SmallScreen: { x: 0, y: 0, width: 4, height: 1 },
-              // LargeScreen missing - should inherit
+              laptop: { x: 0, y: 0, width: 10, height: 1 },
+              // ultrawide missing
             },
           },
         ],
         breakpoints: [
-          { name: 'SmallScreen', minWidth: 0, gridCols: 4, gridRows: 8 },
-          { name: 'LargeScreen', minWidth: 1024, gridCols: 12, gridRows: 8 },
+          { name: 'laptop', minWidth: 1440, gridCols: 10, gridRows: 10 },
+          { name: 'ultrawide', minWidth: 2560, gridCols: 16, gridRows: 8 },
         ],
         layouts: {
-          SmallScreen: { structure: 'vertical', components: ['c1'] },
-          LargeScreen: { structure: 'vertical', components: ['c1'] },
+          laptop: { structure: 'vertical', components: ['c1'] },
+          ultrawide: { structure: 'vertical', components: [] },
         },
       }
 
       const normalized = normalizeSchema(schema)
+      const c1 = normalized.components.find(comp => comp.id === 'c1')!
 
-      const component = normalized.components.find((c) => c.id === 'c1')
-      expect(component).toBeDefined()
-      expect(component!.responsiveCanvasLayout).toBeDefined()
-      expect(component!.responsiveCanvasLayout!.LargeScreen).toBeDefined()
-      expect(component!.responsiveCanvasLayout!.LargeScreen).toEqual({
-        x: 0,
-        y: 0,
-        width: 4,
-        height: 1,
-      })
-    })
+      // laptop has Canvas layout
+      expect(c1.responsiveCanvasLayout?.laptop).toEqual({ x: 0, y: 0, width: 10, height: 1 })
 
-    it('should NOT overwrite existing Canvas Layout', () => {
-      const schema: LaydlerSchema = {
-        schemaVersion: '2.0',
-        components: [
-          {
-            id: 'c1',
-            name: 'Header',
-            semanticTag: 'header',
-            positioning: { type: 'static' },
-            layout: { type: 'none' },
-            responsiveCanvasLayout: {
-              mobile: { x: 0, y: 0, width: 4, height: 1 },
-              desktop: { x: 0, y: 0, width: 12, height: 1 }, // Different width
-            },
-          },
-        ],
-        breakpoints: [
-          { name: 'mobile', minWidth: 0, gridCols: 4, gridRows: 8 },
-          { name: 'desktop', minWidth: 1024, gridCols: 12, gridRows: 8 },
-        ],
-        layouts: {
-          mobile: { structure: 'vertical', components: ['c1'] },
-          desktop: { structure: 'vertical', components: ['c1'] },
-        },
-      }
-
-      const normalized = normalizeSchema(schema)
-
-      const component = normalized.components.find((c) => c.id === 'c1')
-      expect(component!.responsiveCanvasLayout!.desktop).toEqual({
-        x: 0,
-        y: 0,
-        width: 12,
-        height: 1,
-      })
-      expect(component!.responsiveCanvasLayout!.desktop!.width).toBe(12)
-      expect(component!.responsiveCanvasLayout!.desktop!.width).not.toBe(4)
-    })
-  })
-
-  describe('Deep cloning with structuredClone()', () => {
-    it('should use structuredClone() to prevent mutations', () => {
-      const schema: LaydlerSchema = {
-        schemaVersion: '2.0',
-        components: [
-          {
-            id: 'c1',
-            name: 'Header',
-            semanticTag: 'header',
-            positioning: { type: 'static' },
-            layout: { type: 'none' },
-          },
-        ],
-        breakpoints: [
-          { name: 'mobile', minWidth: 0, gridCols: 4, gridRows: 8 },
-          { name: 'desktop', minWidth: 1024, gridCols: 12, gridRows: 8 },
-        ],
-        layouts: {
-          mobile: { structure: 'vertical', components: ['c1'] },
-        },
-      }
-
-      const normalized = normalizeSchema(schema)
-
-      // Mutate normalized schema
-      normalized.layouts.mobile.components.push('c2')
-
-      // Original schema should NOT be affected
-      expect(schema.layouts.mobile.components).toEqual(['c1'])
-      expect(schema.layouts.mobile.components).not.toContain('c2')
-    })
-
-    it('should create independent copies of inherited layouts', () => {
-      const schema: LaydlerSchema = {
-        schemaVersion: '2.0',
-        components: [
-          {
-            id: 'c1',
-            name: 'Header',
-            semanticTag: 'header',
-            positioning: { type: 'static' },
-            layout: { type: 'none' },
-          },
-        ],
-        breakpoints: [
-          { name: 'mobile', minWidth: 0, gridCols: 4, gridRows: 8 },
-          { name: 'tablet', minWidth: 768, gridCols: 8, gridRows: 8 },
-        ],
-        layouts: {
-          mobile: { structure: 'vertical', components: ['c1'] },
-        },
-      }
-
-      const normalized = normalizeSchema(schema)
-
-      // Mutate tablet layout
-      normalized.layouts.tablet.components.push('c2')
-
-      // Mobile layout should NOT be affected
-      expect(normalized.layouts.mobile.components).toEqual(['c1'])
-      expect(normalized.layouts.mobile.components).not.toContain('c2')
+      // ultrawide does NOT inherit (stays undefined)
+      expect(c1.responsiveCanvasLayout?.ultrawide).toBeUndefined()
     })
   })
 
   describe('Breakpoint sorting', () => {
-    it('should sort breakpoints by minWidth before applying inheritance', () => {
+    it('should sort breakpoints by minWidth without inheritance', () => {
       const schema: LaydlerSchema = {
         schemaVersion: '2.0',
         components: [
@@ -411,56 +195,51 @@ describe('normalizeSchema - Dynamic Breakpoint Support', () => {
           },
         ],
         breakpoints: [
-          { name: 'desktop', minWidth: 1024, gridCols: 12, gridRows: 8 },
+          { name: 'laptop', minWidth: 1440, gridCols: 12, gridRows: 8 },
           { name: 'mobile', minWidth: 0, gridCols: 4, gridRows: 8 },
           { name: 'tablet', minWidth: 768, gridCols: 8, gridRows: 8 },
         ],
         layouts: {
           mobile: { structure: 'vertical', components: ['c1'] },
+          tablet: { structure: 'vertical', components: [] },
+          laptop: { structure: 'vertical', components: [] },
         },
       }
 
       const normalized = normalizeSchema(schema)
 
-      // Tablet should inherit from mobile (not desktop)
-      expect(normalized.layouts.tablet.components).toEqual(['c1'])
-      // Desktop should inherit from tablet
-      expect(normalized.layouts.desktop.components).toEqual(['c1'])
+      // Breakpoints should be sorted by minWidth
+      expect(normalized.breakpoints[0].name).toBe('mobile')
+      expect(normalized.breakpoints[1].name).toBe('tablet')
+      expect(normalized.breakpoints[2].name).toBe('laptop')
+
+      // No inheritance occurred
+      expect(normalized.layouts.mobile.components).toEqual(['c1'])
+      expect(normalized.layouts.tablet.components).toEqual([])
+      expect(normalized.layouts.laptop.components).toEqual([])
     })
 
-    it('should handle non-standard minWidth values', () => {
+    it('should handle non-standard minWidth values without inheritance', () => {
       const schema: LaydlerSchema = {
         schemaVersion: '2.0',
-        components: [
-          {
-            id: 'c1',
-            name: 'Header',
-            semanticTag: 'header',
-            positioning: { type: 'static' },
-            layout: { type: 'none' },
-          },
-        ],
+        components: [],
         breakpoints: [
-          { name: 'xs', minWidth: 0, gridCols: 4, gridRows: 8 },
-          { name: 'sm', minWidth: 640, gridCols: 6, gridRows: 8 },
-          { name: 'md', minWidth: 768, gridCols: 8, gridRows: 8 },
-          { name: 'lg', minWidth: 1024, gridCols: 10, gridRows: 8 },
-          { name: 'xl', minWidth: 1280, gridCols: 12, gridRows: 8 },
-          { name: '2xl', minWidth: 1536, gridCols: 14, gridRows: 10 },
+          { name: 'bp3', minWidth: 1920, gridCols: 16, gridRows: 8 },
+          { name: 'bp1', minWidth: 320, gridCols: 4, gridRows: 8 },
+          { name: 'bp2', minWidth: 1024, gridCols: 12, gridRows: 8 },
         ],
         layouts: {
-          xs: { structure: 'vertical', components: ['c1'] },
+          bp1: { structure: 'vertical', components: [] },
+          bp2: { structure: 'vertical', components: [] },
+          bp3: { structure: 'vertical', components: [] },
         },
       }
 
       const normalized = normalizeSchema(schema)
 
-      // All breakpoints should inherit in order
-      expect(normalized.layouts.sm.components).toEqual(['c1'])
-      expect(normalized.layouts.md.components).toEqual(['c1'])
-      expect(normalized.layouts.lg.components).toEqual(['c1'])
-      expect(normalized.layouts.xl.components).toEqual(['c1'])
-      expect(normalized.layouts['2xl'].components).toEqual(['c1'])
+      expect(normalized.breakpoints[0].name).toBe('bp1')  // 320
+      expect(normalized.breakpoints[1].name).toBe('bp2')  // 1024
+      expect(normalized.breakpoints[2].name).toBe('bp3')  // 1920
     })
   })
 
@@ -468,104 +247,45 @@ describe('normalizeSchema - Dynamic Breakpoint Support', () => {
     it('should use deterministic sorting (alphabetical by name) when minWidth values are equal', () => {
       const schema: LaydlerSchema = {
         schemaVersion: '2.0',
-        components: [
-          {
-            id: 'c1',
-            name: 'Header',
-            semanticTag: 'header',
-            positioning: { type: 'static' },
-            layout: { type: 'none' },
-          },
-        ],
+        components: [],
         breakpoints: [
-          { name: 'ZBreakpoint', minWidth: 768, gridCols: 8, gridRows: 8 }, // Same minWidth
-          { name: 'ABreakpoint', minWidth: 768, gridCols: 8, gridRows: 8 }, // Same minWidth
-          { name: 'mobile', minWidth: 0, gridCols: 4, gridRows: 8 },
+          { name: 'zeta', minWidth: 1024, gridCols: 12, gridRows: 8 },
+          { name: 'alpha', minWidth: 1024, gridCols: 12, gridRows: 8 },
         ],
         layouts: {
-          mobile: { structure: 'vertical', components: ['c1'] },
-          // ABreakpoint and ZBreakpoint missing - should inherit
+          zeta: { structure: 'vertical', components: [] },
+          alpha: { structure: 'vertical', components: [] },
         },
       }
 
       const normalized = normalizeSchema(schema)
 
-      // Both breakpoints should inherit from mobile (deterministic)
-      expect(normalized.layouts.ABreakpoint).toBeDefined()
-      expect(normalized.layouts.ZBreakpoint).toBeDefined()
-      expect(normalized.layouts.ABreakpoint.components).toEqual(['c1'])
-      expect(normalized.layouts.ZBreakpoint.components).toEqual(['c1'])
-
-      // Verify inheritance order is deterministic (alphabetically: A before Z)
-      // If ABreakpoint had a layout, ZBreakpoint should inherit from ABreakpoint
-      const schema2: LaydlerSchema = {
-        schemaVersion: '2.0',
-        components: [
-          {
-            id: 'c1',
-            name: 'Header',
-            semanticTag: 'header',
-            positioning: { type: 'static' },
-            layout: { type: 'none' },
-          },
-          {
-            id: 'c2',
-            name: 'Main',
-            semanticTag: 'main',
-            positioning: { type: 'static' },
-            layout: { type: 'none' },
-          },
-        ],
-        breakpoints: [
-          { name: 'ZBreakpoint', minWidth: 768, gridCols: 8, gridRows: 8 },
-          { name: 'ABreakpoint', minWidth: 768, gridCols: 8, gridRows: 8 },
-          { name: 'mobile', minWidth: 0, gridCols: 4, gridRows: 8 },
-        ],
-        layouts: {
-          mobile: { structure: 'vertical', components: ['c1'] },
-          ABreakpoint: { structure: 'vertical', components: ['c1', 'c2'] }, // ABreakpoint defined
-          // ZBreakpoint missing - should inherit from ABreakpoint (alphabetically next)
-        },
-      }
-
-      const normalized2 = normalizeSchema(schema2)
-
-      // ZBreakpoint should inherit from ABreakpoint (not mobile)
-      expect(normalized2.layouts.ZBreakpoint.components).toEqual(['c1', 'c2'])
-      expect(normalized2.layouts.ZBreakpoint.components).not.toEqual(['c1'])
+      // Should sort alphabetically when minWidth is equal
+      expect(normalized.breakpoints[0].name).toBe('alpha')
+      expect(normalized.breakpoints[1].name).toBe('zeta')
     })
 
     it('should handle three breakpoints with same minWidth deterministically', () => {
       const schema: LaydlerSchema = {
         schemaVersion: '2.0',
-        components: [
-          {
-            id: 'c1',
-            name: 'Component',
-            semanticTag: 'div',
-            positioning: { type: 'static' },
-            layout: { type: 'none' },
-          },
-        ],
+        components: [],
         breakpoints: [
-          { name: 'Mobile', minWidth: 0, gridCols: 4, gridRows: 8 },
-          { name: 'Tablet-Portrait', minWidth: 768, gridCols: 6, gridRows: 8 },
-          { name: 'Tablet-Landscape', minWidth: 768, gridCols: 8, gridRows: 8 },
-          { name: 'Desktop', minWidth: 768, gridCols: 10, gridRows: 8 }, // All three have 768
+          { name: 'charlie', minWidth: 768, gridCols: 8, gridRows: 8 },
+          { name: 'bravo', minWidth: 768, gridCols: 8, gridRows: 8 },
+          { name: 'alpha', minWidth: 768, gridCols: 8, gridRows: 8 },
         ],
         layouts: {
-          Mobile: { structure: 'vertical', components: ['c1'] },
-          // All tablet/desktop variants missing
+          charlie: { structure: 'vertical', components: [] },
+          bravo: { structure: 'vertical', components: [] },
+          alpha: { structure: 'vertical', components: [] },
         },
       }
 
       const normalized = normalizeSchema(schema)
 
-      // All three should inherit, with deterministic alphabetical order:
-      // Desktop → Tablet-Landscape → Tablet-Portrait
-      expect(normalized.layouts['Tablet-Portrait'].components).toEqual(['c1'])
-      expect(normalized.layouts['Tablet-Landscape'].components).toEqual(['c1'])
-      expect(normalized.layouts.Desktop.components).toEqual(['c1'])
+      expect(normalized.breakpoints[0].name).toBe('alpha')
+      expect(normalized.breakpoints[1].name).toBe('bravo')
+      expect(normalized.breakpoints[2].name).toBe('charlie')
     })
   })
 })
