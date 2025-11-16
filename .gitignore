@@ -41,3 +41,4 @@ playwright-report/**/*.json
 
 # Test files
 /test-*.json
+tmp_*.md
