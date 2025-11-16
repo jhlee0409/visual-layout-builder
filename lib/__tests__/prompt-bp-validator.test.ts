@@ -510,4 +510,312 @@ Generate a React component.
       expect(formatted).toContain("No issues found")
     })
   })
+
+  describe("Edge Cases & Security", () => {
+    describe("Empty Inputs", () => {
+      it("should handle empty code string", () => {
+        const emptyCode = ""
+        const result = validateGeneratedCode(emptyCode, testSchema)
+
+        // Empty code will fail semantic HTML validation (missing components)
+        // But should not crash
+        expect(result).toBeDefined()
+        expect(typeof result.valid).toBe("boolean")
+        expect(typeof result.score).toBe("number")
+
+        // Will detect missing components
+        const semanticIssues = result.issues.filter(
+          (i) => i.category === "semantic-html"
+        )
+        expect(semanticIssues.length).toBeGreaterThan(0)
+      })
+
+      it("should handle schema with empty components array", () => {
+        const emptySchema: LaydlerSchema = {
+          schemaVersion: "2.0",
+          components: [],
+          breakpoints: [
+            { name: "mobile", minWidth: 0, gridCols: 6, gridRows: 24 },
+          ],
+          layouts: {
+            mobile: {
+              structure: "vertical",
+              components: [],
+            },
+          },
+        }
+
+        const code = `
+function EmptyLayout() {
+  return <div>Empty Layout</div>
+}
+`
+        const result = validateGeneratedCode(code, emptySchema)
+
+        // Should not crash, may have warnings but no errors
+        expect(result).toBeDefined()
+        expect(typeof result.valid).toBe("boolean")
+        expect(typeof result.score).toBe("number")
+        expect(result.score).toBeGreaterThan(0) // Some score, not necessarily 100
+      })
+
+      it("should handle whitespace-only code", () => {
+        const whitespaceCode = "   \n\n   \t\t   "
+        const result = validateGeneratedCode(whitespaceCode, testSchema)
+
+        // Should not crash, may detect missing components
+        expect(result).toBeDefined()
+        expect(typeof result.valid).toBe("boolean")
+        expect(typeof result.score).toBe("number")
+      })
+    })
+
+    describe("Very Large Inputs (DoS Prevention)", () => {
+      it("should skip button validation for inputs larger than 100KB", () => {
+        // Generate code larger than 100KB with nested buttons
+        const largeCode =
+          "function Component() { return <div>" +
+          "<button>Click me</button>".repeat(10000) + // ~280KB
+          "</div> }"
+
+        expect(largeCode.length).toBeGreaterThan(100000)
+
+        const result = validateGeneratedCode(largeCode, testSchema)
+
+        // Should not hang (DoS prevention)
+        // Button validation should be skipped
+        const buttonWarnings = result.issues.filter(
+          (i) => i.category === "layout-only" && i.message.includes("Mock buttons")
+        )
+        expect(buttonWarnings.length).toBe(0) // Skipped due to size limit
+      })
+
+      it("should handle very large code efficiently (< 1 second)", () => {
+        const largeCode =
+          "function Component() { return <div>" +
+          "<p>Content</p>".repeat(5000) + // ~70KB
+          "</div> }"
+
+        const startTime = performance.now()
+        const result = validateGeneratedCode(largeCode, testSchema)
+        const endTime = performance.now()
+
+        const duration = endTime - startTime
+
+        // Should complete within 1 second
+        expect(duration).toBeLessThan(1000)
+        expect(result).toBeDefined()
+      })
+
+      it("should handle deeply nested structures", () => {
+        const deeplyNested =
+          "<div>".repeat(100) +
+          "Content" +
+          "</div>".repeat(100)
+
+        const code = `
+function DeepComponent() {
+  return ${deeplyNested}
+}
+`
+
+        const result = validateGeneratedCode(code, testSchema)
+
+        // Should not crash with stack overflow
+        expect(result).toBeDefined()
+        expect(result.valid).toBeDefined()
+      })
+    })
+
+    describe("Malformed Code Handling", () => {
+      it("should handle unclosed tags gracefully", () => {
+        const malformedCode = `
+function Broken() {
+  return (
+    <header className="fixed top-0">
+      <div>
+        <span>Unclosed
+      </div>
+    </header>
+  )
+}
+`
+
+        const result = validateGeneratedCode(malformedCode, testSchema)
+
+        // Should not crash, may not detect all issues but should return a result
+        expect(result).toBeDefined()
+        expect(typeof result.valid).toBe("boolean")
+        expect(typeof result.score).toBe("number")
+      })
+
+      it("should handle special characters in code", () => {
+        const specialCharsCode = `
+function Special() {
+  return (
+    <header className="fixed top-0">
+      {"<>&\\"'"}
+      {/* Comment with special chars: <>{}[] */}
+    </header>
+  )
+}
+`
+
+        const result = validateGeneratedCode(specialCharsCode, testSchema)
+
+        // Should handle special characters without crashing
+        expect(result).toBeDefined()
+        expect(result.valid).toBeDefined()
+      })
+
+      it("should handle code with regex-breaking patterns", () => {
+        const regexBreakingCode = `
+function RegexTest() {
+  const pattern = /<button[^>]*>(?!.*\\(c\\d+\\))[\s\S]*?<\\/button>/gi
+  return (
+    <header className="fixed top-0">
+      {pattern.toString()}
+    </header>
+  )
+}
+`
+
+        const result = validateGeneratedCode(regexBreakingCode, testSchema)
+
+        // Should not crash on regex metacharacters
+        expect(result).toBeDefined()
+        expect(result.valid).toBeDefined()
+      })
+
+      it("should handle non-ASCII characters (Unicode)", () => {
+        const unicodeCode = `
+function Unicode() {
+  return (
+    <header className="fixed top-0">
+      {"안녕하세요 🎉 こんにちは"}
+      {/* 中文 العربية 한글 */}
+    </header>
+  )
+}
+`
+
+        const result = validateGeneratedCode(unicodeCode, testSchema)
+
+        // Should handle Unicode without issues
+        expect(result).toBeDefined()
+        expect(result.valid).toBeDefined()
+      })
+    })
+
+    describe("Button Validation Logic", () => {
+      it("should allow buttons with {children} prop", () => {
+        const goodButtonCode = `
+function ButtonGroup({ children }: { children?: React.ReactNode }) {
+  return (
+    <div className="flex gap-2">
+      <button className="px-4 py-2">{children}</button>
+    </div>
+  )
+}
+`
+
+        const result = validateGeneratedCode(goodButtonCode, testSchema)
+
+        // Buttons with {children} should be allowed
+        const buttonWarnings = result.issues.filter(
+          (i) => i.category === "layout-only" && i.message.includes("Mock buttons")
+        )
+        expect(buttonWarnings.length).toBe(0)
+      })
+
+      it("should allow buttons with component ID pattern (c\\d+)", () => {
+        const goodButtonCode = `
+function ButtonGroup() {
+  return (
+    <div className="flex gap-2">
+      <button className="px-4 py-2">Button (c3)</button>
+    </div>
+  )
+}
+`
+
+        const result = validateGeneratedCode(goodButtonCode, testSchema)
+
+        // Buttons with component ID should be allowed
+        const buttonWarnings = result.issues.filter(
+          (i) => i.category === "layout-only" && i.message.includes("Mock buttons")
+        )
+        expect(buttonWarnings.length).toBe(0)
+      })
+
+      it("should warn for mock buttons with hardcoded text", () => {
+        const badButtonCode = `
+function BadButtons() {
+  return (
+    <div className="flex gap-2">
+      <button className="px-4 py-2">Click me</button>
+      <button className="px-4 py-2">Submit</button>
+    </div>
+  )
+}
+`
+
+        const result = validateGeneratedCode(badButtonCode, testSchema)
+
+        // Mock buttons should trigger warning
+        const buttonWarnings = result.issues.filter(
+          (i) => i.category === "layout-only" && i.message.includes("Mock buttons")
+        )
+        expect(buttonWarnings.length).toBeGreaterThan(0)
+        expect(buttonWarnings[0].severity).toBe("warning")
+      })
+    })
+
+    describe("Responsive Class Validation", () => {
+      it("should correctly validate responsive classes (md:, lg:, etc.)", () => {
+        const responsiveSchema: LaydlerSchema = {
+          schemaVersion: "2.0",
+          components: [
+            {
+              id: "c1",
+              name: "ResponsiveDiv",
+              semanticTag: "div",
+              positioning: { type: "static" },
+              layout: { type: "flex" },
+              styling: {
+                className: "hidden md:flex lg:grid-cols-3 xl:block",
+              },
+            },
+          ],
+          breakpoints: [
+            { name: "mobile", minWidth: 0, gridCols: 6, gridRows: 24 },
+          ],
+          layouts: {
+            mobile: {
+              structure: "vertical",
+              components: ["c1"],
+            },
+          },
+        }
+
+        const code = `
+function ResponsiveDiv() {
+  return (
+    <div className="hidden md:flex lg:grid-cols-3 xl:block">
+      Responsive Content
+    </div>
+  )
+}
+`
+
+        const result = validateGeneratedCode(code, responsiveSchema)
+
+        // Should correctly validate md:, lg:, xl: prefixes
+        const responsiveWarnings = result.issues.filter(
+          (i) => i.category === "css-mapping" && i.message.includes("md:")
+        )
+        expect(responsiveWarnings.length).toBe(0) // Should pass
+      })
+    })
+  })
 })
