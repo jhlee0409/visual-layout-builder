@@ -10,6 +10,9 @@ import {
   DEFAULT_GRID_CONFIG,
   GRID_CONSTRAINTS,
   normalizeSchema,
+  getDefaultComponentData,
+  cloneSchema,
+  isValidSchema,
 } from '../schema-utils'
 import type { Component, LaydlerSchema } from '@/types/schema'
 
@@ -287,6 +290,270 @@ describe('Schema Utils', () => {
 
       // Should not add responsiveCanvasLayout if it doesn't exist
       expect(component.responsiveCanvasLayout).toBeUndefined()
+    })
+
+    it('should auto-create missing layouts for breakpoints', () => {
+      const schema: LaydlerSchema = {
+        schemaVersion: '2.0',
+        components: [],
+        breakpoints: [
+          { name: 'mobile', minWidth: 0, gridCols: 4, gridRows: 8 },
+          { name: 'tablet', minWidth: 768, gridCols: 8, gridRows: 8 },
+        ],
+        layouts: {
+          mobile: { structure: 'vertical', components: [] },
+          // tablet layout missing
+        },
+      }
+
+      const normalized = normalizeSchema(schema)
+
+      expect(normalized.layouts.mobile).toBeDefined()
+      expect(normalized.layouts.tablet).toBeDefined()
+      expect(normalized.layouts.tablet.structure).toBe('vertical')
+      expect(normalized.layouts.tablet.components).toEqual([])
+    })
+
+    it('should sort breakpoints by minWidth', () => {
+      const schema: LaydlerSchema = {
+        schemaVersion: '2.0',
+        components: [],
+        breakpoints: [
+          { name: 'desktop', minWidth: 1024, gridCols: 12, gridRows: 8 },
+          { name: 'mobile', minWidth: 0, gridCols: 4, gridRows: 8 },
+          { name: 'tablet', minWidth: 768, gridCols: 8, gridRows: 8 },
+        ],
+        layouts: {
+          mobile: { structure: 'vertical', components: [] },
+          tablet: { structure: 'vertical', components: [] },
+          desktop: { structure: 'vertical', components: [] },
+        },
+      }
+
+      const normalized = normalizeSchema(schema)
+
+      expect(normalized.breakpoints[0].name).toBe('mobile')
+      expect(normalized.breakpoints[1].name).toBe('tablet')
+      expect(normalized.breakpoints[2].name).toBe('desktop')
+    })
+  })
+
+  describe('getDefaultComponentData', () => {
+    it('should return default data for header', () => {
+      const data = getDefaultComponentData('header')
+
+      expect(data.name).toBe('Header')
+      expect(data.semanticTag).toBe('header')
+      expect(data.positioning.type).toBe('sticky')
+      expect(data.positioning.position?.top).toBe(0)
+      expect(data.layout.type).toBe('container')
+    })
+
+    it('should return default data for nav', () => {
+      const data = getDefaultComponentData('nav')
+
+      expect(data.name).toBe('Sidebar')
+      expect(data.semanticTag).toBe('nav')
+      expect(data.positioning.type).toBe('sticky')
+      expect(data.layout.type).toBe('flex')
+      expect(data.responsive?.mobile?.hidden).toBe(true)
+      expect(data.responsive?.desktop?.hidden).toBe(false)
+    })
+
+    it('should return default data for main', () => {
+      const data = getDefaultComponentData('main')
+
+      expect(data.name).toBe('Main')
+      expect(data.semanticTag).toBe('main')
+      expect(data.positioning.type).toBe('static')
+      expect(data.layout.type).toBe('container')
+      expect(data.styling?.className).toBe('flex-1')
+    })
+
+    it('should return default data for aside', () => {
+      const data = getDefaultComponentData('aside')
+
+      expect(data.name).toBe('Aside')
+      expect(data.semanticTag).toBe('aside')
+      expect(data.positioning.type).toBe('static')
+      expect(data.layout.type).toBe('flex')
+    })
+
+    it('should return default data for footer', () => {
+      const data = getDefaultComponentData('footer')
+
+      expect(data.name).toBe('Footer')
+      expect(data.semanticTag).toBe('footer')
+      expect(data.positioning.type).toBe('static')
+      expect(data.layout.type).toBe('container')
+    })
+
+    it('should return default data for section', () => {
+      const data = getDefaultComponentData('section')
+
+      expect(data.name).toBe('Section')
+      expect(data.semanticTag).toBe('section')
+      expect(data.positioning.type).toBe('static')
+      expect(data.layout.type).toBe('container')
+    })
+
+    it('should return default data for article', () => {
+      const data = getDefaultComponentData('article')
+
+      expect(data.name).toBe('Article')
+      expect(data.semanticTag).toBe('article')
+      expect(data.positioning.type).toBe('static')
+      expect(data.layout.type).toBe('flex')
+    })
+
+    it('should return default data for div', () => {
+      const data = getDefaultComponentData('div')
+
+      expect(data.name).toBe('Container')
+      expect(data.semanticTag).toBe('div')
+      expect(data.positioning.type).toBe('static')
+      expect(data.layout.type).toBe('flex')
+    })
+
+    it('should return default data for form', () => {
+      const data = getDefaultComponentData('form')
+
+      expect(data.name).toBe('Form')
+      expect(data.semanticTag).toBe('form')
+      expect(data.positioning.type).toBe('static')
+      expect(data.layout.type).toBe('flex')
+      expect(data.styling?.className).toContain('shadow')
+    })
+  })
+
+  describe('cloneSchema', () => {
+    it('should create a deep clone of schema', () => {
+      const original = createEmptySchema()
+      original.components.push({
+        id: 'c1',
+        name: 'Header',
+        semanticTag: 'header',
+        positioning: { type: 'sticky', position: { top: 0 } },
+        layout: { type: 'flex', flex: { direction: 'row' } },
+        canvasLayout: { x: 0, y: 0, width: 12, height: 1 },
+      })
+
+      const cloned = cloneSchema(original)
+
+      // Should be deeply equal
+      expect(cloned).toEqual(original)
+
+      // Should be different objects
+      expect(cloned).not.toBe(original)
+      expect(cloned.components).not.toBe(original.components)
+      expect(cloned.breakpoints).not.toBe(original.breakpoints)
+      expect(cloned.layouts).not.toBe(original.layouts)
+
+      // Modifying clone should not affect original
+      cloned.components[0].name = 'Modified'
+      expect(original.components[0].name).toBe('Header')
+    })
+
+    it('should clone nested objects deeply', () => {
+      const original = createEmptySchema()
+      original.components.push({
+        id: 'c1',
+        name: 'Header',
+        semanticTag: 'header',
+        positioning: { type: 'sticky', position: { top: 0, zIndex: 50 } },
+        layout: { type: 'flex', flex: { direction: 'row', gap: '1rem' } },
+        canvasLayout: { x: 0, y: 0, width: 12, height: 1 },
+      })
+
+      const cloned = cloneSchema(original)
+
+      // Modify nested object
+      if (cloned.components[0].positioning.position) {
+        cloned.components[0].positioning.position.top = 100
+      }
+
+      // Original should remain unchanged
+      expect(original.components[0].positioning.position?.top).toBe(0)
+    })
+  })
+
+  describe('isValidSchema', () => {
+    it('should return true for valid schema', () => {
+      const valid = createEmptySchema()
+
+      expect(isValidSchema(valid)).toBe(true)
+    })
+
+    it('should return false for null', () => {
+      expect(isValidSchema(null)).toBe(false)
+    })
+
+    it('should return false for non-object', () => {
+      expect(isValidSchema('not an object')).toBe(false)
+      expect(isValidSchema(123)).toBe(false)
+      expect(isValidSchema(undefined)).toBe(false)
+    })
+
+    it('should return false for missing schemaVersion', () => {
+      const invalid = {
+        components: [],
+        breakpoints: [],
+        layouts: {},
+      }
+
+      expect(isValidSchema(invalid)).toBe(false)
+    })
+
+    it('should return false for wrong schemaVersion', () => {
+      const invalid = {
+        schemaVersion: '1.0',
+        components: [],
+        breakpoints: [],
+        layouts: {},
+      }
+
+      expect(isValidSchema(invalid)).toBe(false)
+    })
+
+    it('should return false for missing components array', () => {
+      const invalid = {
+        schemaVersion: '2.0',
+        breakpoints: [],
+        layouts: {},
+      }
+
+      expect(isValidSchema(invalid)).toBe(false)
+    })
+
+    it('should return false for missing breakpoints array', () => {
+      const invalid = {
+        schemaVersion: '2.0',
+        components: [],
+        layouts: {},
+      }
+
+      expect(isValidSchema(invalid)).toBe(false)
+    })
+
+    it('should return false for missing layouts object', () => {
+      const invalid = {
+        schemaVersion: '2.0',
+        components: [],
+        breakpoints: [],
+      }
+
+      expect(isValidSchema(invalid)).toBe(false)
+    })
+
+    it('should return false for non-object layouts', () => {
+      const invalid = {
+        schemaVersion: '2.0',
+        components: [],
+        breakpoints: [],
+        layouts: null,
+      }
+
+      expect(isValidSchema(invalid)).toBe(false)
     })
   })
 })
