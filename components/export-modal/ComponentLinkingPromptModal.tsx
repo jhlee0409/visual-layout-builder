@@ -10,7 +10,7 @@ import {
 import { Button } from "@/components/ui/button"
 import { Link, Sparkles, ArrowRight } from "lucide-react"
 
-interface ComponentLinkingPromptModalProps {
+export interface ComponentLinkingPromptModalProps {
   open: boolean
   breakpointCount: number
   onLinkComponents: () => void
@@ -30,8 +30,15 @@ export function ComponentLinkingPromptModal({
   onLinkComponents,
   onSkip,
 }: ComponentLinkingPromptModalProps) {
+  const handleOpenChange = (isOpen: boolean) => {
+    // Dialog closed by ESC/outside click → treat as Skip
+    if (!isOpen) {
+      onSkip()
+    }
+  }
+
   return (
-    <Dialog open={open} onOpenChange={(isOpen) => !isOpen && onSkip()}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <div className="flex items-center justify-center mb-4">
