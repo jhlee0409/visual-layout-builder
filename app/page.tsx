@@ -7,7 +7,6 @@ import { LayersTree} from "@/components/layers-tree"
 import { KonvaCanvas} from "@/components/canvas"
 import { PropertiesPanel} from "@/components/properties-panel"
 import { ExportModal} from "@/components/export-modal"
-import { ThemeSelector} from "@/components/theme-selector"
 import { InitialBreakpointModal } from "@/components/initial-breakpoint-modal"
 import { ComponentLinkingPanel } from "@/components/component-linking-panel/ComponentLinkingPanel"
 import { Button } from "@/components/ui/button"
@@ -73,7 +72,6 @@ export default function Home() {
             <span className="text-sm text-muted-foreground">
               {componentCount} components
             </span>
-            <ThemeSelector />
             <Button
               variant="outline"
               size="sm"

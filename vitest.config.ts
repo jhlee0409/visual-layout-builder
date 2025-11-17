@@ -73,7 +73,6 @@ export default defineConfig({
          * 이유: React 컴포넌트 생성 및 파일 시스템 작업을 포함하여
          * 브라우저 환경 또는 통합 테스트가 필요함
          */
-        'lib/theme-system.ts',
         'lib/utils.ts',
         'lib/component-library.ts',
         'lib/file-exporter.ts',

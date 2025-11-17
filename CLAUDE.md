@@ -626,7 +626,6 @@ function Dashboard() {
   /breakpoint-panel
   /layers-tree
   /export-modal
-  /theme-selector
   /component-linking-panel
   /initial-breakpoint-modal
   /ui             # shadcn/ui 컴포넌트
@@ -656,7 +655,6 @@ function Dashboard() {
   /__tests__/                 # Vitest 유닛 테스트
 /store            # Zustand 상태 관리
   layout-store.ts
-  theme-store.ts
   toast-store.ts
   alert-dialog-store.ts
 /types            # TypeScript 타입 정의
