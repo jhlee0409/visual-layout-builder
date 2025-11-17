@@ -854,12 +854,15 @@ describe('Prompt Quality Tests', () => {
       // Token estimate: ~1 token per 4 characters (rough estimate)
       const estimatedTokens = Math.ceil(prompt.length / 4)
 
-      // For a simple schema, should be < 2500 tokens (updated for 2025 improvements)
-      // Increased from 2000 to account for:
-      // - ARIA attributes section (Props)
-      // - Enhanced layout-only philosophy instructions
-      // - Stronger accessibility guidelines
-      expect(estimatedTokens).toBeLessThan(2500)
+      // For a simple schema, should be < 3500 tokens (updated for 2025 Code Quality Standards)
+      // Increased from 2500 to account for:
+      // - Code Quality Standards (2025) section (~100 lines)
+      // - Example Component Pattern (~40 lines)
+      // - Required Utilities section (~15 lines)
+      // - Responsive Design examples (~20 lines)
+      // - Enhanced Code Quality Checklist (~30 lines)
+      // Total increase: ~70% more comprehensive guidelines
+      expect(estimatedTokens).toBeLessThan(3500)
     })
 
     it('should scale linearly with number of components', () => {
