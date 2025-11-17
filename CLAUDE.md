@@ -407,6 +407,188 @@ const bestModel = recommendations[0]
 - Token 추정 알고리즘
 - Model 추천 로직
 
+### Code Quality Guidelines (2025)
+
+**AI가 생성하는 React 코드는 2025년 업계 표준을 따라야 합니다.**
+
+#### TypeScript Component Patterns
+
+**✅ DO:**
+- Use standard function components with direct prop typing (NOT `React.FC`)
+- Use utility types: `PropsWithChildren`, `ComponentPropsWithoutRef`
+- Use discriminated unions for state modeling
+- Use `React.AriaRole` for role attributes
+- Export proper TypeScript types for all components
+- Use `cn()` utility for conditional className merging
+- Include JSDoc comments for all exported components
+
+**❌ DON'T:**
+- Don't use `React.FC` or `React.FunctionComponent` (not recommended in 2025)
+- Don't use `any` or `unknown` without proper type narrowing
+- Don't use string literals for role attributes
+- Don't hardcode demo content in production components
+
+**권장 컴포넌트 패턴:**
+
+```typescript
+import type { PropsWithChildren } from 'react'
+import { cn } from '@/lib/utils'
+
+type HeaderProps = PropsWithChildren<{
+  variant?: 'default' | 'sticky' | 'fixed'
+  className?: string
+  role?: React.AriaRole
+  'aria-label'?: string
+}>
+
+/**
+ * Header component for page navigation
+ * @param variant - Positioning strategy (default: 'default')
+ * @param className - Additional Tailwind classes
+ */
+function Header({
+  children,
+  variant = 'default',
+  className,
+  role = 'banner',
+  'aria-label': ariaLabel,
+}: HeaderProps) {
+  return (
+    <header
+      className={cn(
+        'w-full border-b border-gray-300 bg-white px-4 py-4',
+        {
+          'sticky top-0 z-50': variant === 'sticky',
+          'fixed top-0 left-0 right-0 z-50': variant === 'fixed',
+        },
+        className
+      )}
+      role={role}
+      aria-label={ariaLabel}
+    >
+      {children}
+    </header>
+  )
+}
+
+export { Header }
+export type { HeaderProps }
+```
+
+#### Component Structure Best Practices
+
+**✅ DO:**
+- Separate component definition from usage
+- Use composition patterns for complex components (e.g., `Card.Header`, `Card.Body`)
+- Implement proper prop spreading for HTML attributes
+- Use `memo()` for performance-critical components
+- Implement lazy loading for large components
+- Avoid component duplication across breakpoints (use responsive classes instead)
+
+**❌ DON'T:**
+- Don't duplicate components for different breakpoints
+- Don't mix demo content with component logic
+- Don't create overly complex conditional rendering
+
+**Responsive Layout (No Duplication):**
+
+```typescript
+// ❌ DON'T: Duplicate components
+<div className="block md:hidden"><Header>Mobile</Header></div>
+<div className="hidden md:block"><Header>Desktop</Header></div>
+
+// ✅ DO: Single component with responsive behavior
+<div className="col-span-full">
+  <Header>
+    <div className="flex items-center justify-between">
+      <Logo />
+      <nav className="hidden lg:flex gap-6">
+        <NavLink href="/">Home</NavLink>
+      </nav>
+      <button className="lg:hidden">
+        <MenuIcon />
+      </button>
+    </div>
+  </Header>
+</div>
+```
+
+#### Required Utilities
+
+**모든 생성된 코드에는 다음 유틸리티를 포함:**
+
+```typescript
+// lib/utils.ts
+import { type ClassValue, clsx } from 'clsx'
+import { twMerge } from 'tailwind-merge'
+
+/**
+ * Merge Tailwind CSS classes with proper precedence
+ */
+export function cn(...inputs: ClassValue[]) {
+  return twMerge(clsx(inputs))
+}
+```
+
+#### Accessibility Standards
+
+**모든 컴포넌트는 다음 접근성 기준을 충족:**
+
+- Semantic HTML tags (`<header>`, `<nav>`, `<main>`, `<footer>`, etc.)
+- ARIA labels and roles (type-safe with `React.AriaRole`)
+- Keyboard navigation support
+- Focus management (`focus:ring-2`, `focus:outline-none`)
+- Screen reader support
+
+#### File Organization
+
+**생성된 코드의 권장 파일 구조:**
+
+```
+/components
+  /layout
+    Header.tsx          # Individual component files
+    Footer.tsx
+    Sidebar.tsx
+  /ui
+    Card.tsx
+    Button.tsx
+  Layout.tsx            # Main layout composition
+/lib
+  utils.ts              # Utility functions (cn, etc.)
+  types.ts              # Shared TypeScript types
+```
+
+#### Performance Patterns
+
+**성능 최적화를 위한 권장 패턴:**
+
+```typescript
+// ✅ Memoization for expensive components
+import { memo } from 'react'
+
+const HeavyComponent = memo(function HeavyComponent({ data }: Props) {
+  return <div>{/* ... */}</div>
+})
+
+// ✅ Lazy loading for code splitting
+import { lazy, Suspense } from 'react'
+
+const DashboardContent = lazy(() => import('./DashboardContent'))
+
+function Dashboard() {
+  return (
+    <Suspense fallback={<LoadingSpinner />}>
+      <DashboardContent />
+    </Suspense>
+  )
+}
+```
+
+**참고 문서:**
+- [Code Quality Strategy](/docs/dev-log/2025-11-17-code-quality-improvement-strategy.md)
+- [Ideal Code Example](/docs/dev-log/2025-11-17-ideal-code-example.tsx)
+
 ### Component Library
 
 **lib/component-library.ts**는 사전 정의된 컴포넌트 템플릿을 제공합니다.
