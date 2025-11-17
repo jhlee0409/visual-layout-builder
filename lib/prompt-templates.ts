@@ -72,12 +72,96 @@ The Laylder Schema follows a **Component-First** approach where each component i
 - Proper use of Tailwind CSS utility classes
 - Responsive design following mobile-first principles
 
-**Code Style (2025 Best Practices):**
-- ❌ **DO NOT** use \`React.FC\` type (deprecated pattern)
-- ✅ **DO** use explicit function signatures: \`function Component(props: Props) { ... }\`
-- ✅ **DO** use modern React patterns (no class components, hooks only)
-- ❌ **DO NOT** add placeholder content or mock data
+**Code Quality Standards (2025):**
+
+**TypeScript Component Patterns:**
+- ❌ **DO NOT** use \`React.FC\` or \`React.FunctionComponent\` (not recommended in 2025)
+- ✅ **DO** use standard function components with direct prop typing
+- ✅ **DO** use utility types: \`PropsWithChildren\`, \`ComponentPropsWithoutRef\`
+- ✅ **DO** use \`React.AriaRole\` for role attributes (type-safe)
+- ✅ **DO** export proper TypeScript types for all components
+- ✅ **DO** include JSDoc comments for all exported components
+
+**Example Component Pattern:**
+\`\`\`typescript
+import type { PropsWithChildren } from 'react'
+import { cn } from '@/lib/utils'
+
+type HeaderProps = PropsWithChildren<{
+  variant?: 'default' | 'sticky' | 'fixed'
+  className?: string
+  role?: React.AriaRole
+  'aria-label'?: string
+}>
+
+/**
+ * Header component for page navigation
+ * @param variant - Positioning strategy (default: 'default')
+ */
+function Header({
+  children,
+  variant = 'default',
+  className,
+  role = 'banner',
+  'aria-label': ariaLabel,
+}: HeaderProps) {
+  return (
+    <header
+      className={cn(
+        'w-full border-b border-gray-300 px-4 py-4',
+        { 'sticky top-0 z-50': variant === 'sticky' },
+        className
+      )}
+      role={role}
+      aria-label={ariaLabel}
+    >
+      {children}
+    </header>
+  )
+}
+
+export { Header }
+export type { HeaderProps }
+\`\`\`
+
+**Component Structure Best Practices:**
+- ✅ **DO** use \`cn()\` utility for conditional className merging
+- ✅ **DO** separate component definition from usage
+- ✅ **DO** use composition patterns for complex components (e.g., \`Card.Header\`, \`Card.Body\`)
+- ❌ **DO NOT** duplicate components for different breakpoints
+- ❌ **DO NOT** mix demo content with component logic
 - ✅ **DO** only generate layout structure with component name + ID as content
+
+**Required Utilities:**
+Every generated codebase MUST include this utility function:
+
+\`\`\`typescript
+// lib/utils.ts
+import { type ClassValue, clsx } from 'clsx'
+import { twMerge } from 'tailwind-merge'
+
+/**
+ * Merge Tailwind CSS classes with proper precedence
+ */
+export function cn(...inputs: ClassValue[]) {
+  return twMerge(clsx(inputs))
+}
+\`\`\`
+
+**Responsive Design Without Duplication:**
+\`\`\`typescript
+// ❌ DON'T: Duplicate components
+<div className="block md:hidden"><Header>Mobile</Header></div>
+<div className="hidden md:block"><Header>Desktop</Header></div>
+
+// ✅ DO: Single component with responsive behavior
+<div className="col-span-full">
+  <Header>
+    <nav className="hidden lg:flex gap-6">Desktop Nav</nav>
+    <button className="lg:hidden">Mobile Menu</button>
+  </Header>
+</div>
+\`\`\`
 
 **🎨 Layout-Only Code Generation (2025 Philosophy):**
 
@@ -302,14 +386,28 @@ Let's build a high-quality, production-ready layout.`,
       `  - Example: \`hidden md:block\` = hidden on mobile, visible on tablet+\n` +
       `  - Example: \`w-full md:w-1/2 lg:w-1/3\` = full width on mobile, half on tablet, third on desktop\n\n` +
       `### Code Quality Checklist\n\n` +
+      `**TypeScript & Component Structure:**\n` +
+      `- [ ] Use standard function components (NOT \`React.FC\`)\n` +
+      `- [ ] Use utility types (\`PropsWithChildren\`, \`ComponentPropsWithoutRef\`)\n` +
+      `- [ ] Use \`React.AriaRole\` for role attributes\n` +
+      `- [ ] Export component and props type separately\n` +
+      `- [ ] Include JSDoc comments for all components\n` +
+      `- [ ] Use \`cn()\` utility for all className operations\n\n` +
+      `**Layout & Responsive:**\n` +
       `- [ ] All components use specified semantic tags\n` +
-      `- [ ] TypeScript types are properly defined (use explicit function signatures, NOT React.FC)\n` +
       `- [ ] Positioning and layout follow specifications exactly\n` +
-      `- [ ] Responsive behavior is implemented for all breakpoints\n` +
-      `- [ ] Code is clean, readable, and well-commented\n` +
-      `- [ ] Accessibility is considered (ARIA labels, keyboard navigation)\n` +
+      `- [ ] Responsive behavior implemented for all breakpoints\n` +
+      `- [ ] NO component duplication across breakpoints (use responsive classes instead)\n` +
+      `- [ ] Single component instances with responsive content\n\n` +
+      `**Accessibility:**\n` +
+      `- [ ] ARIA labels and roles are type-safe\n` +
+      `- [ ] Keyboard navigation support (\`focus:ring-2\`, \`focus:outline-none\`)\n` +
+      `- [ ] Screen reader support (semantic tags + ARIA)\n\n` +
+      `**Content & Code Quality:**\n` +
       `- [ ] **Content: ONLY display component name + ID** (e.g., "Header (c1)")\n` +
-      `- [ ] **NO placeholder content, mock data, or creative additions**\n`
+      `- [ ] **NO placeholder content, mock data, or creative additions**\n` +
+      `- [ ] Code is clean, readable, and well-commented\n` +
+      `- [ ] Include \`lib/utils.ts\` with \`cn()\` function\n`
   },
 }
 
