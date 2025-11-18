@@ -137,13 +137,14 @@ export function generateGridCSS(visualLayout: VisualLayout): string {
  * Tailwind CSS Grid 클래스 생성 (최신 Tailwind v3.4 지원)
  *
  * @param visualLayout - Visual layout info
- * @returns Tailwind class recommendations
+ * @returns Tailwind class recommendations with inline style for auto rows
  *
  * @example
  * const tailwind = generateTailwindClasses(visualLayout)
  * // Output:
  * // {
- * //   container: "grid grid-cols-12 grid-rows-8 gap-4",
+ * //   container: "grid grid-cols-12 gap-4",
+ * //   inlineStyle: "repeat(8, auto)",
  * //   components: {
  * //     c1: "col-span-12 row-span-1",
  * //     c2: "col-start-1 col-end-3 row-start-2 row-end-8"
@@ -152,9 +153,14 @@ export function generateGridCSS(visualLayout: VisualLayout): string {
  */
 export function generateTailwindClasses(visualLayout: VisualLayout): {
   container: string
+  inlineStyle: string
   components: Record<string, string>
 } {
-  const container = `grid grid-cols-${visualLayout.gridCols} grid-rows-${visualLayout.gridRows} gap-4`
+  // Container classes (no grid-rows-* since we use inline style)
+  const container = `grid grid-cols-${visualLayout.gridCols} gap-4`
+
+  // Inline style for auto rows (universal solution for all layouts)
+  const inlineStyle = `repeat(${visualLayout.gridRows}, auto)`
 
   const components: Record<string, string> = {}
 
@@ -195,6 +201,7 @@ export function generateTailwindClasses(visualLayout: VisualLayout): {
 
   return {
     container,
+    inlineStyle,
     components,
   }
 }

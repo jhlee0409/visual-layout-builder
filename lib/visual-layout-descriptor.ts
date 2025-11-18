@@ -265,14 +265,19 @@ function generateImplementationHints(
 ): string[] {
   const hints: string[] = []
 
-  // 🚨 0. CRITICAL: Side-by-side warning (최우선)
+  // 🎯 0. UNIVERSAL RULE: Auto Rows Strategy (최우선 - "Magic Prompt" solution)
+  hints.push(
+    `🎯 **UNIVERSAL RULE - Auto Rows**: Use \`gridTemplateRows: 'repeat(${gridRows}, auto)'\` as an inline style on the grid container. This allows rows to auto-size based on content, solving height sync issues universally for ALL layout combinations (vertical, side-by-side, mixed). Do NOT use fixed row heights (\`grid-rows-${gridRows}\`).`
+  )
+
+  // 🚨 1. CRITICAL: Side-by-side warning (if applicable)
   if (complexity.hasSideBySide) {
     hints.push(
       `🚨 **CRITICAL**: This layout has components positioned **side-by-side** in the same row. You MUST use CSS Grid (not flexbox column) to achieve horizontal positioning. DO NOT stack these components vertically!`
     )
   }
 
-  // 1. Layout strategy
+  // 3. Layout strategy
   if (complexity.recommendedImplementation === "grid") {
     hints.push(
       `**Use CSS Grid** for the main layout container due to complex 2D positioning. Create a grid container with \`display: grid; grid-template-columns: repeat(${gridCols}, 1fr);\``
@@ -283,12 +288,12 @@ function generateImplementationHints(
     )
   }
 
-  // 2. Grid positioning
+  // 4. Grid positioning
   hints.push(
     `Each component MUST use \`grid-area\` (or \`grid-column\`/\`grid-row\`) to specify its exact position based on Canvas Grid coordinates`
   )
 
-  // 3. Sidebar handling
+  // 5. Sidebar handling
   const sidebar = detectSidebar(components, breakpoint, gridCols, gridRows)
   if (sidebar) {
     hints.push(
@@ -296,19 +301,22 @@ function generateImplementationHints(
     )
   }
 
-  // 4. Side-by-side implementation details
+  // 6. Side-by-side implementation details + h-full strategy
   if (complexity.hasSideBySide) {
     hints.push(
       `For side-by-side components: Use grid-column spans to place components horizontally. Example: Component A uses \`grid-column: 1 / 4\`, Component B uses \`grid-column: 4 / 9\`, both with the same \`grid-row\` value`
     )
+    hints.push(
+      `🎯 **CRITICAL - Equal Heights**: Components positioned side-by-side MUST use \`h-full\` (or \`height: 100%\`) to fill their grid cell vertically. This ensures equal heights when components share the same row range. Add \`h-full\` to the component wrapper div.`
+    )
   }
 
-  // 5. Component independence reminder
+  // 7. Component independence reminder
   hints.push(
     `Each component still uses its own \`positioning\` strategy (sticky/fixed/static) and internal \`layout\` (flex/grid/container)`
   )
 
-  // 6. Responsive considerations
+  // 8. Responsive considerations
   hints.push(
     `This grid layout applies to the **${breakpoint}** breakpoint - other breakpoints may have different arrangements`
   )

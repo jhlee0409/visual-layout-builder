@@ -458,8 +458,9 @@ Let's build a high-quality, production-ready layout.`,
         section += gridCSS
         section += `\`\`\`\n\n`
 
-        section += `Or with Tailwind CSS:\n\n`
-        section += `Container: \`${tailwindClasses.container}\`\n\n`
+        section += `Or with Tailwind CSS + Inline Style:\n\n`
+        section += `Container: \`${tailwindClasses.container}\`\n`
+        section += `Inline Style: \`style={{ gridTemplateRows: '${tailwindClasses.inlineStyle}' }}\`\n\n`
         section += `Components:\n`
         Object.entries(tailwindClasses.components).forEach(([id, classes]) => {
           const comp = components.find(c => c.id === id)
@@ -535,6 +536,106 @@ Let's build a high-quality, production-ready layout.`,
 
   instructionsSection: () => {
     return `## Implementation Instructions\n\n` +
+      `### 🎯 Universal Layout Pattern (Magic Prompt Solution)\n\n` +
+      `**This pattern works for ALL Canvas layouts - vertical, horizontal, side-by-side, or mixed:**\n\n` +
+      `\`\`\`tsx\n` +
+      `// Container: Grid with auto rows (universal solution)\n` +
+      `<div \n` +
+      `  className="grid grid-cols-12 gap-4"\n` +
+      `  style={{ gridTemplateRows: 'repeat(8, auto)' }}  // Auto-size rows\n` +
+      `>\n` +
+      `  {/* Wrapper: Grid positioning */}\n` +
+      `  <div className="col-span-full row-start-1 row-end-2">\n` +
+      `    {/* Component: Border + Padding + Layout */}\n` +
+      `    <header className={cn(\n` +
+      `      'border-b border-gray-300 py-4 px-6',  // Styling HERE\n` +
+      `      'flex items-center justify-between',   // Layout HERE\n` +
+      `      'sticky top-0 z-50 bg-white'           // Positioning HERE\n` +
+      `    )}>\n` +
+      `      Header (c1)  {/* Content: Name + ID only */}\n` +
+      `    </header>\n` +
+      `  </div>\n\n` +
+      `  {/* Side-by-side: Use h-full for equal heights */}\n` +
+      `  <div className="col-start-1 col-end-4 row-start-2 row-end-8 h-full">\n` +
+      `    <aside className={cn(\n` +
+      `      'border-r border-gray-300 p-4',\n` +
+      `      'flex flex-col gap-4',\n` +
+      `      'h-full'  // Fill grid cell vertically\n` +
+      `    )}>\n` +
+      `      Sidebar (c2)\n` +
+      `    </aside>\n` +
+      `  </div>\n\n` +
+      `  <div className="col-start-4 col-end-13 row-start-2 row-end-8 h-full">\n` +
+      `    <main className={cn(\n` +
+      `      'border border-gray-300 p-6',\n` +
+      `      'flex flex-col gap-6',\n` +
+      `      'h-full'  // Fill grid cell vertically\n` +
+      `    )}>\n` +
+      `      Main (c3)\n` +
+      `    </main>\n` +
+      `  </div>\n` +
+      `</div>\n` +
+      `\`\`\`\n\n` +
+      `**🚨 CRITICAL RULES (Non-Negotiable):**\n\n` +
+      `1. **Container MUST use inline style** \`style={{ gridTemplateRows: 'repeat(N, auto)' }}\` (NOT \`grid-rows-N\`)\n` +
+      `2. **Wrapper div** handles grid positioning (\`col-span-*\`, \`row-start-*\`, \`row-end-*\`)\n` +
+      `3. **Component tag** contains ALL styling (border, padding, layout) - NOT children div\n` +
+      `4. **Side-by-side components** MUST use \`h-full\` on both wrapper AND component\n` +
+      `5. **Content** is ONLY component name + ID (e.g., "Header (c1)") - NO placeholder text\n\n` +
+      `**❌ ANTI-PATTERNS (What NOT to Do):**\n\n` +
+      `\`\`\`tsx\n` +
+      `// ❌ WRONG: Fixed rows (causes height sync issues)\n` +
+      `<div className="grid grid-cols-12 grid-rows-8 gap-4">\n\n` +
+      `// ❌ WRONG: Styling in children div (not component tag)\n` +
+      `<footer>\n` +
+      `  <div className="flex justify-between border-t py-6">\n` +
+      `    Footer (c2)  {/* BAD: border/padding in children */}\n` +
+      `  </div>\n` +
+      `</footer>\n\n` +
+      `// ❌ WRONG: Missing h-full for side-by-side components\n` +
+      `<div className="col-start-1 col-end-4 row-start-2 row-end-8">\n` +
+      `  <aside className="border-r p-4">  {/* Missing h-full */}\n` +
+      `    Sidebar (c2)\n` +
+      `  </aside>\n` +
+      `</div>\n\n` +
+      `// ❌ WRONG: Placeholder content\n` +
+      `<header>\n` +
+      `  <nav>\n` +
+      `    <a href="/">Home</a>  {/* NO placeholder links */}\n` +
+      `    <a href="/about">About</a>\n` +
+      `  </nav>\n` +
+      `</header>\n` +
+      `\`\`\`\n\n` +
+      `**✅ CORRECT PATTERN:**\n\n` +
+      `\`\`\`tsx\n` +
+      `// ✅ Container: Auto rows with inline style\n` +
+      `<div \n` +
+      `  className="grid grid-cols-12 gap-4"\n` +
+      `  style={{ gridTemplateRows: 'repeat(8, auto)' }}\n` +
+      `>\n` +
+      `  {/* ✅ Wrapper: Grid positioning only */}\n` +
+      `  <div className="col-span-full row-start-8 row-end-9">\n` +
+      `    {/* ✅ Component: Border + Padding in tag */}\n` +
+      `    <footer className={cn(\n` +
+      `      'border-t border-gray-300 py-6 px-6',  // ✅ Styling HERE\n` +
+      `      'flex justify-between'\n` +
+      `    )}>\n` +
+      `      Footer (c2)  {/* ✅ Name + ID only */}\n` +
+      `    </footer>\n` +
+      `  </div>\n\n` +
+      `  {/* ✅ Side-by-side: h-full on wrapper AND component */}\n` +
+      `  <div className="col-start-1 col-end-4 row-start-2 row-end-8 h-full">\n` +
+      `    <aside className={cn(\n` +
+      `      'border-r border-gray-300 p-4',\n` +
+      `      'flex flex-col gap-4',\n` +
+      `      'h-full'  // ✅ Fill grid cell\n` +
+      `    )}>\n` +
+      `      Sidebar (c2)  {/* ✅ No placeholder content */}\n` +
+      `    </aside>\n` +
+      `  </div>\n` +
+      `</div>\n` +
+      `\`\`\`\n\n` +
+      `---\n\n` +
       `### Positioning Guidelines\n\n` +
       `- **static**: Default flow (no position class needed)\n` +
       `- **fixed**: Use Tailwind \`fixed\` with position values (e.g., \`fixed top-0 left-0 right-0 z-50\`)\n` +
@@ -570,8 +671,15 @@ Let's build a high-quality, production-ready layout.`,
       `- [ ] ARIA labels and roles are type-safe\n` +
       `- [ ] Keyboard navigation support (\`focus:ring-2\`, \`focus:outline-none\`)\n` +
       `- [ ] Screen reader support (semantic tags + ARIA)\n\n` +
+      `**Layout Architecture (Universal Pattern):**\n` +
+      `- [ ] **Grid container uses inline style** \`style={{ gridTemplateRows: 'repeat(N, auto)' }}\` (NOT Tailwind \`grid-rows-N\`)\n` +
+      `- [ ] **Wrapper div** handles grid positioning only (\`col-span-*\`, \`row-start-*\`, \`row-end-*\`)\n` +
+      `- [ ] **Component tag** contains ALL styling (border, padding, layout) - NOT children div\n` +
+      `- [ ] **Side-by-side components** use \`h-full\` on both wrapper AND component tag\n` +
+      `- [ ] Follow the 3-tier pattern: Container (grid) → Wrapper (positioning) → Component (styling)\n\n` +
       `**Styling & Borders (2025 Wireframe Standards):**\n` +
-      `- [ ] **EVERY component has a border** (\`border-gray-300\`)\n` +
+      `- [ ] **EVERY component has a border** (\`border-gray-300\`) ON THE COMPONENT TAG\n` +
+      `- [ ] **Border/padding MUST be in component tag** - NOT in children div ❌\n` +
       `- [ ] Border positions follow component type (header: border-b, footer: border-t, main: border)\n` +
       `- [ ] Consistent padding (p-4 mobile, p-6 tablet, p-8 desktop)\n` +
       `- [ ] Minimal rounded corners (section: rounded-lg, article: rounded-md, div: rounded)\n` +
@@ -580,6 +688,7 @@ Let's build a high-quality, production-ready layout.`,
       `**Content & Code Quality:**\n` +
       `- [ ] **Content: ONLY display component name + ID** (e.g., "Header (c1)")\n` +
       `- [ ] **NO placeholder content, mock data, lorem ipsum, or creative text**\n` +
+      `- [ ] **NO children div with styling** - Component tag is self-contained\n` +
       `- [ ] Code is clean, readable, and well-commented\n` +
       `- [ ] Include inline \`cn()\` utility in each component (or extract to shared file)\n` +
       `- [ ] Install dependencies: \`npm install clsx tailwind-merge\`\n` +
