@@ -432,7 +432,14 @@ const bestModel = recommendations[0]
 
 ```typescript
 import type { PropsWithChildren } from 'react'
-import { cn } from '@/lib/utils'
+import { clsx, type ClassValue } from 'clsx'
+import { twMerge } from 'tailwind-merge'
+
+// Inline cn utility - included for maximum portability
+// (Optional: Move to shared file like lib/utils.ts if preferred)
+function cn(...inputs: ClassValue[]) {
+  return twMerge(clsx(inputs))
+}
 
 type HeaderProps = PropsWithChildren<{
   variant?: 'default' | 'sticky' | 'fixed'
@@ -515,20 +522,46 @@ export type { HeaderProps }
 
 #### Required Utilities
 
-**모든 생성된 코드에는 다음 유틸리티를 포함:**
+**cn() Utility - Inline Approach (Maximum Compatibility):**
+
+AI가 생성하는 모든 컴포넌트는 `cn()` 유틸리티를 **inline으로 포함**해야 합니다:
 
 ```typescript
-// lib/utils.ts
-import { type ClassValue, clsx } from 'clsx'
+import { clsx, type ClassValue } from 'clsx'
 import { twMerge } from 'tailwind-merge'
 
-/**
- * Merge Tailwind CSS classes with proper precedence
- */
-export function cn(...inputs: ClassValue[]) {
+// Inline cn utility - works in any project structure
+function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 ```
+
+**Why Inline?**
+- ✅ **No file path assumptions**: 유저의 프로젝트 구조와 무관하게 동작 (Next.js, Vite, CRA 모두 OK)
+- ✅ **Copy-paste friendly**: 복사-붙여넣기만으로 즉시 사용 가능
+- ✅ **Zero configuration**: 유틸리티 파일 생성이나 import alias 설정 불필요
+- ✅ **Beginner friendly**: 유저가 `cn()` 함수의 동작을 직접 확인 가능
+- ✅ **Bundle impact minimal**: 모던 번들러(Webpack, Vite)가 자동으로 중복 제거
+
+**Required Dependencies:**
+```bash
+npm install clsx tailwind-merge
+# or: pnpm add clsx tailwind-merge
+# or: yarn add clsx tailwind-merge
+```
+
+**Optional Refactoring (For Experienced Users):**
+
+경험 많은 유저는 나중에 중복을 제거하기 위해 shared 파일로 추출할 수 있습니다:
+
+1. 선호하는 위치에 유틸리티 파일 생성:
+   - Next.js: `lib/utils.ts` → `import { cn } from '@/lib/utils'`
+   - Vite: `src/utils/cn.ts` → `import { cn } from '@/utils/cn'`
+   - CRA: `src/lib/utils.js` → `import { cn } from '../lib/utils'`
+
+2. Inline `cn()` 함수를 해당 파일로 이동
+
+3. 모든 컴포넌트의 inline utility를 import로 교체
 
 #### Accessibility Standards
 
@@ -547,15 +580,15 @@ export function cn(...inputs: ClassValue[]) {
 ```
 /components
   /layout
-    Header.tsx          # Individual component files
-    Footer.tsx
-    Sidebar.tsx
+    Header.tsx          # Individual component files (cn() inline)
+    Footer.tsx          # Individual component files (cn() inline)
+    Sidebar.tsx         # Individual component files (cn() inline)
   /ui
-    Card.tsx
-    Button.tsx
+    Card.tsx            # Individual component files (cn() inline)
+    Button.tsx          # Individual component files (cn() inline)
   Layout.tsx            # Main layout composition
-/lib
-  utils.ts              # Utility functions (cn, etc.)
+/lib                    # Optional: Extract cn() to shared file
+  utils.ts              # (Optional) Utility functions (cn, etc.)
   types.ts              # Shared TypeScript types
 ```
 
