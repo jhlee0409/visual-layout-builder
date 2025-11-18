@@ -11,6 +11,11 @@ const Tooltip = TooltipPrimitive.Root
 
 const TooltipTrigger = TooltipPrimitive.Trigger
 
+// Type exports for consistency with other shadcn/ui components
+export type TooltipProps = React.ComponentPropsWithoutRef<typeof TooltipPrimitive.Root>
+export type TooltipTriggerProps = React.ComponentPropsWithoutRef<typeof TooltipPrimitive.Trigger>
+export type TooltipContentProps = React.ComponentPropsWithoutRef<typeof TooltipPrimitive.Content>
+
 const TooltipContent = React.forwardRef<
   React.ElementRef<typeof TooltipPrimitive.Content>,
   React.ComponentPropsWithoutRef<typeof TooltipPrimitive.Content>

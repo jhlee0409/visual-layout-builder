@@ -51,8 +51,7 @@ const result = strategy.generatePrompt(
   'react',
   'tailwind',
   {
-    optimizationLevel: 'quality',
-    verbosity: 'detailed',
+    verbosity: 'detailed',    // 'minimal' | 'normal' | 'detailed'
     chainOfThought: true
   }
 )
@@ -97,8 +96,7 @@ const claudeResult = createPromptStrategy('claude-sonnet-4.5').generatePrompt(
   'react',
   'tailwind',
   {
-    optimizationLevel: 'quality',
-    verbosity: 'detailed',
+    verbosity: 'detailed',       // 상세한 프롬프트
     chainOfThought: true,        // 단계별 추론 요청
     temperature: 0               // 사실 기반 작업
   }
@@ -110,8 +108,7 @@ const gptResult = createPromptStrategy('gpt-4.1').generatePrompt(
   'react',
   'tailwind',
   {
-    optimizationLevel: 'balanced',
-    verbosity: 'normal',
+    verbosity: 'normal',          // 표준 상세도
     includeExamples: true,        // 예시 코드 포함
     temperature: 0.7              // 창의적 작업
   }
@@ -123,8 +120,7 @@ const geminiResult = createPromptStrategy('gemini-2.5-pro').generatePrompt(
   'react',
   'tailwind',
   {
-    optimizationLevel: 'balanced',
-    verbosity: 'normal'
+    verbosity: 'normal'           // 표준 상세도
   }
 )
 
@@ -134,8 +130,7 @@ const deepseekResult = createPromptStrategy('deepseek-r1').generatePrompt(
   'react',
   'tailwind',
   {
-    optimizationLevel: 'quick',
-    verbosity: 'minimal',
+    verbosity: 'minimal',         // 간결한 프롬프트 (~30% fewer tokens)
     costSensitive: true           // 비용 최적화 모드
   }
 )
@@ -273,9 +268,8 @@ const result = createPromptStrategy('deepseek-r1').generatePrompt(
   'react',
   'tailwind',
   {
-    verbosity: 'minimal',
-    costSensitive: true,
-    optimizationLevel: 'quick'
+    verbosity: 'minimal',         // ~30% fewer tokens
+    costSensitive: true
   }
 )
 // 예상 비용: Claude 대비 90% 절감
@@ -290,9 +284,8 @@ const result = createPromptStrategy('claude-sonnet-4.5').generatePrompt(
   'react',
   'tailwind',
   {
-    verbosity: 'detailed',
+    verbosity: 'detailed',        // ~40% more tokens, clearer instructions
     chainOfThought: true,
-    optimizationLevel: 'quality',
     temperature: 0
   }
 )
@@ -308,8 +301,7 @@ const result = createPromptStrategy('gemini-2.0-flash').generatePrompt(
   'react',
   'tailwind',
   {
-    verbosity: 'minimal',
-    optimizationLevel: 'quick'
+    verbosity: 'minimal'          // ~30% fewer tokens, faster processing
   }
 )
 // 가장 빠른 응답 (< 1초)
@@ -325,7 +317,7 @@ const result = createPromptStrategy('gemini-2.0-flash').generatePrompt(
 ### 2. 프로덕션 개발 단계
 - **추천 모델**: Claude Sonnet 4.5, Gemini 2.5 Pro
 - **이유**: 고품질 코드, 프레임워크 특화
-- **설정**: `verbosity: 'detailed'`, `optimizationLevel: 'quality'`
+- **설정**: `verbosity: 'detailed'` (상세한 지침으로 품질 향상)
 
 ### 3. 복잡한 아키텍처 설계
 - **추천 모델**: GPT-4.1, Claude Opus 4
@@ -363,14 +355,13 @@ const result = createPromptStrategy('deepseek-r1').generatePrompt(
 
 ### Q: 코드 품질이 낮은 경우
 ```typescript
-// Claude 사용 + Quality 최적화
+// Claude 사용 + 상세 프롬프트
 const result = createPromptStrategy('claude-sonnet-4.5').generatePrompt(
   schema,
   'react',
   'tailwind',
   {
-    optimizationLevel: 'quality',
-    verbosity: 'detailed',
+    verbosity: 'detailed',        // 상세한 지침 제공
     chainOfThought: true
   }
 )

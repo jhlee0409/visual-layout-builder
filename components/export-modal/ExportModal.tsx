@@ -345,9 +345,6 @@ export function ExportModal() {
                   </SelectItem>
                 </SelectContent>
               </Select>
-              <p className="text-xs text-gray-500">
-                Controls the amount of detail in the generated prompt. Higher detail = more tokens but clearer instructions.
-              </p>
             </div>
 
             {/* Framework Selection */}
