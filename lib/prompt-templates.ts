@@ -85,7 +85,14 @@ The Laylder Schema follows a **Component-First** approach where each component i
 **Example Component Pattern:**
 \`\`\`typescript
 import type { PropsWithChildren } from 'react'
-import { cn } from '@/lib/utils'
+import { clsx, type ClassValue } from 'clsx'
+import { twMerge } from 'tailwind-merge'
+
+// Inline cn utility - included for maximum portability
+// (Optional: Move to shared file like lib/utils.ts if preferred)
+function cn(...inputs: ClassValue[]) {
+  return twMerge(clsx(inputs))
+}
 
 type HeaderProps = PropsWithChildren<{
   variant?: 'default' | 'sticky' | 'fixed'
@@ -134,40 +141,47 @@ export type { HeaderProps }
 
 **Required Utilities:**
 
-**🔧 cn() Utility - Choose Based on Project Type:**
+**🔧 cn() Utility - Inline Approach (Maximum Compatibility):**
 
-**For NEW Projects / First Page:**
-Create a new utility file with the \`cn()\` function:
+For maximum portability across different project structures, include the \`cn()\` utility **inline in each component**:
 
 \`\`\`typescript
-// lib/utils.ts (CREATE THIS FILE)
-import { type ClassValue, clsx } from 'clsx'
+import { clsx, type ClassValue } from 'clsx'
 import { twMerge } from 'tailwind-merge'
 
-/**
- * Merge Tailwind CSS classes with proper precedence
- */
-export function cn(...inputs: ClassValue[]) {
+// Inline cn utility - works in any project structure
+function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 \`\`\`
 
-**Install dependencies:**
+**Why Inline?**
+- ✅ **No file path assumptions**: Works regardless of project structure (Next.js, Vite, CRA, etc.)
+- ✅ **Copy-paste friendly**: Users can paste components directly without setup
+- ✅ **Zero configuration**: No need to create utility files or configure import aliases
+- ✅ **Beginner friendly**: Users see exactly what \`cn()\` does
+
+**Install dependencies (Required):**
 \`\`\`bash
-pnpm add clsx tailwind-merge
-# or: npm install clsx tailwind-merge
+npm install clsx tailwind-merge
+# or: pnpm add clsx tailwind-merge
+# or: yarn add clsx tailwind-merge
 \`\`\`
 
-**For EXISTING Projects / Additional Pages:**
-- ✅ **Check if \`cn()\` already exists** in your project (common locations: \`lib/utils.ts\`, \`utils/cn.ts\`)
-- ✅ **Use existing import path** if found (e.g., \`@/lib/utils\`, \`@/utils\`)
-- ✅ **Add to existing utils** if \`cn()\` doesn't exist but utils file exists
-- ❌ **DO NOT overwrite** existing utility files
+**Optional Refactoring (For Experienced Users):**
 
-**Import in all components:**
-\`\`\`typescript
-import { cn } from '@/lib/utils'  // Adjust path to match your project
-\`\`\`
+If you prefer to reduce duplication, you can extract \`cn()\` to a shared file:
+
+1. Create a utility file at your preferred location:
+   - Next.js: \`lib/utils.ts\` → \`import { cn } from '@/lib/utils'\`
+   - Vite: \`src/utils/cn.ts\` → \`import { cn } from '@/utils/cn'\`
+   - CRA: \`src/lib/utils.js\` → \`import { cn } from '../lib/utils'\`
+
+2. Move the inline \`cn()\` function to that file
+
+3. Replace inline utilities in all components with the import
+
+**Note:** Modern bundlers (Webpack, Vite, etc.) will tree-shake duplicate \`cn()\` functions, so inline duplication has minimal bundle impact.
 
 **Responsive Design Without Duplication:**
 \`\`\`typescript
@@ -567,7 +581,8 @@ Let's build a high-quality, production-ready layout.`,
       `- [ ] **Content: ONLY display component name + ID** (e.g., "Header (c1)")\n` +
       `- [ ] **NO placeholder content, mock data, lorem ipsum, or creative text**\n` +
       `- [ ] Code is clean, readable, and well-commented\n` +
-      `- [ ] Include \`lib/utils.ts\` with \`cn()\` function\n` +
+      `- [ ] Include inline \`cn()\` utility in each component (or extract to shared file)\n` +
+      `- [ ] Install dependencies: \`npm install clsx tailwind-merge\`\n` +
       `- [ ] Tailwind class order: positioning → box-model → borders → backgrounds → typography\n`
   },
 }
