@@ -12,6 +12,7 @@ import {
   useEdgesState,
   BackgroundVariant,
   OnConnectStartParams,
+  reconnectEdge,
 } from "@xyflow/react"
 import "@xyflow/react/dist/style.css"
 import { useLayoutStore } from "@/store/layout-store"
@@ -250,27 +251,67 @@ export function ComponentLinkingPanel({ onClose }: { onClose: () => void }) {
     setEdges(newEdges)
   }, [componentLinks, componentsByBreakpoint, setEdges])
 
-  // Handle connection start: Remove existing link if component is already connected
-  const onConnectStart = useCallback(
-    (event: MouseEvent | TouchEvent, params: OnConnectStartParams) => {
-      if (!params.nodeId) return
+  // Handle edge reconnection: Drag existing edge to different handle
+  const onReconnect = useCallback(
+    (oldEdge: Edge, newConnection: Connection) => {
+      console.log(`🔄 Reconnecting edge:`, { oldEdge, newConnection })
 
-      // Extract component ID from node ID
-      const componentId = nodeIdToComponentId.get(params.nodeId)
-      if (!componentId) return
+      // Extract old component IDs
+      const oldSourceId = nodeIdToComponentId.get(oldEdge.source)
+      const oldTargetId = nodeIdToComponentId.get(oldEdge.target)
 
-      // Check if this component already has a link
-      const existingLink = findLinkForComponent(componentId, componentLinks)
-      if (existingLink) {
-        // Remove existing link to allow new connection
-        console.log(`🔄 Removing existing link for ${componentId}:`, existingLink)
-        removeComponentLink(existingLink.source, existingLink.target)
+      // Extract new component IDs
+      const newSourceId = newConnection.source ? nodeIdToComponentId.get(newConnection.source) : null
+      const newTargetId = newConnection.target ? nodeIdToComponentId.get(newConnection.target) : null
+
+      if (!oldSourceId || !oldTargetId) {
+        console.warn("❌ Cannot find old component IDs")
+        return
       }
+
+      if (!newSourceId || !newTargetId) {
+        console.warn("❌ Cannot find new component IDs")
+        return
+      }
+
+      // Prevent self-connection
+      if (newSourceId === newTargetId) {
+        console.warn("❌ Cannot link component to itself")
+        return
+      }
+
+      // Check if new target already has a link (1-to-1 constraint)
+      // Only check if the target has changed
+      if (newTargetId !== oldTargetId) {
+        const targetExistingLink = findLinkForComponent(newTargetId, componentLinks)
+        if (targetExistingLink) {
+          console.log(`🔄 Removing new target's existing link:`, targetExistingLink)
+          removeComponentLink(targetExistingLink.source, targetExistingLink.target)
+        }
+      }
+
+      // Check if new source already has a link (1-to-1 constraint)
+      // Only check if the source has changed
+      if (newSourceId !== oldSourceId) {
+        const sourceExistingLink = findLinkForComponent(newSourceId, componentLinks)
+        if (sourceExistingLink) {
+          console.log(`🔄 Removing new source's existing link:`, sourceExistingLink)
+          removeComponentLink(sourceExistingLink.source, sourceExistingLink.target)
+        }
+      }
+
+      // Remove old link
+      console.log(`🗑️ Removing old link: ${oldSourceId} ↔ ${oldTargetId}`)
+      removeComponentLink(oldSourceId, oldTargetId)
+
+      // Add new link
+      console.log(`✅ Adding new link: ${newSourceId} ↔ ${newTargetId}`)
+      addComponentLink(newSourceId, newTargetId)
     },
-    [nodeIdToComponentId, componentLinks, removeComponentLink]
+    [nodeIdToComponentId, componentLinks, addComponentLink, removeComponentLink]
   )
 
-  // Handle connection complete: Enforce 1-to-1 constraint
+  // Handle new connection: Enforce 1-to-1 constraint
   const onConnect = useCallback(
     (connection: Connection) => {
       if (!connection.source || !connection.target) return
@@ -288,6 +329,13 @@ export function ComponentLinkingPanel({ onClose }: { onClose: () => void }) {
       if (sourceComponentId === targetComponentId) {
         console.warn("❌ Cannot link component to itself")
         return
+      }
+
+      // Check if source already has a link (1-to-1 constraint)
+      const sourceExistingLink = findLinkForComponent(sourceComponentId, componentLinks)
+      if (sourceExistingLink) {
+        console.log(`🔄 Removing source's existing link:`, sourceExistingLink)
+        removeComponentLink(sourceExistingLink.source, sourceExistingLink.target)
       }
 
       // Check if target already has a link (1-to-1 constraint)
@@ -361,10 +409,11 @@ export function ComponentLinkingPanel({ onClose }: { onClose: () => void }) {
           edges={edges}
           onNodesChange={onNodesChange}
           onEdgesChange={onEdgesChange}
-          onConnectStart={onConnectStart}
           onConnect={onConnect}
+          onReconnect={onReconnect}
           onEdgesDelete={onEdgesDelete}
           nodeTypes={nodeTypes}
+          edgesReconnectable={true} // Enable edge reconnection by dragging edge ends
           fitView
           nodesDraggable={false} // 노드 드래그 비활성화 (연결만 가능)
           deleteKeyCode={["Backspace", "Delete"]} // 엣지 삭제 키
@@ -378,9 +427,9 @@ export function ComponentLinkingPanel({ onClose }: { onClose: () => void }) {
       <div className="absolute bottom-4 left-4 bg-blue-50 border border-blue-200 rounded-lg px-4 py-3 shadow-lg max-w-md">
         <div className="font-semibold text-sm text-blue-900 mb-2">💡 How to link components:</div>
         <div className="text-xs text-blue-700 space-y-1">
-          <div>• Drag from one component&apos;s handle (●) to another component</div>
+          <div>• Drag from one component&apos;s handle (●) to another to create a link</div>
           <div>• <span className="font-semibold text-orange-600">1-to-1 constraint</span>: Each component can have only <span className="font-semibold">one link</span></div>
-          <div>• If already linked, dragging from handle will <span className="font-semibold">remove old link</span> and start new connection</div>
+          <div>• To <span className="font-semibold">reconnect</span>: Drag the edge end to a different component</div>
           <div>• Each link has a <span className="font-semibold">unique color</span> for easy identification</div>
           <div>• <span className="font-semibold">Hover</span> over a link to see it highlighted</div>
           <div>• <span className="font-semibold">Click to select</span> a link (glows brighter with thicker line)</div>
