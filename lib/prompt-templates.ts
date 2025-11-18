@@ -14,10 +14,10 @@ import { sortComponentsByCanvasCoordinates, getComponentCanvasLayout } from "./c
 /**
  * Prompt Template Types for Schema
  *
- * V1과 동일한 구조지만 스키마 특성 반영:
+ * Similar structure to V1 but with schema characteristics:
  * - Component Independence (positioning, layout, styling, responsive)
  * - Structure-based layouts (vertical/horizontal/sidebar-main)
- * - No direct code generation - 순수 스펙 설명만
+ * - No direct code generation - pure specification only
  */
 
 export interface PromptTemplate {
@@ -36,7 +36,7 @@ export interface PromptTemplate {
 /**
  * React + Tailwind CSS Template for Schema
  *
- * Component Independence 아키텍처 기반
+ * Based on Component Independence architecture
  */
 export const reactTailwindTemplate: PromptTemplate = {
   framework: "react",
@@ -421,7 +421,7 @@ Let's build a high-quality, production-ready layout.`,
 
       section += `### ${index + 1}. ${breakpoint.name.charAt(0).toUpperCase() + breakpoint.name.slice(1)} (≥${breakpoint.minWidth}px)\n\n`
 
-      // 🆕 VISUAL LAYOUT DESCRIPTION (Canvas Grid 정보)
+      // NEW: VISUAL LAYOUT DESCRIPTION (Canvas Grid information)
       try {
         const layoutDesc = describeVisualLayout(
           components,
@@ -448,7 +448,7 @@ Let's build a high-quality, production-ready layout.`,
           section += "\n"
         }
 
-        // 🆕 CSS GRID POSITIONING (2025 pattern)
+        // NEW: CSS GRID POSITIONING (2025 pattern)
         const gridCSS = generateGridCSS(layoutDesc.visualLayout)
         const tailwindClasses = generateTailwindClasses(layoutDesc.visualLayout)
 
@@ -467,7 +467,7 @@ Let's build a high-quality, production-ready layout.`,
         })
         section += "\n"
 
-        // 🆕 IMPLEMENTATION STRATEGY (강화)
+        // NEW: IMPLEMENTATION STRATEGY (enhanced)
         section += `**Implementation Strategy:**\n\n`
         layoutDesc.implementationHints.forEach((hint) => {
           section += `- ${hint}\n`
@@ -475,24 +475,24 @@ Let's build a high-quality, production-ready layout.`,
         section += "\n"
 
       } catch (error) {
-        // Fallback: Canvas 좌표 정보가 없는 경우 (backward compatibility)
+        // Fallback: When Canvas coordinate information is missing (backward compatibility)
         // Only log in development environment (not production)
         if (process.env.NODE_ENV !== 'production') {
           console.warn(`Visual layout description failed for ${layoutKey}:`, error)
         }
       }
 
-      // Structure type (기존)
+      // Structure type (existing)
       section += `**Page Flow:** \`${layout.structure}\` (vertical scrolling with horizontal content areas)\n\n`
 
-      // 🚨 IMPORTANT - Layout Priority (먼저 표시)
+      // IMPORTANT: Layout Priority (shown first)
       section += `**🚨 IMPORTANT - Layout Priority:**\n\n`
       section += `1. **PRIMARY**: Use the **Visual Layout (Canvas Grid)** positioning above as your main guide\n`
       section += `2. **SECONDARY**: The DOM order below is for reference only (accessibility/SEO)\n`
       section += `3. **RULE**: Components with the same Y-coordinate range MUST be placed side-by-side horizontally\n`
       section += `4. **DO NOT** stack components vertically if they share the same row in the Canvas Grid\n\n`
 
-      // Component order (DOM 순서) - Canvas 좌표 기준으로 정렬
+      // Component order (DOM order) - Sorted by Canvas coordinates
       section += `**Component Order (DOM):**\n\n`
       section += `For screen readers and SEO crawlers, the HTML source order is:\n\n`
       section += `⚠️ **Note:** Visual positioning may differ from DOM order. Use Canvas Grid coordinates for layout.\n\n`
