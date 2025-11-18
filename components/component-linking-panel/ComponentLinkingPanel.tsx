@@ -11,17 +11,29 @@ import {
   useNodesState,
   useEdgesState,
   BackgroundVariant,
-  OnConnectStartParams,
-  reconnectEdge,
 } from "@xyflow/react"
 import "@xyflow/react/dist/style.css"
 import { useLayoutStore } from "@/store/layout-store"
 import { Button } from "@/components/ui/button"
-import { X, Link, Trash2 } from "lucide-react"
+import { X, Trash2 } from "lucide-react"
 import { ComponentCardNode } from "./ComponentCardNode"
 import type { Component } from "@/types/schema"
-import { UnionFind, calculateConnectedGroups } from "@/lib/union-find"
+import { UnionFind } from "@/lib/union-find"
 import styles from "./ComponentLinkingPanel.module.css"
+
+// Debug flag for development logging
+const DEBUG = process.env.NODE_ENV === "development"
+
+// UI Constants
+const COLUMN_WIDTH = 280
+const COLUMN_GAP = 150
+const CARD_HEIGHT = 90
+const CARD_GAP = 20
+const EDGE_STROKE_WIDTH = {
+  DEFAULT: 2.5,
+  HOVER: 3.5,
+  SELECTED: 4,
+}
 
 // 커스텀 노드 타입 등록
 const nodeTypes = {
@@ -76,17 +88,6 @@ function createEdgeFromLink(
     type: "default", // Bezier curve (smooth, not straight)
     data: { linkColor, linkIndex: index }, // Store for hover/selection effects
   }
-}
-
-/**
- * Helper: Find existing link for a component
- * Returns the link where the component is either source or target
- */
-function findLinkForComponent(
-  componentId: string,
-  links: Array<{ source: string; target: string }>
-): { source: string; target: string } | null {
-  return links.find((link) => link.source === componentId || link.target === componentId) || null
 }
 
 /**
@@ -254,7 +255,7 @@ export function ComponentLinkingPanel({ onClose }: { onClose: () => void }) {
   // Handle edge reconnection: Drag existing edge to different handle
   const onReconnect = useCallback(
     (oldEdge: Edge, newConnection: Connection) => {
-      console.log(`🔄 Reconnecting edge:`, { oldEdge, newConnection })
+      if (DEBUG) console.log(`🔄 Reconnecting edge:`, { oldEdge, newConnection })
 
       // Extract old component IDs
       const oldSourceId = nodeIdToComponentId.get(oldEdge.source)
@@ -265,50 +266,30 @@ export function ComponentLinkingPanel({ onClose }: { onClose: () => void }) {
       const newTargetId = newConnection.target ? nodeIdToComponentId.get(newConnection.target) : null
 
       if (!oldSourceId || !oldTargetId) {
-        console.warn("❌ Cannot find old component IDs")
+        if (DEBUG) console.warn("❌ Cannot find old component IDs")
         return
       }
 
       if (!newSourceId || !newTargetId) {
-        console.warn("❌ Cannot find new component IDs")
+        if (DEBUG) console.warn("❌ Cannot find new component IDs")
         return
       }
 
       // Prevent self-connection
       if (newSourceId === newTargetId) {
-        console.warn("❌ Cannot link component to itself")
+        if (DEBUG) console.warn("❌ Cannot link component to itself")
         return
       }
 
-      // Check if new target already has a link (1-to-1 constraint)
-      // Only check if the target has changed
-      if (newTargetId !== oldTargetId) {
-        const targetExistingLink = findLinkForComponent(newTargetId, componentLinks)
-        if (targetExistingLink) {
-          console.log(`🔄 Removing new target's existing link:`, targetExistingLink)
-          removeComponentLink(targetExistingLink.source, targetExistingLink.target)
-        }
-      }
-
-      // Check if new source already has a link (1-to-1 constraint)
-      // Only check if the source has changed
-      if (newSourceId !== oldSourceId) {
-        const sourceExistingLink = findLinkForComponent(newSourceId, componentLinks)
-        if (sourceExistingLink) {
-          console.log(`🔄 Removing new source's existing link:`, sourceExistingLink)
-          removeComponentLink(sourceExistingLink.source, sourceExistingLink.target)
-        }
-      }
-
-      // Remove old link
-      console.log(`🗑️ Removing old link: ${oldSourceId} ↔ ${oldTargetId}`)
+      // Remove old link first
+      if (DEBUG) console.log(`🗑️ Removing old link: ${oldSourceId} ↔ ${oldTargetId}`)
       removeComponentLink(oldSourceId, oldTargetId)
 
-      // Add new link
-      console.log(`✅ Adding new link: ${newSourceId} ↔ ${newTargetId}`)
+      // Add new link (store will handle 1-to-1 constraint automatically)
+      if (DEBUG) console.log(`✅ Adding new link: ${newSourceId} ↔ ${newTargetId}`)
       addComponentLink(newSourceId, newTargetId)
     },
-    [nodeIdToComponentId, componentLinks, addComponentLink, removeComponentLink]
+    [nodeIdToComponentId, addComponentLink, removeComponentLink]
   )
 
   // Handle new connection: Enforce 1-to-1 constraint
@@ -321,55 +302,41 @@ export function ComponentLinkingPanel({ onClose }: { onClose: () => void }) {
       const targetComponentId = nodeIdToComponentId.get(connection.target)
 
       if (!sourceComponentId || !targetComponentId) {
-        console.warn("❌ Cannot find component IDs for connection")
+        if (DEBUG) console.warn("❌ Cannot find component IDs for connection")
         return
       }
 
       // 같은 컴포넌트면 연결 불가
       if (sourceComponentId === targetComponentId) {
-        console.warn("❌ Cannot link component to itself")
+        if (DEBUG) console.warn("❌ Cannot link component to itself")
         return
       }
 
-      // Check if source already has a link (1-to-1 constraint)
-      const sourceExistingLink = findLinkForComponent(sourceComponentId, componentLinks)
-      if (sourceExistingLink) {
-        console.log(`🔄 Removing source's existing link:`, sourceExistingLink)
-        removeComponentLink(sourceExistingLink.source, sourceExistingLink.target)
-      }
-
-      // Check if target already has a link (1-to-1 constraint)
-      const targetExistingLink = findLinkForComponent(targetComponentId, componentLinks)
-      if (targetExistingLink) {
-        console.log(`🔄 Removing target's existing link:`, targetExistingLink)
-        removeComponentLink(targetExistingLink.source, targetExistingLink.target)
-      }
-
-      // Add new link
-      console.log(`✅ Adding link: ${sourceComponentId} ↔ ${targetComponentId}`)
+      // Add new link (store will handle 1-to-1 constraint automatically)
+      if (DEBUG) console.log(`✅ Adding link: ${sourceComponentId} ↔ ${targetComponentId}`)
       addComponentLink(sourceComponentId, targetComponentId)
     },
-    [nodeIdToComponentId, componentLinks, addComponentLink, removeComponentLink]
+    [nodeIdToComponentId, addComponentLink]
   )
 
   // 엣지 삭제 핸들러 (Map 기반, type-safe)
   const onEdgesDelete = useCallback(
     (edgesToDelete: Edge[]) => {
-      console.log(`🗑️ Deleting ${edgesToDelete.length} edge(s)`)
+      if (DEBUG) console.log(`🗑️ Deleting ${edgesToDelete.length} edge(s)`)
 
       edgesToDelete.forEach((edge) => {
         const sourceId = nodeIdToComponentId.get(edge.source)
         const targetId = nodeIdToComponentId.get(edge.target)
 
-        console.log(`  Edge ${edge.id}: ${edge.source} (${sourceId}) → ${edge.target} (${targetId})`)
+        if (DEBUG) console.log(`  Edge ${edge.id}: ${edge.source} (${sourceId}) → ${edge.target} (${targetId})`)
 
         if (sourceId && targetId) {
-          console.log(`  ✅ Removing link: ${sourceId} ↔ ${targetId}`)
+          if (DEBUG) console.log(`  ✅ Removing link: ${sourceId} ↔ ${targetId}`)
           removeComponentLink(sourceId, targetId)
         } else {
-          console.warn(`  ❌ Cannot find component IDs for edge: ${edge.id}`)
-          console.warn(`    - Source: ${edge.source} → ${sourceId}`)
-          console.warn(`    - Target: ${edge.target} → ${targetId}`)
+          if (DEBUG) console.warn(`  ❌ Cannot find component IDs for edge: ${edge.id}`)
+          if (DEBUG) console.warn(`    - Source: ${edge.source} → ${sourceId}`)
+          if (DEBUG) console.warn(`    - Target: ${edge.target} → ${targetId}`)
         }
       })
     },
@@ -377,7 +344,12 @@ export function ComponentLinkingPanel({ onClose }: { onClose: () => void }) {
   )
 
   return (
-    <div className="fixed inset-0 z-50 bg-white">
+    <div
+      className="fixed inset-0 z-50 bg-white"
+      role="dialog"
+      aria-label="Component Linking Panel"
+      aria-describedby="linking-instructions"
+    >
       {/* Header */}
       <div className="h-16 border-b flex items-center justify-between px-4 bg-white shadow-sm">
         <div>
@@ -403,7 +375,11 @@ export function ComponentLinkingPanel({ onClose }: { onClose: () => void }) {
       </div>
 
       {/* React Flow Canvas */}
-      <div className={`h-[calc(100vh-4rem)] ${styles.container}`}>
+      <div
+        className={`h-[calc(100vh-4rem)] ${styles.container}`}
+        role="application"
+        aria-label="Component linking graph visualization"
+      >
         <ReactFlow
           nodes={nodes}
           edges={edges}
@@ -417,6 +393,8 @@ export function ComponentLinkingPanel({ onClose }: { onClose: () => void }) {
           fitView
           nodesDraggable={false} // 노드 드래그 비활성화 (연결만 가능)
           deleteKeyCode={["Backspace", "Delete"]} // 엣지 삭제 키
+          aria-label="Interactive component linking canvas"
+          aria-describedby="linking-instructions linking-statistics"
         >
           <Controls showInteractive={false} />
           <Background variant={BackgroundVariant.Dots} gap={16} size={1} />
@@ -424,7 +402,12 @@ export function ComponentLinkingPanel({ onClose }: { onClose: () => void }) {
       </div>
 
       {/* Instructions */}
-      <div className="absolute bottom-4 left-4 bg-blue-50 border border-blue-200 rounded-lg px-4 py-3 shadow-lg max-w-md">
+      <div
+        id="linking-instructions"
+        className="absolute bottom-4 left-4 bg-blue-50 border border-blue-200 rounded-lg px-4 py-3 shadow-lg max-w-md"
+        role="region"
+        aria-label="Component linking instructions and keyboard shortcuts"
+      >
         <div className="font-semibold text-sm text-blue-900 mb-2">💡 How to link components:</div>
         <div className="text-xs text-blue-700 space-y-1">
           <div>• Drag from one component&apos;s handle (●) to another to create a link</div>
@@ -433,7 +416,7 @@ export function ComponentLinkingPanel({ onClose }: { onClose: () => void }) {
           <div>• Each link has a <span className="font-semibold">unique color</span> for easy identification</div>
           <div>• <span className="font-semibold">Hover</span> over a link to see it highlighted</div>
           <div>• <span className="font-semibold">Click to select</span> a link (glows brighter with thicker line)</div>
-          <div>• Press <kbd className="px-1.5 py-0.5 bg-white border border-blue-300 rounded text-xs font-mono">Delete</kbd> or <kbd className="px-1.5 py-0.5 bg-white border border-blue-300 rounded text-xs font-mono">Backspace</kbd> to unlink</div>
+          <div>• Press <kbd className="px-1.5 py-0.5 bg-white border border-blue-300 rounded text-xs font-mono" aria-label="Delete key">Delete</kbd> or <kbd className="px-1.5 py-0.5 bg-white border border-blue-300 rounded text-xs font-mono" aria-label="Backspace key">Backspace</kbd> to unlink</div>
           <div className="text-blue-600 mt-2 pt-2 border-t border-blue-200">
             ℹ️ Links are reflected in the AI prompt for consistent component generation
           </div>
@@ -441,20 +424,32 @@ export function ComponentLinkingPanel({ onClose }: { onClose: () => void }) {
       </div>
 
       {/* Statistics */}
-      <div className="absolute top-20 right-4 bg-white border rounded-lg p-3 shadow-lg">
+      <div
+        id="linking-statistics"
+        className="absolute top-20 right-4 bg-white border rounded-lg p-3 shadow-lg"
+        role="region"
+        aria-label="Component linking statistics"
+      >
         <div className="text-sm font-semibold mb-2">Statistics</div>
         <div className="text-xs space-y-1">
           <div className="flex justify-between gap-4">
             <span className="text-gray-600">Total components:</span>
-            <span className="font-medium">{schema.components.length}</span>
+            <span className="font-medium" aria-label={`${schema.components.length} total components`}>
+              {schema.components.length}
+            </span>
           </div>
           <div className="flex justify-between gap-4">
             <span className="text-gray-600">Links:</span>
-            <span className="font-medium">{componentLinks.length}</span>
+            <span className="font-medium" aria-label={`${componentLinks.length} links`}>
+              {componentLinks.length}
+            </span>
           </div>
           <div className="flex justify-between gap-4">
             <span className="text-gray-600">Connected groups:</span>
-            <span className="font-medium">
+            <span
+              className="font-medium"
+              aria-label={`${calculateConnectedGroupsCount(schema.components, componentLinks)} connected groups`}
+            >
               {calculateConnectedGroupsCount(schema.components, componentLinks)}
             </span>
           </div>

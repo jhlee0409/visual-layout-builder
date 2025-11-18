@@ -692,23 +692,29 @@ export const useLayoutStore = create<LayoutState>()(
         const targetExists = state.schema.components.some((c) => c.id === targetId)
 
         if (!sourceExists) {
-          console.warn(`Cannot link: source component "${sourceId}" does not exist`)
+          if (process.env.NODE_ENV === "development") {
+            console.warn(`Cannot link: source component "${sourceId}" does not exist`)
+          }
           return
         }
 
         if (!targetExists) {
-          console.warn(`Cannot link: target component "${targetId}" does not exist`)
+          if (process.env.NODE_ENV === "development") {
+            console.warn(`Cannot link: target component "${targetId}" does not exist`)
+          }
           return
         }
 
         // Validation: Cannot link component to itself
         if (sourceId === targetId) {
-          console.warn(`Cannot link component "${sourceId}" to itself`)
+          if (process.env.NODE_ENV === "development") {
+            console.warn(`Cannot link component "${sourceId}" to itself`)
+          }
           return
         }
 
         set((state) => {
-          // 중복 체크
+          // 중복 체크 (exact same link already exists)
           const exists = state.componentLinks.some(
             (link) =>
               (link.source === sourceId && link.target === targetId) ||
@@ -717,9 +723,49 @@ export const useLayoutStore = create<LayoutState>()(
 
           if (exists) return state
 
+          // 1-to-1 Constraint: Remove any existing links for source component
+          const sourceExistingLink = state.componentLinks.find(
+            (link) => link.source === sourceId || link.target === sourceId
+          )
+
+          // 1-to-1 Constraint: Remove any existing links for target component
+          const targetExistingLink = state.componentLinks.find(
+            (link) => link.source === targetId || link.target === targetId
+          )
+
+          // Filter out existing links for both source and target
+          let updatedLinks = state.componentLinks
+
+          if (sourceExistingLink) {
+            if (process.env.NODE_ENV === "development") {
+              console.log(`[Store] Removing source's existing link: ${sourceExistingLink.source} ↔ ${sourceExistingLink.target}`)
+            }
+            updatedLinks = updatedLinks.filter(
+              (link) =>
+                !(
+                  (link.source === sourceExistingLink.source && link.target === sourceExistingLink.target) ||
+                  (link.source === sourceExistingLink.target && link.target === sourceExistingLink.source)
+                )
+            )
+          }
+
+          if (targetExistingLink && targetExistingLink !== sourceExistingLink) {
+            if (process.env.NODE_ENV === "development") {
+              console.log(`[Store] Removing target's existing link: ${targetExistingLink.source} ↔ ${targetExistingLink.target}`)
+            }
+            updatedLinks = updatedLinks.filter(
+              (link) =>
+                !(
+                  (link.source === targetExistingLink.source && link.target === targetExistingLink.target) ||
+                  (link.source === targetExistingLink.target && link.target === targetExistingLink.source)
+                )
+            )
+          }
+
+          // Add new link
           return {
             componentLinks: [
-              ...state.componentLinks,
+              ...updatedLinks,
               { source: sourceId, target: targetId },
             ],
           }

@@ -39,21 +39,21 @@ describe("Component Linking Concurrent Operations", () => {
       const c2Id = components[1].id
       const c3Id = components[2].id
 
-      // Add multiple links in sequence
-      store.addComponentLink(c1Id, c2Id)
-      store.addComponentLink(c2Id, c3Id)
-      store.addComponentLink(c1Id, c3Id) // Should be deduplicated by transitive connection
+      // Add multiple links in sequence (with 1-to-1 constraint)
+      store.addComponentLink(c1Id, c2Id)  // c1-c2
+      store.addComponentLink(c2Id, c3Id)  // c2-c3 (removes c1-c2 because c2 can only have 1 link)
+      store.addComponentLink(c1Id, c3Id)  // c1-c3 (removes c2-c3 because c3 can only have 1 link)
 
       // Get updated state
       store = useLayoutStore.getState()
       const links = store.componentLinks
-      expect(links.length).toBeGreaterThan(0)
+      expect(links.length).toBe(1)  // Only c1-c3 remains
 
-      // Verify transitive connections
+      // Verify final connection
       const group = store.getLinkedComponentGroup(c1Id)
       expect(group).toContain(c1Id)
-      expect(group).toContain(c2Id)
       expect(group).toContain(c3Id)
+      expect(group).not.toContain(c2Id)  // c2 is no longer connected
     })
 
     it("should handle rapid link additions without duplication", () => {
@@ -119,17 +119,16 @@ describe("Component Linking Concurrent Operations", () => {
       store = useLayoutStore.getState()
       const ids = store.schema.components.map((c) => c.id)
 
-      // Add links
-      store.addComponentLink(ids[0], ids[1])
-      store.addComponentLink(ids[1], ids[2])
+      // Add links (with 1-to-1 constraint)
+      store.addComponentLink(ids[0], ids[1])  // id0-id1
+      store.addComponentLink(ids[1], ids[2])  // id1-id2 (removes id0-id1 because id1 can only have 1 link)
 
       // Get updated state
       store = useLayoutStore.getState()
       const linksBefore = store.componentLinks.length
-      expect(linksBefore).toBe(2)
+      expect(linksBefore).toBe(1)  // Only id1-id2 remains
 
-      // Remove links in sequence
-      store.removeComponentLink(ids[0], ids[1])
+      // Remove link
       store.removeComponentLink(ids[1], ids[2])
 
       // Get updated state
@@ -157,25 +156,28 @@ describe("Component Linking Concurrent Operations", () => {
       store = useLayoutStore.getState()
       const ids = store.schema.components.map((c) => c.id)
 
-      // Mixed operations
-      store.addComponentLink(ids[0], ids[1])
-      store.addComponentLink(ids[1], ids[2])
-      store.removeComponentLink(ids[0], ids[1]) // Remove first link
-      store.addComponentLink(ids[2], ids[3])
+      // Mixed operations (with 1-to-1 constraint)
+      store.addComponentLink(ids[0], ids[1])  // id0-id1
+      store.addComponentLink(ids[1], ids[2])  // id1-id2 (removes id0-id1)
+      store.removeComponentLink(ids[0], ids[1]) // No effect (id0-id1 already removed)
+      store.addComponentLink(ids[2], ids[3])  // id2-id3 (removes id1-id2)
 
       // Get updated state
       store = useLayoutStore.getState()
       const links = store.componentLinks
-      expect(links.length).toBe(2) // ids[1]-ids[2], ids[2]-ids[3]
+      expect(links.length).toBe(1) // Only ids[2]-ids[3] remains
 
       // Verify groups
       const group1 = store.getLinkedComponentGroup(ids[0])
-      expect(group1.length).toBe(1) // ids[0] is now alone
+      expect(group1.length).toBe(1) // ids[0] is alone
 
       const group2 = store.getLinkedComponentGroup(ids[1])
-      expect(group2).toContain(ids[1])
-      expect(group2).toContain(ids[2])
-      expect(group2).toContain(ids[3])
+      expect(group2.length).toBe(1) // ids[1] is alone
+
+      const group3 = store.getLinkedComponentGroup(ids[2])
+      expect(group3).toContain(ids[2])
+      expect(group3).toContain(ids[3])
+      expect(group3.length).toBe(2)
     })
 
     it("should maintain consistency when deleting component with links", () => {
@@ -205,12 +207,12 @@ describe("Component Linking Concurrent Operations", () => {
       store = useLayoutStore.getState()
       const ids = store.schema.components.map((c) => c.id)
 
-      store.addComponentLink(ids[0], ids[1])
-      store.addComponentLink(ids[1], ids[2])
+      store.addComponentLink(ids[0], ids[1])  // id0-id1
+      store.addComponentLink(ids[1], ids[2])  // id1-id2 (removes id0-id1 because id1 can only have 1 link)
 
       // Get updated state
       store = useLayoutStore.getState()
-      expect(store.componentLinks.length).toBe(2)
+      expect(store.componentLinks.length).toBe(1)  // Only id1-id2 remains
 
       // Delete component ids[1] (should remove all related links)
       store.deleteComponent(ids[1])
@@ -279,7 +281,8 @@ describe("Component Linking Concurrent Operations", () => {
       store = useLayoutStore.getState()
       const ids = store.schema.components.map((c) => c.id)
 
-      // Create a chain of links
+      // Create a chain of links (with 1-to-1 constraint)
+      // Each addComponentLink will remove the previous link of the shared component
       for (let i = 0; i < numComponents - 1; i++) {
         store.addComponentLink(ids[i], ids[i + 1])
       }
@@ -287,11 +290,18 @@ describe("Component Linking Concurrent Operations", () => {
       // Get updated state
       store = useLayoutStore.getState()
       const links = store.componentLinks
-      expect(links.length).toBe(numComponents - 1)
+      // With 1-to-1 constraint, only the last link remains (id18-id19)
+      expect(links.length).toBe(1)
 
-      // All components should be in the same group
-      const group = store.getLinkedComponentGroup(ids[0])
-      expect(group.length).toBe(numComponents)
+      // Only the last two components should be linked
+      const lastGroup = store.getLinkedComponentGroup(ids[numComponents - 2])
+      expect(lastGroup).toContain(ids[numComponents - 2])
+      expect(lastGroup).toContain(ids[numComponents - 1])
+      expect(lastGroup.length).toBe(2)
+
+      // First component should be alone
+      const firstGroup = store.getLinkedComponentGroup(ids[0])
+      expect(firstGroup.length).toBe(1)
     })
   })
 })

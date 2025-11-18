@@ -222,11 +222,11 @@ describe("Component Linking Store Actions", () => {
       const components = useLayoutStore.getState().schema.components
       const [c1, c2, c3] = components
 
-      // Add links
-      store.addComponentLink(c1.id, c2.id)
-      store.addComponentLink(c2.id, c3.id)
+      // Add links (with 1-to-1 constraint, second link removes c2's link to c1)
+      store.addComponentLink(c1.id, c2.id)  // c1-c2
+      store.addComponentLink(c2.id, c3.id)  // c2-c3 (removes c1-c2 because c2 can only have 1 link)
 
-      expect(useLayoutStore.getState().componentLinks).toHaveLength(2)
+      expect(useLayoutStore.getState().componentLinks).toHaveLength(1)
 
       // Clear all
       store.clearAllLinks()
@@ -252,11 +252,11 @@ describe("Component Linking Store Actions", () => {
       const components = useLayoutStore.getState().schema.components
       const [c1, c2, c3] = components
 
-      // Add links: c1 - c2, c2 - c3
-      store.addComponentLink(c1.id, c2.id)
-      store.addComponentLink(c2.id, c3.id)
+      // Add links: c1 - c2, c2 - c3 (with 1-to-1 constraint, only c2-c3 remains)
+      store.addComponentLink(c1.id, c2.id)  // c1-c2
+      store.addComponentLink(c2.id, c3.id)  // c2-c3 (removes c1-c2 because c2 can only have 1 link)
 
-      expect(useLayoutStore.getState().componentLinks).toHaveLength(2)
+      expect(useLayoutStore.getState().componentLinks).toHaveLength(1)
 
       // Delete c2
       store.deleteComponent(c2.id)
@@ -359,13 +359,13 @@ describe("Component Linking Store Actions", () => {
 
       const [c1, c2, c3] = components
 
-      // Link: c1 → c2, c2 → c3
-      store.addComponentLink(c1.id, c2.id)
-      store.addComponentLink(c2.id, c3.id)
+      // Link: c1 → c2, c2 → c3 (with 1-to-1 constraint)
+      store.addComponentLink(c1.id, c2.id)  // c1-c2
+      store.addComponentLink(c2.id, c3.id)  // c2-c3 (removes c1-c2 because c2 can only have 1 link)
 
-      // Verify links exist
+      // Verify links exist (only c2-c3 remains)
       const links = useLayoutStore.getState().componentLinks
-      expect(links).toHaveLength(2)
+      expect(links).toHaveLength(1)
 
       // Components should remain separate (no merge)
       const afterLinkComponents = useLayoutStore.getState().schema.components
@@ -437,17 +437,20 @@ describe("Component Linking Store Actions", () => {
       const components = useLayoutStore.getState().schema.components
       const [c1, c2, c3] = components
 
-      // Link: c1 - c2, c2 - c3
-      store.addComponentLink(c1.id, c2.id)
-      store.addComponentLink(c2.id, c3.id)
+      // Link: c1 - c2, c2 - c3 (with 1-to-1 constraint)
+      store.addComponentLink(c1.id, c2.id)  // c1-c2
+      store.addComponentLink(c2.id, c3.id)  // c2-c3 (removes c1-c2 because c2 can only have 1 link)
 
-      // Get group
-      const group = store.getLinkedComponentGroup(c1.id)
+      // Get group for c1 (now alone)
+      const group1 = store.getLinkedComponentGroup(c1.id)
+      expect(group1).toHaveLength(1)
+      expect(group1).toContain(c1.id)
 
-      expect(group).toHaveLength(3)
-      expect(group).toContain(c1.id)
-      expect(group).toContain(c2.id)
-      expect(group).toContain(c3.id)
+      // Get group for c2-c3
+      const group2 = store.getLinkedComponentGroup(c2.id)
+      expect(group2).toHaveLength(2)
+      expect(group2).toContain(c2.id)
+      expect(group2).toContain(c3.id)
     })
 
     it("should return only self for unlinked component", () => {
