@@ -8,9 +8,10 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
-import { FileCode, Sparkles, Check, Copy, Zap, DollarSign, Award } from "lucide-react"
+import { FileCode, Sparkles, Check, Copy, Zap, DollarSign, Award, Info } from "lucide-react"
 import { useToast } from "@/store/toast-store"
 import { ComponentLinkingPromptModal } from "./ComponentLinkingPromptModal"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 
 // New AI Model System
 import type { AIModelId } from "@/types/ai-models"
@@ -301,7 +302,24 @@ export function ExportModal() {
 
             {/* Prompt Detail Level */}
             <div className="space-y-2">
-              <Label htmlFor="verbosity">Prompt Detail Level</Label>
+              <div className="flex items-center gap-2">
+                <Label htmlFor="verbosity">Prompt Detail Level</Label>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <button type="button" className="text-gray-400 hover:text-gray-600 transition-colors">
+                        <Info className="w-4 h-4" />
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent className="max-w-xs">
+                      <p className="text-sm">
+                        Higher detail levels provide more context to the AI model, improving code quality and accuracy
+                        but increasing token usage (cost). Choose based on your quality vs. cost preference.
+                      </p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              </div>
               <Select value={verbosity} onValueChange={(value) => setVerbosity(value as typeof verbosity)}>
                 <SelectTrigger id="verbosity">
                   <SelectValue />
