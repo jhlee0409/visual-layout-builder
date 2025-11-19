@@ -458,9 +458,9 @@ Let's build a high-quality, production-ready layout.`,
         section += gridCSS
         section += `\`\`\`\n\n`
 
-        section += `Or with Tailwind CSS + Inline Style:\n\n`
-        section += `Container: \`${tailwindClasses.container}\`\n`
-        section += `Inline Style: \`style={{ gridTemplateRows: '${tailwindClasses.inlineStyle}' }}\`\n\n`
+        section += `Or with Tailwind CSS (Arbitrary Values):\n\n`
+        section += `Container: \`${tailwindClasses.container}\`\n\n`
+        section += `**Note:** \`grid-rows-[repeat(N,auto)]\` uses Tailwind arbitrary values (v3.0+) for auto-sizing rows.\n\n`
         section += `Components:\n`
         Object.entries(tailwindClasses.components).forEach(([id, classes]) => {
           const comp = components.find(c => c.id === id)
@@ -536,14 +536,11 @@ Let's build a high-quality, production-ready layout.`,
 
   instructionsSection: () => {
     return `## Implementation Instructions\n\n` +
-      `### 🎯 Universal Layout Pattern (Magic Prompt Solution)\n\n` +
+      `### 🎯 Universal Layout Pattern (Reusable Architecture)\n\n` +
       `**This pattern works for ALL Canvas layouts - vertical, horizontal, side-by-side, or mixed:**\n\n` +
       `\`\`\`tsx\n` +
-      `// Container: Grid with auto rows (universal solution)\n` +
-      `<div \n` +
-      `  className="grid grid-cols-12 gap-4"\n` +
-      `  style={{ gridTemplateRows: 'repeat(8, auto)' }}  // Auto-size rows\n` +
-      `>\n` +
+      `// Container: Grid with auto rows (Tailwind arbitrary values)\n` +
+      `<div className="grid grid-cols-12 grid-rows-[repeat(8,auto)] gap-4">\n` +
       `  {/* Wrapper: Grid positioning */}\n` +
       `  <div className="col-span-full row-start-1 row-end-2">\n` +
       `    {/* Component: Border + Padding + Layout */}\n` +
@@ -577,64 +574,108 @@ Let's build a high-quality, production-ready layout.`,
       `</div>\n` +
       `\`\`\`\n\n` +
       `**🚨 CRITICAL RULES (Non-Negotiable):**\n\n` +
-      `1. **Container MUST use inline style** \`style={{ gridTemplateRows: 'repeat(N, auto)' }}\` (NOT \`grid-rows-N\`)\n` +
+      `1. **Container MUST use arbitrary values** \`grid-rows-[repeat(N,auto)]\` for auto-sizing rows (Tailwind v3.0+)\n` +
       `2. **Wrapper div** handles grid positioning (\`col-span-*\`, \`row-start-*\`, \`row-end-*\`)\n` +
       `3. **Component tag** contains ALL styling (border, padding, layout) - NOT children div\n` +
       `4. **Side-by-side components** MUST use \`h-full\` on both wrapper AND component\n` +
       `5. **Content** is ONLY component name + ID (e.g., "Header (c1)") - NO placeholder text\n\n` +
-      `**❌ ANTI-PATTERNS (What NOT to Do):**\n\n` +
+      `---\n\n` +
+      `### ♻️ Component Reusability Patterns\n\n` +
+      `**Level 1: Extract Reusable GridCell Wrapper**\n\n` +
       `\`\`\`tsx\n` +
-      `// ❌ WRONG: Fixed rows (causes height sync issues)\n` +
-      `<div className="grid grid-cols-12 grid-rows-8 gap-4">\n\n` +
-      `// ❌ WRONG: Styling in children div (not component tag)\n` +
-      `<footer>\n` +
-      `  <div className="flex justify-between border-t py-6">\n` +
-      `    Footer (c2)  {/* BAD: border/padding in children */}\n` +
-      `  </div>\n` +
-      `</footer>\n\n` +
-      `// ❌ WRONG: Missing h-full for side-by-side components\n` +
-      `<div className="col-start-1 col-end-4 row-start-2 row-end-8">\n` +
-      `  <aside className="border-r p-4">  {/* Missing h-full */}\n` +
-      `    Sidebar (c2)\n` +
-      `  </aside>\n` +
-      `</div>\n\n` +
-      `// ❌ WRONG: Placeholder content\n` +
-      `<header>\n` +
-      `  <nav>\n` +
-      `    <a href="/">Home</a>  {/* NO placeholder links */}\n` +
-      `    <a href="/about">About</a>\n` +
-      `  </nav>\n` +
-      `</header>\n` +
+      `type GridCellProps = PropsWithChildren<{\n` +
+      `  colSpan?: string\n` +
+      `  rowStart?: number\n` +
+      `  rowEnd?: number\n` +
+      `  className?: string\n` +
+      `}>\n\n` +
+      `function GridCell({ colSpan = 'col-span-full', rowStart, rowEnd, className, children }: GridCellProps) {\n` +
+      `  return (\n` +
+      `    <div className={cn(\n` +
+      `      colSpan,\n` +
+      `      rowStart && \`row-start-\${rowStart}\`,\n` +
+      `      rowEnd && \`row-end-\${rowEnd}\`,\n` +
+      `      className\n` +
+      `    )}>\n` +
+      `      {children}\n` +
+      `    </div>\n` +
+      `  )\n` +
+      `}\n\n` +
+      `// Usage: Cleaner, reusable\n` +
+      `<GridCell colSpan="col-span-full" rowStart={1} rowEnd={2}>\n` +
+      `  <header className="border-b py-4 px-6">Header (c1)</header>\n` +
+      `</GridCell>\n` +
       `\`\`\`\n\n` +
-      `**✅ CORRECT PATTERN:**\n\n` +
+      `**Level 2: Extract GridLayout Container**\n\n` +
       `\`\`\`tsx\n` +
-      `// ✅ Container: Auto rows with inline style\n` +
-      `<div \n` +
-      `  className="grid grid-cols-12 gap-4"\n` +
-      `  style={{ gridTemplateRows: 'repeat(8, auto)' }}\n` +
-      `>\n` +
-      `  {/* ✅ Wrapper: Grid positioning only */}\n` +
-      `  <div className="col-span-full row-start-8 row-end-9">\n` +
-      `    {/* ✅ Component: Border + Padding in tag */}\n` +
-      `    <footer className={cn(\n` +
-      `      'border-t border-gray-300 py-6 px-6',  // ✅ Styling HERE\n` +
-      `      'flex justify-between'\n` +
+      `type GridLayoutProps = PropsWithChildren<{\n` +
+      `  cols?: number\n` +
+      `  rows?: number\n` +
+      `  gap?: number\n` +
+      `  className?: string\n` +
+      `}>\n\n` +
+      `function GridLayout({ cols = 12, rows = 8, gap = 4, className, children }: GridLayoutProps) {\n` +
+      `  return (\n` +
+      `    <div className={cn(\n` +
+      `      'grid',\n` +
+      `      \`grid-cols-\${cols}\`,\n` +
+      `      \`grid-rows-[repeat(\${rows},auto)]\`,  // Auto-sizing rows\n` +
+      `      \`gap-\${gap}\`,\n` +
+      `      className\n` +
       `    )}>\n` +
-      `      Footer (c2)  {/* ✅ Name + ID only */}\n` +
-      `    </footer>\n` +
-      `  </div>\n\n` +
-      `  {/* ✅ Side-by-side: h-full on wrapper AND component */}\n` +
-      `  <div className="col-start-1 col-end-4 row-start-2 row-end-8 h-full">\n` +
-      `    <aside className={cn(\n` +
-      `      'border-r border-gray-300 p-4',\n` +
-      `      'flex flex-col gap-4',\n` +
-      `      'h-full'  // ✅ Fill grid cell\n` +
-      `    )}>\n` +
-      `      Sidebar (c2)  {/* ✅ No placeholder content */}\n` +
+      `      {children}\n` +
+      `    </div>\n` +
+      `  )\n` +
+      `}\n\n` +
+      `// Usage: Fully configurable\n` +
+      `<GridLayout cols={12} rows={8}>\n` +
+      `  <GridCell rowStart={1} rowEnd={2}>...</GridCell>\n` +
+      `</GridLayout>\n` +
+      `\`\`\`\n\n` +
+      `**Level 3: Composition Pattern (Compound Components)**\n\n` +
+      `\`\`\`tsx\n` +
+      `// Compound component pattern for complex layouts\n` +
+      `function PageLayout({ children }: PropsWithChildren) {\n` +
+      `  return (\n` +
+      `    <GridLayout cols={12} rows={8}>\n` +
+      `      {children}\n` +
+      `    </GridLayout>\n` +
+      `  )\n` +
+      `}\n\n` +
+      `PageLayout.Header = ({ children }: PropsWithChildren) => (\n` +
+      `  <GridCell rowStart={1} rowEnd={2}>\n` +
+      `    <header className="border-b py-4 px-6 sticky top-0 z-50 bg-white">\n` +
+      `      {children}\n` +
+      `    </header>\n` +
+      `  </GridCell>\n` +
+      `)\n\n` +
+      `PageLayout.Sidebar = ({ children }: PropsWithChildren) => (\n` +
+      `  <GridCell colSpan="col-start-1 col-end-4" rowStart={2} rowEnd={8} className="h-full">\n` +
+      `    <aside className="border-r p-4 flex flex-col gap-4 h-full">\n` +
+      `      {children}\n` +
       `    </aside>\n` +
-      `  </div>\n` +
-      `</div>\n` +
+      `  </GridCell>\n` +
+      `)\n\n` +
+      `PageLayout.Main = ({ children }: PropsWithChildren) => (\n` +
+      `  <GridCell colSpan="col-start-4 col-end-13" rowStart={2} rowEnd={8} className="h-full">\n` +
+      `    <main className="border p-6 flex flex-col gap-6 h-full">\n` +
+      `      {children}\n` +
+      `    </main>\n` +
+      `  </GridCell>\n` +
+      `)\n\n` +
+      `// Usage: Highly readable, composable\n` +
+      `<PageLayout>\n` +
+      `  <PageLayout.Header>Header (c1)</PageLayout.Header>\n` +
+      `  <PageLayout.Sidebar>Sidebar (c2)</PageLayout.Sidebar>\n` +
+      `  <PageLayout.Main>Main (c3)</PageLayout.Main>\n` +
+      `</PageLayout>\n` +
       `\`\`\`\n\n` +
+      `**🎯 Reusability Best Practices:**\n\n` +
+      `1. **Start simple** (inline code), then extract when patterns emerge\n` +
+      `2. **Props over duplication**: Use props for variants instead of copying components\n` +
+      `3. **Composition over configuration**: Prefer compound components for complex layouts\n` +
+      `4. **Type safety**: Always export TypeScript types for reusable components\n` +
+      `5. **Single Responsibility**: Each component should have ONE clear purpose\n\n` +
       `---\n\n` +
       `### Positioning Guidelines\n\n` +
       `- **static**: Default flow (no position class needed)\n` +
@@ -672,11 +713,17 @@ Let's build a high-quality, production-ready layout.`,
       `- [ ] Keyboard navigation support (\`focus:ring-2\`, \`focus:outline-none\`)\n` +
       `- [ ] Screen reader support (semantic tags + ARIA)\n\n` +
       `**Layout Architecture (Universal Pattern):**\n` +
-      `- [ ] **Grid container uses inline style** \`style={{ gridTemplateRows: 'repeat(N, auto)' }}\` (NOT Tailwind \`grid-rows-N\`)\n` +
+      `- [ ] **Grid container uses Tailwind arbitrary values** \`grid-rows-[repeat(N,auto)]\` (NOT fixed \`grid-rows-N\`)\n` +
       `- [ ] **Wrapper div** handles grid positioning only (\`col-span-*\`, \`row-start-*\`, \`row-end-*\`)\n` +
       `- [ ] **Component tag** contains ALL styling (border, padding, layout) - NOT children div\n` +
       `- [ ] **Side-by-side components** use \`h-full\` on both wrapper AND component tag\n` +
       `- [ ] Follow the 3-tier pattern: Container (grid) → Wrapper (positioning) → Component (styling)\n\n` +
+      `**Component Reusability:**\n` +
+      `- [ ] Extract repeated patterns into reusable components (GridCell, GridLayout)\n` +
+      `- [ ] Use props for variants instead of duplicating code\n` +
+      `- [ ] Consider composition patterns (compound components) for complex layouts\n` +
+      `- [ ] Export TypeScript types for all reusable components\n` +
+      `- [ ] Each component has a single, clear responsibility\n\n` +
       `**Styling & Borders (2025 Wireframe Standards):**\n` +
       `- [ ] **EVERY component has a border** (\`border-gray-300\`) ON THE COMPONENT TAG\n` +
       `- [ ] **Border/padding MUST be in component tag** - NOT in children div ❌\n` +

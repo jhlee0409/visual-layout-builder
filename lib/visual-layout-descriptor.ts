@@ -267,7 +267,7 @@ function generateImplementationHints(
 
   // 🎯 0. UNIVERSAL RULE: Auto Rows Strategy (최우선 - "Magic Prompt" solution)
   hints.push(
-    `🎯 **UNIVERSAL RULE - Auto Rows**: Use \`gridTemplateRows: 'repeat(${gridRows}, auto)'\` as an inline style on the grid container. This allows rows to auto-size based on content, solving height sync issues universally for ALL layout combinations (vertical, side-by-side, mixed). Do NOT use fixed row heights (\`grid-rows-${gridRows}\`).`
+    `🎯 **UNIVERSAL RULE - Auto Rows**: Use Tailwind arbitrary values \`grid-rows-[repeat(${gridRows},auto)]\` on the grid container. This allows rows to auto-size based on content, solving height sync issues universally for ALL layout combinations (vertical, side-by-side, mixed). Do NOT use fixed row heights (\`grid-rows-${gridRows}\`).`
   )
 
   // 🚨 1. CRITICAL: Side-by-side warning (if applicable)
@@ -311,12 +311,17 @@ function generateImplementationHints(
     )
   }
 
-  // 7. Component independence reminder
+  // 7. Component reusability (NEW)
+  hints.push(
+    `♻️ **Reusability**: Consider extracting repeated grid positioning patterns into reusable \`GridCell\` components. For complex layouts, use composition patterns (compound components like \`PageLayout.Header\`, \`PageLayout.Sidebar\`).`
+  )
+
+  // 8. Component independence reminder
   hints.push(
     `Each component still uses its own \`positioning\` strategy (sticky/fixed/static) and internal \`layout\` (flex/grid/container)`
   )
 
-  // 8. Responsive considerations
+  // 9. Responsive considerations
   hints.push(
     `This grid layout applies to the **${breakpoint}** breakpoint - other breakpoints may have different arrangements`
   )
