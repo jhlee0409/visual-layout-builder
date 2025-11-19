@@ -136,8 +136,12 @@ export function generateGridCSS(visualLayout: VisualLayout): string {
 /**
  * Tailwind CSS Grid 클래스 생성 (최신 Tailwind v3.4 지원)
  *
- * Uses Tailwind arbitrary values for auto rows (maintainable, responsive)
+ * **IMPORTANT: Requires Tailwind CSS v3.0 or higher**
  *
+ * Uses Tailwind arbitrary values for auto rows (maintainable, responsive).
+ * Arbitrary value syntax `grid-rows-[repeat(N,auto)]` was introduced in Tailwind v3.0.
+ *
+ * @requires tailwindcss@^3.0.0 - Arbitrary values support
  * @param visualLayout - Visual layout info
  * @returns Tailwind class recommendations with arbitrary values
  *

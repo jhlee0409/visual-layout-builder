@@ -755,7 +755,13 @@ Let's build a high-quality, production-ready layout.`,
 }
 
 /**
- * Helper function to format positioning specification
+ * Helper function to format positioning specification for AI prompt
+ *
+ * Converts ComponentPositioning object to formatted markdown text
+ * describing the component's positioning strategy and CSS values.
+ *
+ * @param positioning - Component positioning configuration
+ * @returns Formatted markdown text describing positioning (strategy, top, right, bottom, left, zIndex)
  */
 function formatPositioning(positioning: ComponentPositioning): string {
   let text = `**Positioning:**\n`
@@ -781,7 +787,13 @@ function formatPositioning(positioning: ComponentPositioning): string {
 }
 
 /**
- * Helper function to format layout specification
+ * Helper function to format layout specification for AI prompt
+ *
+ * Converts ComponentLayout object to formatted markdown text
+ * describing the component's internal layout system (flex, grid, container, or none).
+ *
+ * @param layout - Component layout configuration
+ * @returns Formatted markdown text describing layout type and configuration
  */
 function formatLayout(layout: ComponentLayout): string {
   let text = `**Layout:**\n`
@@ -828,7 +840,13 @@ function formatLayout(layout: ComponentLayout): string {
 }
 
 /**
- * Helper function to format styling specification
+ * Helper function to format styling specification for AI prompt
+ *
+ * Converts ComponentStyling object to formatted markdown text
+ * describing the component's visual styling properties (width, height, background, border, etc.).
+ *
+ * @param styling - Component styling configuration
+ * @returns Formatted markdown text describing styling properties
  */
 function formatStyling(styling: ComponentStyling): string {
   let text = `**Styling:**\n`
