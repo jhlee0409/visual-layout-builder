@@ -59,7 +59,10 @@ The Laylder Schema follows a **Component-First** approach where each component i
 
 **Core Principles:**
 1. **Component Independence**: Each component operates independently with its own positioning and layout
-2. **Flexbox First**: Use Flexbox for page structure, CSS Grid only for card/content layouts
+2. **Layout Strategy**:
+   - Use CSS Grid for page-level positioning (based on Canvas Grid coordinates)
+   - Use Flexbox for component internal layout (flex-col, flex-row, gap utilities)
+   - Use CSS Grid for content grids within components (grid-cols-3, auto-fit, etc.)
 3. **Semantic HTML First**: Follow HTML5 semantic principles (header, nav, main, aside, footer, section, article)
 4. **Mobile First**: Implement responsive design with mobile-first approach (base styles for mobile, then md: for tablet, lg: for desktop)
 5. **Breakpoint Inheritance**: Mobile → Tablet → Desktop cascade (unspecified breakpoints inherit from previous breakpoint)
@@ -483,8 +486,16 @@ Let's build a high-quality, production-ready layout.`,
         }
       }
 
-      // Structure type (existing)
-      section += `**Page Flow:** \`${layout.structure}\` (vertical scrolling with horizontal content areas)\n\n`
+      // Structure type with dynamic descriptions
+      const flowDescriptions: Record<string, string> = {
+        vertical: "vertical scrolling layout",
+        horizontal: "horizontal scrolling layout",
+        "sidebar-main": "sidebar layout with main content area",
+        "sidebar-main-sidebar": "three-column layout with left and right sidebars",
+        custom: "custom layout structure"
+      }
+      const flowDescription = flowDescriptions[layout.structure] || layout.structure
+      section += `**Page Flow:** \`${layout.structure}\` (${flowDescription})\n\n`
 
       // IMPORTANT: Layout Priority (shown first)
       section += `**🚨 IMPORTANT - Layout Priority:**\n\n`
