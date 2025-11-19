@@ -421,7 +421,7 @@ Let's build a high-quality, production-ready layout.`,
 
       section += `### ${index + 1}. ${breakpoint.name.charAt(0).toUpperCase() + breakpoint.name.slice(1)} (≥${breakpoint.minWidth}px)\n\n`
 
-      // NEW: VISUAL LAYOUT DESCRIPTION (Canvas Grid information)
+      // Visual Layout Description (Canvas Grid information)
       try {
         const layoutDesc = describeVisualLayout(
           components,
@@ -448,7 +448,7 @@ Let's build a high-quality, production-ready layout.`,
           section += "\n"
         }
 
-        // NEW: CSS GRID POSITIONING (2025 pattern)
+        // CSS Grid Positioning
         const gridCSS = generateGridCSS(layoutDesc.visualLayout)
         const tailwindClasses = generateTailwindClasses(layoutDesc.visualLayout)
 
@@ -468,7 +468,7 @@ Let's build a high-quality, production-ready layout.`,
         })
         section += "\n"
 
-        // NEW: IMPLEMENTATION STRATEGY (enhanced)
+        // Implementation Strategy
         section += `**Implementation Strategy:**\n\n`
         layoutDesc.implementationHints.forEach((hint) => {
           section += `- ${hint}\n`
