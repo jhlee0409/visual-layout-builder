@@ -35,6 +35,45 @@ pnpm test:e2e:ui
 pnpm test:e2e:headed
 ```
 
+## Claude Code Skills
+
+Laylder는 개발 생산성을 높이기 위한 5개의 Claude Code Skills를 제공합니다. Skills는 Claude가 작업 컨텍스트에 따라 자동으로 활성화하는 전문 지식 모듈입니다.
+
+### Available Skills
+
+| Skill | Description | When Auto-Activated |
+|-------|-------------|---------------------|
+| **schema-development** | Schema 생성, 수정, 검증 | `types/schema.ts`, `lib/schema-*.ts` 작업 시 |
+| **component-testing** | Vitest 유닛 테스트 작성 | `lib/__tests__/` 작업 또는 테스트 요청 시 |
+| **prompt-strategy** | AI 프롬프트 전략 개발 | `lib/prompt-*.ts`, AI 모델 관련 작업 시 |
+| **canvas-debugging** | Canvas 레이아웃 디버깅 | `components/canvas/`, Grid 이슈 해결 시 |
+| **code-review** | 코드 품질 검토 | PR 리뷰, 코드 품질 검토 요청 시 |
+
+### Skill Files Location
+
+```
+.claude/skills/
+├── schema-development/
+│   └── SKILL.md           # Schema 개발 가이드
+├── component-testing/
+│   └── SKILL.md           # Vitest 테스트 패턴
+├── prompt-strategy/
+│   └── SKILL.md           # AI 프롬프트 최적화
+├── canvas-debugging/
+│   └── SKILL.md           # Canvas 디버깅 가이드
+└── code-review/
+    └── SKILL.md           # 코드 품질 체크리스트
+```
+
+### How Skills Work
+
+1. Claude가 작업 컨텍스트 분석
+2. 관련 skill의 description 매칭
+3. 자동으로 해당 SKILL.md 내용 로드
+4. 전문 지식을 활용한 작업 수행
+
+Skills는 slash commands와 달리 **자동으로 활성화**됩니다. 사용자가 명시적으로 호출할 필요가 없습니다.
+
 ## 아키텍처 핵심 개념
 
 ### Schema - Component Independence
