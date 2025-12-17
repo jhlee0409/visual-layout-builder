@@ -35,6 +35,122 @@ pnpm test:e2e:ui
 pnpm test:e2e:headed
 ```
 
+## Claude Code Skills
+
+Laylder는 개발 생산성을 높이기 위한 5개의 Claude Code Skills를 제공합니다. Skills는 Claude가 작업 컨텍스트에 따라 자동으로 활성화하는 전문 지식 모듈입니다.
+
+### Available Skills
+
+| Skill | Description | When Auto-Activated |
+|-------|-------------|---------------------|
+| **schema-development** | Schema 생성, 수정, 검증 | `types/schema.ts`, `lib/schema-*.ts` 작업 시 |
+| **component-testing** | Vitest 유닛 테스트 작성 | `lib/__tests__/` 작업 또는 테스트 요청 시 |
+| **prompt-strategy** | AI 프롬프트 전략 개발 | `lib/prompt-*.ts`, AI 모델 관련 작업 시 |
+| **canvas-debugging** | Canvas 레이아웃 디버깅 | `components/canvas/`, Grid 이슈 해결 시 |
+| **code-review** | 코드 품질 검토 | PR 리뷰, 코드 품질 검토 요청 시 |
+
+### Skill Files Location
+
+```
+.claude/skills/
+├── schema-development/
+│   └── SKILL.md           # Schema 개발 가이드
+├── component-testing/
+│   └── SKILL.md           # Vitest 테스트 패턴
+├── prompt-strategy/
+│   └── SKILL.md           # AI 프롬프트 최적화
+├── canvas-debugging/
+│   └── SKILL.md           # Canvas 디버깅 가이드
+└── code-review/
+    └── SKILL.md           # 코드 품질 체크리스트
+```
+
+### How Skills Work
+
+1. Claude가 작업 컨텍스트 분석
+2. 관련 skill의 description 매칭
+3. 자동으로 해당 SKILL.md 내용 로드
+4. 전문 지식을 활용한 작업 수행
+
+Skills는 slash commands와 달리 **자동으로 활성화**됩니다. 사용자가 명시적으로 호출할 필요가 없습니다.
+
+## Claude Code Subagents (Custom Agents)
+
+Subagents는 **독립된 컨텍스트**에서 복잡한 작업을 수행하는 전문 에이전트입니다. Skills와 달리 명시적으로 호출하며, 별도의 컨텍스트 윈도우를 사용합니다.
+
+### Skills vs Subagents
+
+| 특성 | Skills | Subagents |
+|------|--------|-----------|
+| **호출 방식** | 자동 (Claude가 결정) | 명시적 (`@agent-name`) |
+| **컨텍스트** | 공유 (메인 대화) | 독립 (별도 윈도우) |
+| **용도** | 빠른 도움 기능 | 복잡한 위임 작업 |
+| **도구 제어** | 공유 | 개별 제한 가능 |
+
+### Available Subagents
+
+| Agent | Description | Use Case |
+|-------|-------------|----------|
+| **@schema-validator** | 스키마 깊이 검증, Component Independence 준수 확인 | 복잡한 스키마 검증, export 전 품질 확인 |
+| **@test-generator** | Vitest 테스트 자동 생성, AAA 패턴, 픽스처 관리 | 새 기능 테스트 작성, 커버리지 개선 |
+| **@prompt-reviewer** | AI 프롬프트 품질 분석, 모델별 최적화 검토 | 프롬프트 개선, 새 모델 전략 검토 |
+| **@canvas-analyzer** | Canvas 레이아웃 분석, CSS Grid 변환 검증 | 레이아웃 디버깅, 공간 관계 분석 |
+| **@pr-reviewer** | 종합 PR 코드 리뷰, 품질/테스트/보안 검토 | PR 리뷰, merge 전 최종 확인 |
+
+### Subagent Files Location
+
+```
+.claude/agents/
+├── schema-validator/
+│   └── agent.md           # 스키마 검증 전문가
+├── test-generator/
+│   └── agent.md           # 테스트 생성 전문가
+├── prompt-reviewer/
+│   └── agent.md           # 프롬프트 품질 검토
+├── canvas-analyzer/
+│   └── agent.md           # Canvas 레이아웃 분석
+└── pr-reviewer/
+    └── agent.md           # PR 코드 리뷰
+```
+
+### How to Use Subagents
+
+```bash
+# Schema 전체 검증
+@schema-validator 현재 스키마를 검증하고 문제점을 분석해주세요.
+
+# 테스트 생성
+@test-generator lib/new-feature.ts에 대한 테스트를 생성해주세요.
+
+# 프롬프트 리뷰
+@prompt-reviewer Claude Sonnet용 프롬프트 품질을 검토해주세요.
+
+# Canvas 분석
+@canvas-analyzer desktop 레이아웃의 공간 관계를 분석해주세요.
+
+# PR 리뷰
+@pr-reviewer PR #123을 종합 리뷰해주세요.
+```
+
+### When to Use Each
+
+```
+복잡한 스키마 검증이 필요할 때
+└── @schema-validator (깊이 있는 분석, 독립 컨텍스트)
+
+새 기능에 테스트가 필요할 때
+└── @test-generator (테스트 코드 생성, 파일 작성)
+
+프롬프트 품질 개선이 필요할 때
+└── @prompt-reviewer (모델별 최적화, 토큰 효율성)
+
+Canvas 레이아웃 문제 해결이 필요할 때
+└── @canvas-analyzer (공간 관계, CSS Grid 변환)
+
+PR 코드 리뷰가 필요할 때
+└── @pr-reviewer (종합 리뷰, 체크리스트 기반)
+```
+
 ## 아키텍처 핵심 개념
 
 ### Schema - Component Independence
@@ -663,29 +779,38 @@ function Dashboard() {
   /initial-breakpoint-modal
   /ui             # shadcn/ui 컴포넌트
 /lib              # 핵심 비즈니스 로직
-  schema-validation.ts        # Schema 검증 + 에러/경고
-  schema-utils.ts             # Schema 생성, 복제, 정규화
-  component-library.ts        # 사전 정의 템플릿
-  prompt-generator.ts         # AI 프롬프트 생성
-  code-generator.ts           # React 코드 생성
-  file-exporter.ts            # 파일 내보내기
+  ai-model-registry.ts        # AI 모델 메타데이터 및 추천 시스템
+  ai-service.ts               # AI 서비스 인터페이스
+  canvas-sort-utils.ts        # Canvas 정렬 유틸리티
   canvas-to-grid.ts           # Canvas Grid → CSS Grid 변환
-  visual-layout-descriptor.ts # Canvas를 자연어로 설명
   canvas-utils.ts             # 공통 Canvas 유틸리티
-  smart-layout.ts             # 스마트 배치 로직
+  code-generator.ts           # React 코드 생성
+  component-library.ts        # 사전 정의 컴포넌트 템플릿
+  file-exporter.ts            # 파일 내보내기 (ZIP, JSON)
   graph-utils.ts              # Component Linking 그래프 알고리즘
-  grid-constraints.ts         # Grid 제약 조건
+  grid-constraints.ts         # Grid 제약 조건 검증
+  prompt-bp-validator.ts      # Breakpoint 프롬프트 검증
+  prompt-generator.ts         # AI 프롬프트 생성
+  prompt-templates.ts         # 프롬프트 템플릿 정의
+  props-validator.ts          # ARIA Props 검증
+  sample-data.ts              # 샘플 스키마 데이터
+  schema-utils.ts             # Schema 생성, 복제, 정규화
+  schema-validation.ts        # Schema 검증 + 에러/경고
+  smart-layout.ts             # 스마트 배치 로직
   snap-to-grid.ts             # Grid 스냅 로직
-  ai-model-registry.ts        # AI 모델 메타데이터
+  union-find.ts               # Union-Find 알고리즘 (링킹용)
+  utils.ts                    # 공통 유틸리티 (cn 함수 등)
+  visual-layout-descriptor.ts # Canvas를 자연어로 설명
   /prompt-strategies/         # AI 모델별 프롬프트 전략
     base-strategy.ts
     claude-strategy.ts
-    gpt-strategy.ts
-    gemini-strategy.ts
     deepseek-strategy.ts
+    gemini-strategy.ts
+    gpt-strategy.ts
     grok-strategy.ts
     strategy-factory.ts
-  /__tests__/                 # Vitest 유닛 테스트
+    index.ts
+  /__tests__/                 # Vitest 유닛 테스트 (579+ tests)
 /store            # Zustand 상태 관리
   layout-store.ts
   toast-store.ts
@@ -765,26 +890,36 @@ pnpm test:coverage     # With coverage
 
 ```
 lib/__tests__/
-├── canvas-comprehensive-validation.test.ts  # Canvas 검증 (33 tests)
+├── canvas-comprehensive-validation.test.ts  # Canvas 검증 (18 tests)
 ├── canvas-edge-cases.test.ts                # Canvas 엣지 케이스 (13 tests)
-├── canvas-integration.test.ts               # Canvas 통합 (39 tests)
+├── canvas-integration.test.ts               # Canvas 통합 (21 tests)
 ├── canvas-json-export.test.ts               # Canvas JSON export (22 tests)
+├── canvas-layout-inheritance.test.ts        # Canvas 레이아웃 상속 (3 tests)
 ├── canvas-to-prompt-e2e.test.ts             # Canvas to Prompt E2E (16 tests)
-├── canvas-utils.test.ts                     # Canvas 유틸리티 (13 tests)
-├── component-linking-store.test.ts          # Component Linking (25 tests)
-├── dynamic-breakpoints.test.ts              # 동적 Breakpoint (24 tests)
-├── graph-utils.test.ts                      # 그래프 알고리즘 (20 tests)
-├── grid-constraints.test.ts                 # 그리드 제약 조건 (33 tests)
-├── performance.test.ts                      # 성능 테스트 (10 tests)
+├── canvas-utils.test.ts                     # Canvas 유틸리티 (19 tests)
+├── component-isolation.test.ts              # 컴포넌트 독립성 (2 tests)
+├── component-linking-concurrent.test.ts     # Component Linking 동시성 (7 tests)
+├── component-linking-store.test.ts          # Component Linking 스토어 (16 tests)
+├── dynamic-breakpoints.test.ts              # 동적 Breakpoint (10 tests)
+├── export-modal-linking-logic.test.ts       # Export Modal 링킹 (13 tests)
+├── graph-utils.test.ts                      # 그래프 알고리즘 (36 tests)
+├── grid-constraints.test.ts                 # 그리드 제약 조건 (29 tests)
+├── performance.test.ts                      # 성능 테스트 (21 tests)
+├── prompt-bp-validator.test.ts              # Breakpoint 검증 (31 tests)
 ├── prompt-generation-negative.test.ts       # 프롬프트 생성 음수 케이스 (18 tests)
-├── prompt-generator.test.ts                 # 프롬프트 생성 (7 tests)
-├── prompt-quality.test.ts                   # 프롬프트 품질 (46 tests)
-├── schema-utils.test.ts                     # 스키마 유틸리티 (27 tests)
-├── schema-validation.test.ts                # 스키마 검증 (78 tests)
-├── side-by-side-layouts.test.ts             # Side-by-side 레이아웃 (21 tests)
-├── smart-layout.test.ts                     # 스마트 레이아웃 (41 tests)
-├── snap-to-grid.test.ts                     # 그리드 스냅 (7 tests)
-└── union-find.test.ts                       # Union-Find (13 tests)
+├── prompt-generator.test.ts                 # 프롬프트 생성 (19 tests)
+├── prompt-quality.test.ts                   # 프롬프트 품질 (22 tests)
+├── props-validator.test.ts                  # Props 검증 (41 tests)
+├── schema-utils.test.ts                     # 스키마 유틸리티 (39 tests)
+├── schema-utils-dynamic-breakpoints.test.ts # 동적 Breakpoint 스키마 (9 tests)
+├── schema-validation.test.ts                # 스키마 검증 (27 tests)
+├── side-by-side-layouts.test.ts             # Side-by-side 레이아웃 (16 tests)
+├── smart-layout.test.ts                     # 스마트 레이아웃 (56 tests)
+├── snap-to-grid.test.ts                     # 그리드 스냅 (21 tests)
+├── union-find.test.ts                       # Union-Find (27 tests)
+└── fixtures/                                # 테스트 픽스처
+    ├── component-fixtures.ts
+    └── test-schemas.ts
 ```
 
 **명명 규칙**:
@@ -807,7 +942,7 @@ pnpm test:e2e:headed   # Headed mode (브라우저 보임)
 ### 테스트 커버리지
 
 **현재 커버리지 (핵심 비즈니스 로직)**:
-- **전체**: 500+ 테스트, 12,000+ lines of test code
+- **전체**: 579+ 테스트 (28개 테스트 파일), ~14,000 lines of test code
 - **canvas-to-grid.ts**: 100% ✅
 - **snap-to-grid.ts**: 100% ✅
 - **prompt-generator.ts**: 95%+ ✅
@@ -815,6 +950,14 @@ pnpm test:e2e:headed   # Headed mode (브라우저 보임)
 - **schema-validation.ts**: 85%+ ✅
 - **schema-utils.ts**: 80%+ ✅
 - **smart-layout.ts**: 75%+ ✅
+
+**E2E 테스트**: 6개 spec 파일 (Playwright)
+- `01-basic-flow.spec.ts`: 기본 워크플로우
+- `02-panels.spec.ts`: 패널 상호작용
+- `03-breakpoints.spec.ts`: Breakpoint 전환
+- `04-export.spec.ts`: Export 기능
+- `05-smart-layout.spec.ts`: 스마트 레이아웃
+- `resizable-panels.spec.ts`: 리사이즈 가능 패널
 
 **커버리지 리포트 위치**: `coverage/` 디렉토리 (HTML 형식으로 확인 가능)
 
