@@ -9,7 +9,7 @@ test.describe('Resizable Panels - Phase 1', () => {
 
   test('페이지가 정상적으로 로드된다', async ({ page }) => {
     // 헤더 확인
-    await expect(page.getByRole('heading', { name: 'Laylder' })).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'Visual Layout Builder' })).toBeVisible()
 
     // 주요 패널 확인 (우측 패널 내부의 헤더 선택)
     await expect(page.getByRole('heading', { name: 'Layers', level: 2 })).toBeVisible()

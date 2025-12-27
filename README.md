@@ -1,12 +1,12 @@
-# Laylder
+# Visual Layout Builder
 
 [![codecov](https://codecov.io/gh/jhlee0409/laylder/branch/main/graph/badge.svg)](https://codecov.io/gh/jhlee0409/laylder)
 
-**Visual Layout Builder for AI-Powered Code Generation**
+**Drag-and-Drop Layout Builder for AI-Powered Code Generation**
 
-Laylder is a drag-and-drop layout builder that generates schemas for AI to produce production-ready React/Tailwind code. Design responsive layouts visually, export to AI prompts optimized for Claude, GPT, Gemini, and more.
+Visual Layout Builder is a drag-and-drop layout builder that generates schemas for AI to produce production-ready React/Tailwind code. Design responsive layouts visually, export to AI prompts optimized for Claude, GPT, Gemini, and more.
 
-![Laylder Screenshot](docs/screenshot.png)
+![Visual Layout Builder Screenshot](docs/screenshot.png)
 
 ## Features
 
@@ -48,7 +48,7 @@ pnpm dev
 ## Project Structure
 
 ```
-laylder/
+visual-layout-builder/
 ├── app/                    # Next.js App Router
 │   ├── layout.tsx          # Root layout
 │   └── page.tsx            # Main application page
@@ -80,7 +80,7 @@ laylder/
 
 ### Schema Architecture
 
-Laylder uses a **Component Independence** architecture where each component defines its own:
+Visual Layout Builder uses a **Component Independence** architecture where each component defines its own:
 
 ```typescript
 interface Component {
@@ -143,7 +143,7 @@ pnpm test:e2e:headed  # Run with visible browser
 
 ## AI Model Support
 
-Laylder generates optimized prompts for multiple AI models:
+Visual Layout Builder generates optimized prompts for multiple AI models:
 
 | Provider | Models |
 |----------|--------|
@@ -163,7 +163,7 @@ Each model has a specialized prompt strategy optimized for its capabilities.
 
 ## Sample Layouts
 
-Laylder includes 4 sample layouts to get started:
+Visual Layout Builder includes 4 sample layouts to get started:
 
 - **github**: GitHub-style layout (Header + Sidebar + Main)
 - **dashboard**: Dashboard layout (Fixed Header + Side Menu + Content)

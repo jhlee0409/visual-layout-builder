@@ -1,12 +1,12 @@
 ---
 name: schema-development
-description: Create and modify Laylder schema components, breakpoints, and layouts. Use when working with types/schema.ts, creating new components, adding breakpoints, or modifying layout configurations. Helps ensure Component Independence architecture compliance.
+description: Create and modify Visual Layout Builder schema components, breakpoints, and layouts. Use when working with types/schema.ts, creating new components, adding breakpoints, or modifying layout configurations. Helps ensure Component Independence architecture compliance.
 allowed-tools: Read, Glob, Grep
 ---
 
 # Schema Development Skill
 
-Laylder의 Schema 시스템 개발을 위한 전문 스킬입니다. Component Independence 아키텍처를 준수하며 schema를 생성, 수정, 검증합니다.
+Visual Layout Builder의 Schema 시스템 개발을 위한 전문 스킬입니다. Component Independence 아키텍처를 준수하며 schema를 생성, 수정, 검증합니다.
 
 ## When to Use
 

@@ -47,11 +47,11 @@ export const reactTailwindTemplate: PromptTemplate = {
 You are a senior React developer with expertise in modern web development, responsive design, and best practices.
 
 **Your Task:**
-Generate a production-quality, responsive layout component based on the provided Laylder Schema specifications.
+Generate a production-quality, responsive layout component based on the provided Visual Layout Builder Schema specifications.
 
 **Schema Architecture (Component Independence):**
 
-The Laylder Schema follows a **Component-First** approach where each component is independently defined with its own:
+The Visual Layout Builder Schema follows a **Component-First** approach where each component is independently defined with its own:
 - **Positioning Strategy**: How the component is positioned (fixed, sticky, static, absolute, relative)
 - **Layout System**: Internal layout structure (flexbox, CSS grid, container, or none)
 - **Styling**: Visual properties (width, height, background, border, shadow, custom classes)

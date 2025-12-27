@@ -3,11 +3,19 @@
  *
  * Grok (xAI) 모델에 최적화된 프롬프트 전략
  *
+ * 지원 모델 (2025년 12월):
+ * - Grok 2, Grok 3
+ * - Grok 4, Grok 4.1 (2025 신규)
+ *
  * 특화 영역:
- * - 추론 능력 (reasoning: 9/10)
+ * - 추론 능력 (reasoning: 9-10/10)
  * - 실시간 데이터 접근
  * - 컨텍스트 이해
  * - 명확하고 직접적인 지시
+ *
+ * 2025년 12월 업데이트:
+ * - Grok 4.1: 코딩 벤치마크 9.8/10, 강력한 추론
+ * - Grok 4: 실시간 데이터와 추론 능력 향상
  *
  * Best Practices (2025):
  * - 명확한 목표 설정
@@ -45,10 +53,10 @@ export class GrokStrategy extends BasePromptStrategy {
     return `You are an expert ${framework} developer. Today is ${currentDate}.
 
 **Objective:**
-Build a responsive layout component from the Laylder Schema specifications provided.
+Build a responsive layout component from the Visual Layout Builder Schema specifications provided.
 
 **Schema Overview:**
-The Laylder Schema follows a Component Independence architecture:
+The Visual Layout Builder Schema follows a Component Independence architecture:
 - Each component defines its own positioning (fixed, sticky, static, absolute, relative)
 - Each component defines its internal layout (flexbox, grid, container, or none)
 - Styling and responsive behavior are component-specific
@@ -250,4 +258,13 @@ export function createGrok3Strategy(): GrokStrategy {
 
 export function createGrok2Strategy(): GrokStrategy {
   return new GrokStrategy("grok-2")
+}
+
+// 2025년 12월 신규 모델
+export function createGrok4Strategy(): GrokStrategy {
+  return new GrokStrategy("grok-4")
+}
+
+export function createGrok41Strategy(): GrokStrategy {
+  return new GrokStrategy("grok-4.1")
 }

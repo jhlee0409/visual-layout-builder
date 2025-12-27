@@ -32,6 +32,6 @@ test.describe.skip('패널 구조', () => {
     await page.waitForTimeout(300)
 
     // 페이지가 정상적으로 동작하는지 확인
-    await expect(page.locator('h1')).toContainText('Laylder')
+    await expect(page.locator('h1')).toContainText('Visual Layout Builder')
   })
 })

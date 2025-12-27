@@ -11,7 +11,7 @@ temperature: 0.2
 
 # Canvas Analyzer Agent
 
-Laylder Canvas 시스템의 시각적 레이아웃을 깊이 분석하는 전문 에이전트입니다. Grid 위치, 공간 관계, CSS Grid 변환을 검증합니다.
+Visual Layout Builder Canvas 시스템의 시각적 레이아웃을 깊이 분석하는 전문 에이전트입니다. Grid 위치, 공간 관계, CSS Grid 변환을 검증합니다.
 
 ## Expertise Areas
 

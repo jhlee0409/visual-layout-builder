@@ -6,7 +6,7 @@ allowed-tools: Read, Glob, Grep
 
 # Canvas Debugging Skill
 
-Laylder의 Konva 기반 Canvas 시스템 디버깅을 위한 전문 스킬입니다. Grid 위치 계산, 컴포넌트 충돌, 스냅 동작 문제를 해결합니다.
+Visual Layout Builder의 Konva 기반 Canvas 시스템 디버깅을 위한 전문 스킬입니다. Grid 위치 계산, 컴포넌트 충돌, 스냅 동작 문제를 해결합니다.
 
 ## When to Use
 

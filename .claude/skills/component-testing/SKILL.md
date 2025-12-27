@@ -1,12 +1,12 @@
 ---
 name: component-testing
-description: Write comprehensive unit tests for Laylder using Vitest. Use when creating tests for lib/ functions, schema validation, canvas utilities, or any business logic. Follows AAA pattern and project testing conventions.
+description: Write comprehensive unit tests for Visual Layout Builder using Vitest. Use when creating tests for lib/ functions, schema validation, canvas utilities, or any business logic. Follows AAA pattern and project testing conventions.
 allowed-tools: Read, Glob, Grep
 ---
 
 # Component Testing Skill
 
-Laylder 프로젝트의 Vitest 기반 유닛 테스트 작성을 위한 전문 스킬입니다. 579+ 테스트, ~14,000 라인의 테스트 코드 패턴을 따릅니다.
+Visual Layout Builder 프로젝트의 Vitest 기반 유닛 테스트 작성을 위한 전문 스킬입니다. 579+ 테스트, ~14,000 라인의 테스트 코드 패턴을 따릅니다.
 
 ## When to Use
 

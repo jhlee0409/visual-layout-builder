@@ -3,12 +3,23 @@
  *
  * GPT (OpenAI) 모델에 최적화된 프롬프트 전략
  *
+ * 지원 모델 (2025년 12월):
+ * - GPT-4, GPT-4.1, GPT-4 Turbo
+ * - GPT-5, GPT-5.2, GPT-5 mini (2025 신규)
+ * - o1, o1-mini, o3, o3-mini (추론 특화)
+ * - Llama 4 시리즈 (유사 아키텍처로 동일 전략 사용)
+ *
  * 특화 영역:
  * - 창의적 솔루션 (creativity: 10/10)
  * - 복잡한 아키텍처 설계
  * - Few-shot learning (2-3개 예시)
  * - Chain-of-Thought prompting
  * - 높은 temperature for creative tasks
+ *
+ * 2025년 12월 업데이트:
+ * - GPT-5.2: SWE-bench 80%, AIME 2025 100% - 최고 성능
+ * - o3: ARC-AGI-2 52.9% - 깊은 추론 특화
+ * - GPT-5 mini: 빠르고 저렴한 일반 코딩 작업
  *
  * Best Practices (2025):
  * - 창의적 작업에 높은 temperature (0.7-0.9)
@@ -44,10 +55,10 @@ export class GPTStrategy extends BasePromptStrategy {
     return `You are an expert ${framework === "react" ? "React" : framework} developer specializing in modern web development and responsive design.
 
 **Task:**
-Create a responsive, production-ready layout component based on the Laylder Schema specifications provided below.
+Create a responsive, production-ready layout component based on the Visual Layout Builder Schema specifications provided below.
 
 **Schema Architecture:**
-The Laylder Schema uses a **Component Independence** approach:
+The Visual Layout Builder Schema uses a **Component Independence** approach:
 - Each component has its own positioning strategy (fixed, sticky, static, absolute, relative)
 - Each component defines its layout system (flexbox, grid, container, or none)
 - Styling and responsive behavior are component-specific
@@ -282,4 +293,30 @@ export function createGPT4TurboStrategy(): GPTStrategy {
 
 export function createGPT4Strategy(): GPTStrategy {
   return new GPTStrategy("gpt-4")
+}
+
+// 2025년 12월 신규 모델
+export function createGPT52Strategy(): GPTStrategy {
+  return new GPTStrategy("gpt-5.2")
+}
+
+export function createGPT5Strategy(): GPTStrategy {
+  return new GPTStrategy("gpt-5")
+}
+
+export function createGPT5MiniStrategy(): GPTStrategy {
+  return new GPTStrategy("gpt-5-mini")
+}
+
+export function createO3Strategy(): GPTStrategy {
+  return new GPTStrategy("o3")
+}
+
+// Llama 4 시리즈 (GPT 전략 사용)
+export function createLlama4Strategy(): GPTStrategy {
+  return new GPTStrategy("llama-4")
+}
+
+export function createLlama4MaverickStrategy(): GPTStrategy {
+  return new GPTStrategy("llama-4-maverick")
 }

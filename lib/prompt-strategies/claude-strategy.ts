@@ -3,12 +3,20 @@
  *
  * Claude (Anthropic) 모델에 최적화된 프롬프트 전략
  *
+ * 지원 모델 (2025년 12월):
+ * - Claude Sonnet 4, Sonnet 4.5
+ * - Claude Opus 4, Opus 4.5 (2025 신규 - 최강 성능)
+ * - Claude Haiku 3.5
+ *
  * 특화 영역:
  * - 코드 품질 최우선 (codeQuality: 10/10)
  * - 단계별 추론 (<thinking> 태그)
  * - 구조화된 출력 (XML, JSON)
  * - 긴 컨텍스트 활용 (200K tokens)
  * - 명확한 역할 정의
+ *
+ * 2025년 12월 업데이트:
+ * - Claude Opus 4.5: SWE-bench 80.9%, Aider Polyglot 89.4% - 2025년 최강 코딩 모델
  *
  * Best Practices (2025):
  * - 긴 컨텍스트 활용: 전체 프로젝트 구조 제공
@@ -45,11 +53,11 @@ export class ClaudeStrategy extends BasePromptStrategy {
     return `You are a senior ${framework === "react" ? "React" : framework} developer with expertise in modern web development, responsive design, and best practices.
 
 **Your Task:**
-Generate a production-quality, responsive layout component based on the provided Laylder Schema specifications.
+Generate a production-quality, responsive layout component based on the provided Visual Layout Builder Schema specifications.
 
 **Schema Architecture (Component Independence):**
 
-The Laylder Schema follows a **Component-First** approach where each component is independently defined with its own:
+The Visual Layout Builder Schema follows a **Component-First** approach where each component is independently defined with its own:
 - **Positioning Strategy**: How the component is positioned (fixed, sticky, static, absolute, relative)
 - **Layout System**: Internal layout structure (flexbox, CSS grid, container, or none)
 - **Styling**: Visual properties (width, height, background, border, shadow, custom classes)
@@ -240,6 +248,11 @@ export function createClaudeSonnet4Strategy(): ClaudeStrategy {
 
 export function createClaudeOpus4Strategy(): ClaudeStrategy {
   return new ClaudeStrategy("claude-opus-4")
+}
+
+// 2025년 12월 신규 모델 - 최강 성능
+export function createClaudeOpus45Strategy(): ClaudeStrategy {
+  return new ClaudeStrategy("claude-opus-4.5")
 }
 
 export function createClaudeHaiku35Strategy(): ClaudeStrategy {

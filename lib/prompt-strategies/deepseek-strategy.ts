@@ -1,7 +1,11 @@
 /**
  * DeepSeek Prompt Strategy
  *
- * DeepSeek 모델에 최적화된 프롬프트 전략
+ * DeepSeek 및 Qwen (Alibaba) 모델에 최적화된 프롬프트 전략
+ *
+ * 지원 모델 (2025년 12월):
+ * - DeepSeek R1, V3, Coder V2
+ * - Qwen 2.5 Coder, Qwen 2.5 Coder 32B (Alibaba, 유사 전략 사용)
  *
  * 특화 영역:
  * - 비용 효율 최강 (cost: very-low, 90% 저렴)
@@ -9,6 +13,10 @@
  * - 다국어 코드 지원 (338개 언어)
  * - 간결한 프롬프트 선호
  * - 명확한 타입 시스템
+ *
+ * 2025년 12월 업데이트:
+ * - Qwen 2.5 Coder: 코딩 특화 오픈소스, 다국어 지원
+ * - Qwen 2.5 Coder 32B: 대형 버전, 더 복잡한 작업 지원
  *
  * Best Practices (2025):
  * - 알고리즘 중심 작업에 활용
@@ -45,7 +53,7 @@ export class DeepSeekStrategy extends BasePromptStrategy {
    * - 타입 시스템 강조
    */
   generateSystemPrompt(framework: string, cssSolution: string): string {
-    return `You are a ${framework} developer. Create a responsive layout component from the Laylder Schema.
+    return `You are a ${framework} developer. Create a responsive layout component from the Visual Layout Builder Schema.
 
 **Task:**
 Implement a responsive layout with the specified components, following the schema exactly.
@@ -281,4 +289,13 @@ export function createDeepSeekV3Strategy(): DeepSeekStrategy {
 
 export function createDeepSeekCoderV2Strategy(): DeepSeekStrategy {
   return new DeepSeekStrategy("deepseek-coder-v2")
+}
+
+// 2025년 12월 신규 모델 - Qwen (유사 전략 사용)
+export function createQwen25CoderStrategy(): DeepSeekStrategy {
+  return new DeepSeekStrategy("qwen-2.5-coder")
+}
+
+export function createQwen25Coder32BStrategy(): DeepSeekStrategy {
+  return new DeepSeekStrategy("qwen-2.5-coder-32b")
 }

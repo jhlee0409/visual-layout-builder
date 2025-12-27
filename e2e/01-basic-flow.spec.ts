@@ -7,7 +7,7 @@ test.describe.skip('기본 플로우', () => {
 
   test('페이지가 올바르게 로드되어야 함', async ({ page }) => {
     // 페이지 제목 확인
-    await expect(page.locator('h1')).toContainText('Laylder')
+    await expect(page.locator('h1')).toContainText('Visual Layout Builder')
 
     // 주요 버튼들 확인
     await expect(page.getByRole('button', { name: 'Reset' })).toBeVisible()

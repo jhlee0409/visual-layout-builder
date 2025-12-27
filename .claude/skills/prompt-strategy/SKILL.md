@@ -6,7 +6,7 @@ allowed-tools: Read, Glob, Grep
 
 # AI Prompt Strategy Skill
 
-Laylder의 AI 프롬프트 전략 개발을 위한 전문 스킬입니다. Claude, GPT, Gemini, DeepSeek, Grok 등 다양한 AI 모델에 최적화된 프롬프트를 생성합니다.
+Visual Layout Builder의 AI 프롬프트 전략 개발을 위한 전문 스킬입니다. Claude, GPT, Gemini, DeepSeek, Grok 등 다양한 AI 모델에 최적화된 프롬프트를 생성합니다.
 
 ## When to Use
 

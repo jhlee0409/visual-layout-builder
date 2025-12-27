@@ -4,8 +4,8 @@ import { Toaster } from "@/components/ui/toaster"
 import { AlertDialogProvider } from "@/components/ui/alert-dialog-provider"
 
 export const metadata: Metadata = {
-  title: "Laylder - AI Layout Builder",
-  description: "Visual layout builder with AI-powered code generation",
+  title: "Visual Layout Builder",
+  description: "Drag-and-drop layout builder with AI-powered code generation",
 }
 
 export default function RootLayout({

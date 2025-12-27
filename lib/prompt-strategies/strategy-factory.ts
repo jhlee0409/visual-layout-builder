@@ -30,6 +30,10 @@ import { GrokStrategy } from "./grok-strategy"
  *
  * Provider 기반으로 Strategy 클래스 결정
  * 새로운 provider 추가 시 여기만 수정하면 됨
+ *
+ * 2025년 12월 업데이트:
+ * - Meta Llama: GPT 전략 사용 (유사한 transformer 아키텍처)
+ * - Alibaba Qwen: DeepSeek 전략 사용 (유사한 중국 모델 패턴)
  */
 const PROVIDER_STRATEGY_MAP: Record<
   AIProvider,
@@ -40,6 +44,8 @@ const PROVIDER_STRATEGY_MAP: Record<
   google: GeminiStrategy,
   deepseek: DeepSeekStrategy,
   xai: GrokStrategy,
+  meta: GPTStrategy, // Llama uses similar patterns to GPT
+  alibaba: DeepSeekStrategy, // Qwen uses similar patterns to DeepSeek
   custom: ClaudeStrategy, // fallback to Claude
 }
 
@@ -185,16 +191,20 @@ export function getAvailableModelIds(): AIModelId[] {
 
 /**
  * 모델 카테고리별 그룹화
+ *
+ * 2025년 12월 업데이트: Meta Llama, Alibaba Qwen 추가
  */
 export function getModelsByCategory(): Record<string, AIModelId[]> {
   const models = getAvailableModelIds()
 
   return {
     anthropic: models.filter((id) => id.startsWith("claude-")),
-    openai: models.filter((id) => id.startsWith("gpt-") || id.startsWith("o")),
+    openai: models.filter((id) => id.startsWith("gpt-") || id.startsWith("o1") || id.startsWith("o3")),
     google: models.filter((id) => id.startsWith("gemini-")),
     deepseek: models.filter((id) => id.startsWith("deepseek-")),
     xai: models.filter((id) => id.startsWith("grok-")),
+    meta: models.filter((id) => id.startsWith("llama-")),
+    alibaba: models.filter((id) => id.startsWith("qwen-")),
     custom: models.filter((id) => id === "custom"),
   }
 }

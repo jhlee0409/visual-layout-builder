@@ -1,47 +1,70 @@
 /**
  * AI Models Type System
  *
- * 2025년 11월 기준 코딩 AI 모델 메타데이터 및 전략 타입
+ * 2025년 12월 기준 코딩 AI 모델 메타데이터 및 전략 타입
  *
  * 설계 원칙:
  * - Model Independence: 각 모델이 독립적으로 정의됨
  * - Strategy Pattern: 모델별 프롬프트 전략 분리
  * - Extensibility: 새로운 모델 추가 용이
  * - Type Safety: 강력한 타입 안전성
+ *
+ * 2025년 12월 업데이트:
+ * - GPT-5.2, GPT-5 mini 추가
+ * - o3 추론 모델 추가
+ * - Gemini 3 Pro/Flash 추가
+ * - Grok 4.1 추가
+ * - Qwen 2.5 Coder, Llama 4 오픈소스 모델 추가
  */
 
 /**
  * AI 모델 프로바이더
  */
-export type AIProvider = "anthropic" | "openai" | "google" | "deepseek" | "xai" | "custom"
+export type AIProvider = "anthropic" | "openai" | "google" | "deepseek" | "xai" | "meta" | "alibaba" | "custom"
 
 /**
  * AI 모델 ID (고유 식별자)
  */
 export type AIModelId =
-  // Anthropic Claude
+  // Anthropic Claude (2025)
   | "claude-sonnet-4"
   | "claude-sonnet-4.5"
   | "claude-opus-4"
+  | "claude-opus-4.5"
   | "claude-haiku-3.5"
-  // OpenAI GPT
+  // OpenAI GPT (2025)
   | "gpt-4"
   | "gpt-4-turbo"
   | "gpt-4.1"
+  | "gpt-5"
+  | "gpt-5.2"
+  | "gpt-5-mini"
   | "o1"
   | "o1-mini"
+  | "o3"
   | "o3-mini"
-  // Google Gemini
+  // Google Gemini (2025)
   | "gemini-2.0-pro"
   | "gemini-2.5-pro"
   | "gemini-2.0-flash"
+  | "gemini-3-pro"
+  | "gemini-3-flash"
   // DeepSeek
   | "deepseek-r1"
   | "deepseek-v3"
   | "deepseek-coder-v2"
-  // xAI Grok
+  // xAI Grok (2025)
   | "grok-3"
   | "grok-2"
+  | "grok-4"
+  | "grok-4.1"
+  // Meta Llama (Open Source)
+  | "llama-4"
+  | "llama-4-scout"
+  | "llama-4-maverick"
+  // Alibaba Qwen (Open Source)
+  | "qwen-2.5-coder"
+  | "qwen-2.5-coder-32b"
   // Generic/Custom
   | "custom"
 
@@ -271,7 +294,7 @@ export interface IPromptStrategy {
 
   /**
    * 최종 프롬프트 생성 (전체 조합)
-   * @param schema - Laylder Schema
+   * @param schema - Visual Layout Builder Schema
    * @param framework - 타겟 프레임워크
    * @param cssSolution - CSS 솔루션
    * @param options - 생성 옵션
