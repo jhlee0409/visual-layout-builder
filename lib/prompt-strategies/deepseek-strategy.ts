@@ -45,7 +45,7 @@ export class DeepSeekStrategy extends BasePromptStrategy {
    * - 타입 시스템 강조
    */
   generateSystemPrompt(framework: string, cssSolution: string): string {
-    return `You are a ${framework} developer. Create a responsive layout component from the Laylder Schema.
+    return `You are a ${framework} developer. Create a responsive layout component from the Visual Layout Builder Schema.
 
 **Task:**
 Implement a responsive layout with the specified components, following the schema exactly.

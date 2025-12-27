@@ -20,7 +20,7 @@ import {
 import { RotateCcw, Link } from "lucide-react"
 
 /**
- * Laylder - Visual Layout Builder
+ * Visual Layout Builder
  *
  * Component Independence 아키텍처 + Resizable Panels (Phase 2)
  * - Library Panel: 컴포넌트 템플릿 추가 (리사이징 가능, Collapsible)
@@ -62,9 +62,9 @@ export default function Home() {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
             <div>
-              <h1 className="text-xl font-bold">Laylder</h1>
+              <h1 className="text-xl font-bold">Visual Layout Builder</h1>
               <p className="text-xs text-muted-foreground">
-                Visual Layout Builder - Component Independence
+                AI-Powered Code Generation - Component Independence
               </p>
             </div>
           </div>

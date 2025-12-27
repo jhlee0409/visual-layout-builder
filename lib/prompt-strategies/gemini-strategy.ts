@@ -48,7 +48,7 @@ export class GeminiStrategy extends BasePromptStrategy {
     return `You are an expert web developer specializing in ${framework} ${frameworkVersion} and modern web development (${currentYear}).
 
 **Objective:**
-Build a production-ready, responsive layout component following the Laylder Schema specifications.
+Build a production-ready, responsive layout component following the Visual Layout Builder Schema specifications.
 
 **Technology Stack:**
 - **Framework:** ${framework} ${frameworkVersion}${framework === "react" ? " (with functional components, hooks, and latest patterns)" : ""}
@@ -58,7 +58,7 @@ Build a production-ready, responsive layout component following the Laylder Sche
 - **Best Practices:** ${currentYear} web development standards
 
 **Schema Architecture:**
-The Laylder Schema uses a Component Independence model:
+The Visual Layout Builder Schema uses a Component Independence model:
 - **Positioning**: Each component defines how it's positioned (fixed, sticky, static, absolute, relative)
 - **Layout**: Each component defines its internal layout (flexbox, grid, container, none)
 - **Styling**: Visual properties are component-specific

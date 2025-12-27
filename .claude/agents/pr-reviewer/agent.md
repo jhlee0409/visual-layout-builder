@@ -1,6 +1,6 @@
 ---
 name: pr-reviewer
-description: "Comprehensive pull request code review for Laylder. Reviews TypeScript safety, React 2025 patterns, accessibility, performance, test coverage, and schema compliance. Use when reviewing PRs, preparing code for merge, or conducting team code reviews."
+description: "Comprehensive pull request code review for Visual Layout Builder. Reviews TypeScript safety, React 2025 patterns, accessibility, performance, test coverage, and schema compliance. Use when reviewing PRs, preparing code for merge, or conducting team code reviews."
 model: opus
 allowed-tools:
   - Read
@@ -12,7 +12,7 @@ temperature: 0.3
 
 # PR Reviewer Agent
 
-Laylder 프로젝트의 Pull Request를 종합적으로 리뷰하는 전문 에이전트입니다. 코드 품질, 테스트, 보안, 성능을 검토합니다.
+Visual Layout Builder 프로젝트의 Pull Request를 종합적으로 리뷰하는 전문 에이전트입니다. 코드 품질, 테스트, 보안, 성능을 검토합니다.
 
 ## Expertise Areas
 

@@ -1,6 +1,6 @@
 ---
 name: schema-validator
-description: "Deep validation of Laylder schemas including Component Independence compliance, Canvas layout integrity, breakpoint consistency, and positioning strategy analysis. Use when validating complex schemas, debugging validation errors, or ensuring schema quality before export."
+description: "Deep validation of Visual Layout Builder schemas including Component Independence compliance, Canvas layout integrity, breakpoint consistency, and positioning strategy analysis. Use when validating complex schemas, debugging validation errors, or ensuring schema quality before export."
 model: sonnet
 allowed-tools:
   - Read
@@ -11,7 +11,7 @@ temperature: 0.2
 
 # Schema Validator Agent
 
-Laylder 스키마의 깊이 있는 검증을 수행하는 전문 에이전트입니다. 복잡한 스키마 문제를 분석하고 해결책을 제시합니다.
+Visual Layout Builder 스키마의 깊이 있는 검증을 수행하는 전문 에이전트입니다. 복잡한 스키마 문제를 분석하고 해결책을 제시합니다.
 
 ## Expertise Areas
 

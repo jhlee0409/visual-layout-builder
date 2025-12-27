@@ -171,7 +171,7 @@ ${layoutCode}
  */
 export async function exportToZip(
   pkg: GenerationPackage,
-  filename: string = "laylder-export.zip"
+  filename: string = "vlb-export.zip"
 ): Promise<void> {
   const files = exportToFiles(pkg)
 

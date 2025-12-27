@@ -1,5 +1,5 @@
 /**
- * Laylder Schema - Component-First Layout System
+ * Visual Layout Builder Schema - Component-First Layout System
  *
  * 설계 원칙:
  * 1. Component Independence: 각 컴포넌트는 독립적으로 동작
@@ -279,7 +279,7 @@ export interface Breakpoint {
 }
 
 /**
- * Laylder Schema
+ * Visual Layout Builder Schema
  *
  * Component-first, Flexbox-first 레이아웃 시스템
  */
@@ -307,7 +307,7 @@ export type BreakpointV2 = Breakpoint
  * AI 프롬프트로 전달될 최종 패키지
  */
 export interface GenerationPackage {
-  /** Schema: Laylder Schema */
+  /** Schema: Visual Layout Builder Schema */
   schema: LaydlerSchema
   /** Options: 생성 옵션 */
   options: {

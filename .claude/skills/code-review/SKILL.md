@@ -1,12 +1,12 @@
 ---
 name: code-review
-description: Review code for Laylder quality standards including TypeScript patterns, React 2025 best practices, accessibility, and performance. Use when reviewing PRs, checking code quality, or ensuring compliance with project conventions.
+description: Review code for Visual Layout Builder quality standards including TypeScript patterns, React 2025 best practices, accessibility, and performance. Use when reviewing PRs, checking code quality, or ensuring compliance with project conventions.
 allowed-tools: Read, Glob, Grep
 ---
 
 # Code Review Skill
 
-Laylder 프로젝트의 2025 코드 품질 표준에 따른 코드 리뷰 전문 스킬입니다. TypeScript, React, 접근성, 성능 기준을 검증합니다.
+Visual Layout Builder 프로젝트의 2025 코드 품질 표준에 따른 코드 리뷰 전문 스킬입니다. TypeScript, React, 접근성, 성능 기준을 검증합니다.
 
 ## When to Use
 

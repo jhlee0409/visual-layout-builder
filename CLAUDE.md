@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## 프로젝트 개요
 
-Laylder는 AI 기반 코드 생성을 위한 비주얼 레이아웃 빌더입니다. 사용자가 드래그 앤 드롭으로 컴포넌트를 배치하면 Schema를 생성하고, 이를 AI 프롬프트로 변환하여 실제 프로덕션 코드를 생성합니다.
+Visual Layout Builder는 AI 기반 코드 생성을 위한 비주얼 레이아웃 빌더입니다. 사용자가 드래그 앤 드롭으로 컴포넌트를 배치하면 Schema를 생성하고, 이를 AI 프롬프트로 변환하여 실제 프로덕션 코드를 생성합니다.
 
 **핵심 기술**: Next.js 15 (App Router), React 19, TypeScript, Zustand, Konva (Canvas), Vitest (Unit Tests), Playwright (E2E Tests)
 
@@ -37,7 +37,7 @@ pnpm test:e2e:headed
 
 ## Claude Code Skills
 
-Laylder는 개발 생산성을 높이기 위한 5개의 Claude Code Skills를 제공합니다. Skills는 Claude가 작업 컨텍스트에 따라 자동으로 활성화하는 전문 지식 모듈입니다.
+Visual Layout Builder는 개발 생산성을 높이기 위한 5개의 Claude Code Skills를 제공합니다. Skills는 Claude가 작업 컨텍스트에 따라 자동으로 활성화하는 전문 지식 모듈입니다.
 
 ### Available Skills
 
@@ -155,7 +155,7 @@ PR 코드 리뷰가 필요할 때
 
 ### Schema - Component Independence
 
-Laylder의 핵심은 **Component Independence** 원칙을 채택한 Schema 시스템입니다.
+Visual Layout Builder의 핵심은 **Component Independence** 원칙을 채택한 Schema 시스템입니다.
 
 **설계 원칙 (types/schema.ts)**:
 1. **Component Independence**: 각 컴포넌트가 독립적으로 positioning, layout, styling 정의
@@ -863,7 +863,7 @@ function Dashboard() {
 
 ### 테스트 철학
 
-Laylder는 **Vitest 기반 Unit 테스트** + **Playwright E2E 테스트** 전략을 사용합니다.
+Visual Layout Builder는 **Vitest 기반 Unit 테스트** + **Playwright E2E 테스트** 전략을 사용합니다.
 
 **핵심 원칙**:
 1. **비즈니스 로직 검증**: 핵심 로직을 독립적으로 테스트

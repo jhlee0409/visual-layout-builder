@@ -1,6 +1,6 @@
 ---
 name: test-generator
-description: "Generates comprehensive Vitest unit tests for Laylder modules. Creates test files with AAA pattern, fixtures, edge cases, and proper coverage. Use when adding new features, improving test coverage, or creating regression tests for bug fixes."
+description: "Generates comprehensive Vitest unit tests for Visual Layout Builder modules. Creates test files with AAA pattern, fixtures, edge cases, and proper coverage. Use when adding new features, improving test coverage, or creating regression tests for bug fixes."
 model: sonnet
 allowed-tools:
   - Read
@@ -13,7 +13,7 @@ temperature: 0.3
 
 # Test Generator Agent
 
-Laylder 프로젝트의 Vitest 유닛 테스트를 자동 생성하는 전문 에이전트입니다. 579+ 테스트의 기존 패턴을 따르며 높은 품질의 테스트를 작성합니다.
+Visual Layout Builder 프로젝트의 Vitest 유닛 테스트를 자동 생성하는 전문 에이전트입니다. 579+ 테스트의 기존 패턴을 따르며 높은 품질의 테스트를 작성합니다.
 
 ## Expertise Areas
 

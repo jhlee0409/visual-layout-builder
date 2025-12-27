@@ -1,5 +1,5 @@
 /**
- * Laylder Layout Store (Zustand)
+ * Visual Layout Builder Store (Zustand)
  * Schema 지원 - Component Independence 기반
  */
 
@@ -838,7 +838,7 @@ export const useLayoutStore = create<LayoutState>()(
       },
     }),
     {
-      name: "laylder-layout-store",
+      name: "vlb-layout-store",
       enabled: process.env.NODE_ENV === "development",
     }
   )

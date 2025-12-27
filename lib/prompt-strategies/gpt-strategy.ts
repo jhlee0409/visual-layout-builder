@@ -44,10 +44,10 @@ export class GPTStrategy extends BasePromptStrategy {
     return `You are an expert ${framework === "react" ? "React" : framework} developer specializing in modern web development and responsive design.
 
 **Task:**
-Create a responsive, production-ready layout component based on the Laylder Schema specifications provided below.
+Create a responsive, production-ready layout component based on the Visual Layout Builder Schema specifications provided below.
 
 **Schema Architecture:**
-The Laylder Schema uses a **Component Independence** approach:
+The Visual Layout Builder Schema uses a **Component Independence** approach:
 - Each component has its own positioning strategy (fixed, sticky, static, absolute, relative)
 - Each component defines its layout system (flexbox, grid, container, or none)
 - Styling and responsive behavior are component-specific

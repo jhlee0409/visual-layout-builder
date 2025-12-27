@@ -45,10 +45,10 @@ export class GrokStrategy extends BasePromptStrategy {
     return `You are an expert ${framework} developer. Today is ${currentDate}.
 
 **Objective:**
-Build a responsive layout component from the Laylder Schema specifications provided.
+Build a responsive layout component from the Visual Layout Builder Schema specifications provided.
 
 **Schema Overview:**
-The Laylder Schema follows a Component Independence architecture:
+The Visual Layout Builder Schema follows a Component Independence architecture:
 - Each component defines its own positioning (fixed, sticky, static, absolute, relative)
 - Each component defines its internal layout (flexbox, grid, container, or none)
 - Styling and responsive behavior are component-specific
