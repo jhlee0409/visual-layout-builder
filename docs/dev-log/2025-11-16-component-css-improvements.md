@@ -2,7 +2,7 @@
 
 ## 변경 사항 요약
 
-Laylder를 **순수 레이아웃 빌더**로 재정의하기 위해 모든 theme 색상과 스타일링을 제거하고, 레이아웃 구분용 최소 요소만 남겼습니다.
+Visual Layout Builder를 **순수 레이아웃 빌더**로 재정의하기 위해 모든 theme 색상과 스타일링을 제거하고, 레이아웃 구분용 최소 요소만 남겼습니다.
 
 ---
 
@@ -457,7 +457,7 @@ lib/component-library.ts  ← 모든 컴포넌트 템플릿 수정
 
 ### Before (Theme 포함)
 ```jsx
-// ❌ Old: Laylder가 theme 색상 제공
+// ❌ Old: Visual Layout Builder가 theme 색상 제공
 <Hero className="bg-gradient-to-r from-blue-500 to-purple-600 text-white">
   Hero Content
 </Hero>
@@ -480,7 +480,7 @@ lib/component-library.ts  ← 모든 컴포넌트 템플릿 수정
 
 ## 결론
 
-Laylder는 이제 **순수 레이아웃 빌더**입니다.
+Visual Layout Builder는 이제 **순수 레이아웃 빌더**입니다.
 - ✅ 레이아웃 구조만 제공
 - ✅ 접근성 완벽 지원 (WCAG 2.2)
 - ✅ 스타일링은 유저에게 완전히 위임

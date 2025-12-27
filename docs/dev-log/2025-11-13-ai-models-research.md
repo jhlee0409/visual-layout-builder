@@ -121,7 +121,7 @@
 - ✅ 단계별 문제 분해
 - ⚠️ 프로덕션 코드 생성보다 알고리즘 설계에 활용
 
-#### 5. Laylder 통합 전략
+#### 5. Visual Layout Builder 통합 전략
 
 **현재 상태:**
 - `lib/prompt-generator-v2.ts`: 단일 템플릿 기반 프롬프트 생성

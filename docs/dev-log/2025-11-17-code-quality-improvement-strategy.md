@@ -2,7 +2,7 @@
 
 ## 📋 Overview
 
-This document outlines a comprehensive strategy to improve the quality of AI-generated React code from Laylder's prompt system, based on 2025 industry best practices.
+This document outlines a comprehensive strategy to improve the quality of AI-generated React code from Visual Layout Builder's prompt system, based on 2025 industry best practices.
 
 ---
 

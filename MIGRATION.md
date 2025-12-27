@@ -2,7 +2,7 @@
 
 ## Overview
 
-Laylder v1.0.0 transforms the project into a **pure layout builder** with a focus on structural layouts and accessibility. This is a **BREAKING CHANGE** that removes all theme colors and styling elements.
+Visual Layout Builder v1.0.0 transforms the project into a **pure layout builder** with a focus on structural layouts and accessibility. This is a **BREAKING CHANGE** that removes all theme colors and styling elements.
 
 ---
 
@@ -108,7 +108,7 @@ If you have existing schema JSON files, you need to:
 
 ### Step 2: Update AI-Generated Code
 
-If you previously generated code with Laylder v0.x:
+If you previously generated code with Visual Layout Builder v0.x:
 
 1. **Remove theme-specific classes** from your components
 2. **Apply your own theme** using:
@@ -131,7 +131,7 @@ If you previously generated code with Laylder v0.x:
 
 ### Step 3: Apply Your Own Theme
 
-Laylder v1.0.0 provides the layout structure. You need to add styling:
+Visual Layout Builder v1.0.0 provides the layout structure. You need to add styling:
 
 **Option 1: Tailwind Config**
 ```javascript
@@ -169,7 +169,7 @@ import { cn } from "@/lib/utils"
 function Header() {
   return (
     <header className={cn(
-      "sticky top-0 border-b",  // Layout (from Laylder)
+      "sticky top-0 border-b",  // Layout (from Visual Layout Builder)
       "bg-blue-600 text-white shadow-lg"  // Your theme
     )}>
       {/* Your content */}
@@ -222,7 +222,7 @@ Edit `lib/component-library.ts` and add your theme colors back temporarily:
 
 Use this approach instead:
 ```typescript
-// Generate layout with Laylder v1.0.0
+// Generate layout with Visual Layout Builder v1.0.0
 const layout = generateCode(schema)
 
 // Apply your theme separately
@@ -278,9 +278,9 @@ pnpm test:run
 
 ## ❓ FAQ
 
-### Q: Can I still use Laylder for styled components?
+### Q: Can I still use Visual Layout Builder for styled components?
 
-**A:** No. Laylder v1.0.0 is a pure layout builder. Apply your own styles after generation.
+**A:** No. Visual Layout Builder v1.0.0 is a pure layout builder. Apply your own styles after generation.
 
 ### Q: Will my v0.x schemas work in v1.0.0?
 
@@ -327,4 +327,4 @@ If you encounter issues during migration:
 ✅ **Easier maintenance** - Change themes without touching layout
 ✅ **Modern architecture** - Follows 2025 web standards
 
-**Laylder v1.0.0 = Layout structure. Your creativity = Theme.**
+**Visual Layout Builder v1.0.0 = Layout structure. Your creativity = Theme.**

@@ -30,7 +30,7 @@ find . -type f \( -name "*.ts" -o -name "*.tsx" \) \
   -not -path "*/node_modules/*" \
   -not -path "*/.next/*" \
   -not -path "*/scripts/*" \
-  -exec sed -i '' 's/Laylder V2/Laylder/g' {} \;
+  -exec sed -i '' 's/Visual Layout Builder V2/Visual Layout Builder/g' {} \;
 
 find . -type f \( -name "*.ts" -o -name "*.tsx" \) \
   -not -path "*/node_modules/*" \

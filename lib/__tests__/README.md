@@ -2,7 +2,7 @@
 
 ## 개요
 
-Laylder 프로젝트의 핵심 비즈니스 로직을 검증하는 Vitest 기반 단위 테스트입니다.
+Visual Layout Builder 프로젝트의 핵심 비즈니스 로직을 검증하는 Vitest 기반 단위 테스트입니다.
 
 **현재 커버리지**: 89.22% (136 tests)
 

@@ -8,7 +8,7 @@ import type { GenerationPackage } from "@/types/schema"
 import { generatePrompt } from "./prompt-generator"
 
 // Note: ai-service-v2.ts는 더 이상 사용하지 않음
-// Laylder는 AI API를 직접 호출하지 않고, 사용자가 복붙할 프롬프트만 제공
+// Visual Layout Builder는 AI API를 직접 호출하지 않고, 사용자가 복붙할 프롬프트만 제공
 // 이 파일은 이전 버전의 유산이며, 실제로는 generatePrompt()만 사용
 
 export interface AIGenerationRequest {

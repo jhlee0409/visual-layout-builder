@@ -271,7 +271,7 @@ const breakpoints: Breakpoint[] = [
 
 ## 🎯 Conclusion
 
-This architectural improvement **removes a fundamental limitation** of the Laylder system. By eliminating hardcoded breakpoint constraints, the system is now:
+This architectural improvement **removes a fundamental limitation** of the Visual Layout Builder system. By eliminating hardcoded breakpoint constraints, the system is now:
 
 - ✅ **Truly responsive** - Supports any screen size
 - ✅ **Type-safe** - No unsafe type assertions
@@ -431,7 +431,7 @@ expect(normalized.layouts.laptop.components).toEqual([])  // Stays empty
 
 ## 🔗 References
 
-- **PR**: #15 - Build responsive layout with Laylder Schema
+- **PR**: #15 - Build responsive layout with Visual Layout Builder Schema
 - **Commits**: 5 commits (d0e8db0, 5bae599, 70d0e36, etc.)
 - **Test Suite**: `lib/__tests__/dynamic-breakpoints.test.ts`
 - **Migration Guide**: `CLAUDE.md` (lines 79-195)

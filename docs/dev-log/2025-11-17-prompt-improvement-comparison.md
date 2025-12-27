@@ -2,7 +2,7 @@
 
 ## 📊 개요
 
-Laylder의 AI 프롬프트 생성 시스템을 2025년 React/TypeScript 모범 사례에 맞춰 개선했습니다.
+Visual Layout Builder의 AI 프롬프트 생성 시스템을 2025년 React/TypeScript 모범 사례에 맞춰 개선했습니다.
 
 ---
 

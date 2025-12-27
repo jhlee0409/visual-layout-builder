@@ -258,7 +258,7 @@ export type { HeaderProps }
 ## 🚀 Next Steps (Optional)
 
 ### Immediate Testing
-1. Open Laylder UI in browser (`pnpm dev`)
+1. Open Visual Layout Builder UI in browser (`pnpm dev`)
 2. Create a sample schema with Header, Main, Footer
 3. Export → AI Prompt
 4. Verify the improved prompt includes:

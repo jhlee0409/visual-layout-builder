@@ -25,7 +25,7 @@ export interface GenerationResult {
 }
 
 /**
- * Generate AI prompt from Laylder Schema
+ * Generate AI prompt from Visual Layout Builder Schema
  *
  * V1과 동일한 패턴: validation → template → sections → prompt
  * 특성: positioning, layout, styling, responsive 스펙 포함

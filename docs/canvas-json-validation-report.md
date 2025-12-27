@@ -8,7 +8,7 @@
 
 ## 📋 Executive Summary
 
-Laylder의 Canvas에서 드래그 앤 드롭으로 배치된 컴포넌트가 LaydlerSchema (JSON)로 정확하게 변환되고, 이후 AI 프롬프트로 올바르게 생성되는지 검증하기 위한 포괄적인 테스트를 작성하고 실행했습니다.
+Visual Layout Builder의 Canvas에서 드래그 앤 드롭으로 배치된 컴포넌트가 LaydlerSchema (JSON)로 정확하게 변환되고, 이후 AI 프롬프트로 올바르게 생성되는지 검증하기 위한 포괄적인 테스트를 작성하고 실행했습니다.
 
 **결과**: ✅ **22개 테스트 모두 통과** (100% 성공률)
 
@@ -262,7 +262,7 @@ schema-utils.ts      78.37%   62.85%    77.77%   80.55%
 
 ## 📝 결론
 
-**Laylder의 Canvas JSON Export 기능은 100% 정확하게 동작합니다.**
+**Visual Layout Builder의 Canvas JSON Export 기능은 100% 정확하게 동작합니다.**
 
 - ✅ **22개 테스트 모두 통과** (0% 실패율)
 - ✅ **91.88% 코드 커버리지** (핵심 로직)

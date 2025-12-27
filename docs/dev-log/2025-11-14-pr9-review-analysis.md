@@ -1,6 +1,6 @@
 # PR #9 코멘트 분석 및 검증 결과
 
-**PR**: Build responsive layout from Laylder Schema
+**PR**: Build responsive layout from Visual Layout Builder Schema
 **코멘트**: #3530963317 (Claude Bot Review)
 **검증 일시**: 2025-11-14
 

@@ -116,7 +116,7 @@ Row 7:    [Footer (c6)                 ] [CTA(c3)]
 }
 ```
 
-**Laylder 적용**: Canvas Grid → CSS Grid template areas 변환 필요
+**Visual Layout Builder 적용**: Canvas Grid → CSS Grid template areas 변환 필요
 
 ---
 

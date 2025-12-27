@@ -20,7 +20,7 @@ React2Shell is a critical vulnerability in React Server Components affecting Rea
 - react-server-dom-parcel
 - react-server-dom-turbopack
 
-## Laylder Project Status
+## Visual Layout Builder Project Status
 
 ### Before Patch
 ```json

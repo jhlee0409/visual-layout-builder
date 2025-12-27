@@ -1,7 +1,7 @@
 # Cleanup Analysis - 사용하지 않는 파일 분석
 
 **분석 일시**: 2025-11-13
-**분석 대상**: Laylder 프로젝트 전체
+**분석 대상**: Visual Layout Builder 프로젝트 전체
 
 ---
 
@@ -283,7 +283,7 @@ rm -rf docs/prompts-v2/
 ```bash
 #!/bin/bash
 
-echo "🧹 Laylder 프로젝트 정리 시작..."
+echo "🧹 Visual Layout Builder 프로젝트 정리 시작..."
 
 # 1. 아카이브 디렉토리 생성
 mkdir -p scripts/archive

@@ -42,7 +42,7 @@ export interface BPValidationResult {
  * AI가 생성한 코드를 Best Practice에 따라 검증
  *
  * @param generatedCode - AI가 생성한 React 코드
- * @param schema - 원본 Laylder Schema
+ * @param schema - 원본 Visual Layout Builder Schema
  * @returns 검증 결과
  *
  * @example

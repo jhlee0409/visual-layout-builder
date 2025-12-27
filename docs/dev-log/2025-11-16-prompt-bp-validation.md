@@ -2,7 +2,7 @@
 
 ## 개요
 
-Laylder Schema에서 생성된 프롬프트가 AI에게 Best Practice를 잘 전달하고, AI가 생성한 코드가 이러한 Best Practice를 준수하는지 검증하는 시스템을 구축했습니다.
+Visual Layout Builder Schema에서 생성된 프롬프트가 AI에게 Best Practice를 잘 전달하고, AI가 생성한 코드가 이러한 Best Practice를 준수하는지 검증하는 시스템을 구축했습니다.
 
 ## 검증 시스템 아키텍처
 
@@ -575,4 +575,4 @@ function validatePerformance(code: string) {
 - **코드 커버리지**: ✅ 핵심 비즈니스 로직 100%
 - **문서화**: ✅ 완료
 
-**Laylder의 프롬프트 생성 시스템은 2025 Best Practice를 완벽히 반영하고 있으며, AI가 생성한 코드를 검증할 수 있는 시스템이 구축되었습니다.**
+**Visual Layout Builder의 프롬프트 생성 시스템은 2025 Best Practice를 완벽히 반영하고 있으며, AI가 생성한 코드를 검증할 수 있는 시스템이 구축되었습니다.**

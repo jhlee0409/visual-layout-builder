@@ -383,10 +383,10 @@ pnpm test:run
 
 ## 결론
 
-Laylder의 **Component Library**와 **Prompt Generation** 시스템이 완벽히 정렬되었습니다.
+Visual Layout Builder의 **Component Library**와 **Prompt Generation** 시스템이 완벽히 정렬되었습니다.
 
 - ✅ Component Library: 순수 레이아웃 빌더 (theme 색상 제거)
 - ✅ Prompt Generation: Layout-only 철학 강조 (AI에게 명확한 지침)
 - ✅ 자동 검증: 지속적인 품질 보증 (test-prompt-alignment.ts)
 
-**유저는 이제 Laylder로 레이아웃 구조를 생성하고, 자신의 theme를 자유롭게 적용할 수 있습니다.** 🎨
+**유저는 이제 Visual Layout Builder로 레이아웃 구조를 생성하고, 자신의 theme를 자유롭게 적용할 수 있습니다.** 🎨

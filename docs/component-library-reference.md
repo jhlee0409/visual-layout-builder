@@ -1,6 +1,6 @@
 # Component Library Reference - CSS & Properties
 
-Laylder의 모든 사전 정의 컴포넌트 템플릿의 기본 CSS 및 프로퍼티 설정입니다.
+Visual Layout Builder의 모든 사전 정의 컴포넌트 템플릿의 기본 CSS 및 프로퍼티 설정입니다.
 
 ## 목차
 
