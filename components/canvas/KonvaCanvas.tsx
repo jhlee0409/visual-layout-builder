@@ -530,12 +530,6 @@ export function KonvaCanvas({
       <div className="flex-shrink-0 px-4 py-3 border-b bg-background/50">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <span className="text-sm font-medium">Konva Canvas</span>
-            <div className="h-4 w-px bg-border" />
-            <span className="text-xs text-muted-foreground">
-              Pan & Zoom
-            </span>
-            <div className="h-4 w-px bg-border" />
             <div className="flex items-center gap-2">
               <span className="text-xs font-medium text-muted-foreground">Grid:</span>
               <div className="flex items-center gap-1">
