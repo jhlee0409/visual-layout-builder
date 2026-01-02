@@ -70,7 +70,12 @@ export default function Home() {
               className="flex-shrink-0"
             />
             <div>
-              <h1 className="text-xl font-bold">Visual Layout Builder</h1>
+              <h1 className="text-xl font-bold">
+                Visual Layout Builder
+                <span className="ml-2 inline-flex items-center rounded-full bg-yellow-100 px-2 py-0.5 text-xs font-medium text-yellow-800 border border-yellow-300">
+                  BETA
+                </span>
+              </h1>
               <p className="text-xs text-muted-foreground">
                 AI-Powered Code Generation - Component Independence
               </p>
