@@ -1,6 +1,7 @@
 "use client"
 
 import { useRef } from "react"
+import Image from "next/image"
 import { BreakpointSwitcher} from "@/components/breakpoint-panel"
 import { LibraryPanel} from "@/components/library-panel"
 import { LayersTree} from "@/components/layers-tree"
@@ -61,6 +62,13 @@ export default function Home() {
       <header className="flex-shrink-0 border-b bg-white px-6 py-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
+            <Image
+              src="/images/vsl_logo.png"
+              alt="VLB Logo"
+              width={32}
+              height={32}
+              className="flex-shrink-0"
+            />
             <div>
               <h1 className="text-xl font-bold">Visual Layout Builder</h1>
               <p className="text-xs text-muted-foreground">
